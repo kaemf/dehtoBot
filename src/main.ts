@@ -161,6 +161,14 @@ async function main() {
               {
                 text: "Запис на заняття"
               }
+            ],[
+              {
+                text: "Шпрах-Клуби"
+              }
+            ],[
+              {
+                text: "Адмін Панель"
+              }
             ]
           ]
         }
@@ -263,6 +271,72 @@ async function main() {
       ctx.reply(script.registrationLesson.niceWhatATime, {reply_markup: {remove_keyboard: true}});
       await set('state')('_GraphicRespondAndLevelRequest');
     }
+    else if (data.text === "Шпрах-Клуби"){
+      ctx.reply("В розробці...", {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Пробне заняття"
+              },
+              {
+                text: "Реєстрація на клуб"
+              }
+            ],[
+              {
+                text: "Залишок моїх занять"
+              },
+              {
+                text: "Оплатити пакет занять"
+              }
+            ],[
+              {
+                text: "Про шпрах-клаб"
+              }
+            ]
+          ],
+        },
+      });
+
+      await set('state')('ActionClubRespondAndRootAction');
+    }
+    else if (data.text === "Адмін Панель"){
+      ctx.reply("В розробці...", {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Вчитель на годину",
+              },
+            ],[
+              {
+                text: "Пробний урок",
+              },
+            ],[
+              {
+                text: "Оплата занять",
+              },
+            ],[
+              {
+                text: "Запис на заняття"
+              }
+            ],[
+              {
+                text: "Шпрах-Клуби"
+              }
+            ],[
+              {
+                text: "Адмін Панель"
+              }
+            ]
+          ],
+        },
+      })
+    }
     else{
       ctx.reply(script.errorException.chooseFunctionError, {
         parse_mode: "Markdown",
@@ -284,6 +358,14 @@ async function main() {
             ],[
               {
                 text: "Запис на заняття"
+              }
+            ],[
+              {
+                text: "Шпрах-Клуби"
+              }
+            ],[
+              {
+                text: "Адмін Панель"
               }
             ]
           ],
@@ -587,6 +669,14 @@ async function main() {
               {
                 text: "Запис на заняття"
               }
+            ],[
+              {
+                text: "Шпрах-Клуби"
+              }
+            ],[
+              {
+                text: "Адмін Панель"
+              }
             ]
           ]
         }
@@ -602,6 +692,23 @@ async function main() {
             [
               {
                 text: 'В МЕНЮ'
+              }
+            ]
+          ]
+        }
+      })
+    }
+    else if (data.text === 'Назад до реєстрації'){
+      ctx.reply("В розробці...", {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "В МЕНЮ"
+              },
+              {
+                text: "Назад до реєстрації"
               }
             ]
           ]
@@ -1501,6 +1608,510 @@ async function main() {
     }
     else{
       ctx.reply(script.errorException.textGettingError.defaultException);
+    }
+  })
+
+  // Club Handler
+  onTextMessage('ActionClubRespondAndRootAction', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (data.text === 'Пробне заняття'){
+      ctx.reply(script.speakingClub.trialLesson, {
+        parse_mode: "HTML",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "так"
+              },
+              {
+                text: "ні"
+              }
+            ]
+          ],
+        },
+      })
+
+      await set('state')('RespondChooseAndRespondGetLesson');
+    }
+    else if (data.text === 'Реєстрація на клуб'){
+      //process
+    }
+    else if (data.text === 'Залишок моїх занять'){
+      let number : number = 1
+      if (number > 0){
+        ctx.reply(script.speakingClub.lessLessons(number), {
+          parse_mode: "HTML",
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: [
+              [
+                {
+                  text: "В МЕНЮ"
+                },
+              ]
+            ],
+          },
+        });
+        await set('state')('EndRootManager');
+      }
+      else{
+        ctx.reply(script.speakingClub.lessLessons(number), {
+          parse_mode: "HTML",
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: [
+              [
+                {
+                  text: "так"
+                },
+                {
+                  text: "ні"
+                }
+              ]
+            ],
+          },
+        });
+        await set('state')('RespondCheckLessonsAndGetLessons');
+      }
+    }
+    else if (data.text === 'Оплатити пакет занять'){
+      ctx.reply(script.speakingClub.payPacketLesson, {
+        parse_mode: "HTML",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Шпрах-Клуб"
+              },
+              {
+                text: "Шпрах-Клуб+PLUS"
+              }
+            ]
+          ],
+        },
+      });
+      await set('state')('RespondTypePacketAndGetPayment');
+    }
+    else if (data.text === 'Про шпрах-клаб'){
+      ctx.reply(script.speakingClub.about, {
+        parse_mode: "HTML",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "В МЕНЮ"
+              },
+            ]
+          ],
+        },
+      })
+
+      await set('state')('EndRootManager');
+    }
+    else{
+      ctx.reply(script.errorException.chooseButtonError, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Пробне заняття"
+              },
+              {
+                text: "Реєстрація на клуб"
+              }
+            ],[
+              {
+                text: "Залишок моїх занять"
+              },
+              {
+                text: "Оплатити пакет занять"
+              }
+            ],[
+              {
+                text: "Про шпрах-клаб"
+              }
+            ]
+          ],
+        },
+      });
+    }
+  })
+
+  // Club Trial Lesson Handler (start)
+  onTextMessage('RespondChooseAndRespondGetLesson', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (data.text === 'так'){
+      ctx.reply('В розробці', {
+        parse_mode: "HTML",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "так"
+              },
+              {
+                text: "ні"
+              }
+            ]
+          ],
+        },
+      })
+      //process
+    }
+    else if (data.text === 'ні'){
+      ctx.reply(script.speakingClub.trialLesson.ifNo, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "В МЕНЮ"
+              }
+            ],
+          ],
+        },
+      });
+
+      await set('state')('EndRootManager');
+    }
+  })
+
+  // Check count of lessons and pay more if it need
+  onTextMessage('RespondCheckLessonsAndGetLessons', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (data.text === 'так'){
+      ctx.reply('В розробці', {
+        parse_mode: "HTML",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "так"
+              },
+              {
+                text: "ні"
+              }
+            ]
+          ],
+        },
+      })
+      //process
+    }
+    else if (data.text === 'ні'){
+      ctx.reply(script.speakingClub.trialLesson.ifNo, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "В МЕНЮ"
+              }
+            ],
+          ],
+        },
+      });
+
+      await set('state')('EndRootManager');
+    }
+  })
+
+  // Pay Club Type
+  onTextMessage('RespondTypePacketAndGetPayment', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (data.text === 'Шпрах-Клуб'){
+      ctx.reply(script.speakingClub.standartClub);
+      await set('club-typeclub')(data.text);
+      await set('state')('RespondPaymentAndGetCourseOrFinal');
+    }
+    else if (data.text === 'Шпрах-Клуб+PLUS'){
+      ctx.reply(script.speakingClub.plusClub);
+      await set('club-typeclub')(data.text);
+      await set('state')('RespondPaymentAndGetCourseOrFinal');
+    }
+    else{
+      ctx.reply(script.errorException.chooseButtonError, {
+        parse_mode: "HTML",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Шпрах-Клуб"
+              },
+              {
+                text: "Шпрах-Клуб+PLUS"
+              }
+            ]
+          ],
+        },
+      })
+    }
+  })
+
+  onPhotoMessage('RespondPaymentAndGetCourseOrFinal', async(ctx, user, data) => {
+    const id = ctx?.chat?.id ?? -1,
+      set = db.set(id),
+      get = db.get(id),
+      date : Date = new Date(),
+      name = get("name") ?? "учень",
+      monthFormat = (date.getMonth() + 1 < 10 ? '0' : '') + (date.getMonth() + 1),
+      dateFormat = (date.getDate() < 10 ? '0' : '') + (date.getDate()),
+      formattedDateRecord = `${dateFormat}.${monthFormat}.${date.getFullYear()}`;
+
+    if (CheckException.PhotoException(data)){
+      //await set('paymentStatus')('unknown');
+  
+      // const inline = inlineApprovePayment(id, paymentStatus);
+  
+      const unique_file_id = data.photo;
+      
+      // For Developer
+      // ctx.telegram.sendPhoto(id, unique_file_id, {
+      //   caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
+      //   parse_mode: 'HTML',
+      //   ...Markup.inlineKeyboard(inline)
+      //   }
+      // )
+      
+      // ctx.telegram.sendPhoto(confirmationChat, unique_file_id, {
+      //   caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
+      //   parse_mode: 'HTML', 
+      //   ...Markup.inlineKeyboard(inline)
+      //   }
+      // )
+  
+      // ctx.telegram.sendPhoto(supportChat, unique_file_id, {
+      //   caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
+      //   parse_mode: 'HTML',
+      //   ...Markup.inlineKeyboard(inline)
+      //   }
+      // )
+  
+      if (user['club-typeclub'] === 'Шпрах-Клуб'){
+        ctx.reply(script.speakingClub.thanksType.typeStandart(user['name']), {
+          parse_mode: "Markdown",
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: [
+              [
+                {
+                  text: 'В МЕНЮ',
+                },
+                {
+                  text: "Назад до реєстрації"
+                }
+                // {
+                //   text: '？Про Бота'
+                // }
+              ],
+            ],
+          },
+        });
+        await set('state')('EndRootManager');
+      }
+      else if (user['club-typeclub'] === 'Шпрах-Клуб+PLUS'){
+        ctx.reply(script.speakingClub.thanksType.typePlus, {
+          parse_mode: "Markdown",
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: [
+              [
+                {
+                  text: "A1.1",
+                },
+                {
+                  text: "A1.2",
+                },
+              ],[
+                {
+                  text: "A2.1", //Added text
+                },
+                {
+                  text: "A2.2", //Added text
+                },
+                // {
+                //   text: "Назад"
+                // }
+              ],
+            ],
+          },
+        });
+        await set('state')('RespondCourseAndGetMail')
+      }
+      else{
+        ctx.reply(user['club-typeclub']);
+      }
+    }
+    else if (CheckException.FileException(data)){
+  
+      // const inline = inlineApprovePayment(id, paymentStatus);
+  
+      const unique_file_id = data.file;
+      
+      // For Developer
+      // ctx.telegram.sendDocument(id, unique_file_id, {
+      //   caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
+      //   parse_mode: 'HTML',
+      //   ...Markup.inlineKeyboard(inline)
+      //   }
+      // )
+      
+      // ctx.telegram.sendDocument(confirmationChat, unique_file_id, {
+      //   caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
+      //   parse_mode: 'HTML', 
+      //   //...Markup.inlineKeyboard(inline)
+      //   }
+      // )
+  
+      // ctx.telegram.sendDocument(supportChat, unique_file_id, {
+      //   caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
+      //   parse_mode: 'HTML',
+      //   //...Markup.inlineKeyboard(inline)
+      //   }
+      // )
+
+      if (user['club-typeclub'] === 'Шпрах-Клуб'){
+        ctx.reply(script.speakingClub.thanksType.typeStandart(user['name']), {
+          parse_mode: "Markdown",
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: [
+              [
+                {
+                  text: 'В МЕНЮ',
+                },
+                {
+                  text: "Назад до реєстрації"
+                }
+                // {
+                //   text: '？Про Бота'
+                // }
+              ],
+            ],
+          },
+        });
+        await set('state')('EndRootManager');
+      }
+      else if (user['club-typeclub'] === 'Шпрах-Клуб+PLUS'){
+        ctx.reply(script.speakingClub.thanksType.typePlus, {
+          parse_mode: "Markdown",
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: [
+              [
+                {
+                  text: "A1.1",
+                },
+                {
+                  text: "A1.2",
+                },
+              ],[
+                {
+                  text: "A2.1", //Added text
+                },
+                {
+                  text: "A2.2", //Added text
+                },
+                // {
+                //   text: "Назад"
+                // }
+              ],
+            ],
+          },
+        });
+        await set('state')('RespondCourseAndGetMail')
+      }
+      else{
+        ctx.reply(user['club-typeclub']);
+      }
+    }
+    else{
+      ctx.reply(script.errorException.paymentGettingError, {reply_markup: {remove_keyboard: true}});
+    }
+  })
+
+  onTextMessage('RespondCourseAndGetMail', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (data.text === 'A1.1' || data.text === 'A1.2' || data.text === 'A2.1' || data.text === 'A2.2'){
+      await set('club-coursename')(data.text);
+
+      ctx.reply(script.speakingClub.getMail, {reply_markup: {remove_keyboard: true}});
+      await set('state')('RespondMailAndFinal');
+    }
+    else{
+      ctx.reply(script.errorException.chooseButtonError, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "A1.1",
+              },
+              {
+                text: "A1.2",
+              },
+            ],[
+              {
+                text: "A2.1", //Added text
+              },
+              {
+                text: "A2.2", //Added text
+              },
+              // {
+              //   text: "Назад"
+              // }
+            ],
+          ],
+        },
+      });
+    }
+  })
+
+  onTextMessage('RespondMailAndFinal', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    //set mail
+
+    if (CheckException.TextException(data)){
+      ctx.reply(script.speakingClub.thanksAfterMail(user['name'], user['club-coursename']), {
+        parse_mode: "HTML",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "В МЕНЮ",
+              },
+              {
+                text: "Назад до реєстрації",
+              },
+              // {
+              //   text: "Назад"
+              // }
+            ],
+          ],
+        },
+      });
+
+      await set('state')('EndRootManager');
+    }
+    else{
+      ctx.reply(script.errorException.textGettingError.defaultException, {reply_markup: {remove_keyboard: true}});
     }
   })
 
