@@ -2,6 +2,7 @@ import init from './init'
 import { Context } from "telegraf";
 import { Update } from "telegraf/typings/core/types/typegram";
 import { UserScriptState } from "../data/UserScriptState";
+import { ObjectId } from 'mongodb';
 type ActionType<T> = (ctx: Context<Update>, user: {[x: string]: string}, additionalData: T) => void;
 
 export default async function arch() {
@@ -188,6 +189,18 @@ export default async function arch() {
 
     async AddData(data: {title: string, teacher: string, date: string, time: string, count: number, link: string}) {
       await this.clubdb.insertOne(data);
+    }
+
+    async DeleteData(id: ObjectId) {
+      await this.clubdb.deleteOne({ _id: new ObjectId(id) });
+    }
+
+    async ChangeKeyData(id: ObjectId, _key: string, value: string | number){
+      await this.clubdb.updateOne(id, {$set: {_key: value}});
+    }
+
+    async ShowData(id: ObjectId) {
+      return await this.clubdb.find({ _id: new ObjectId(id) }).toArray();
     }
   }
 

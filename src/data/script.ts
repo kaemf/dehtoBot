@@ -306,7 +306,16 @@ UA773220010000026004330103247
 +380 97 577 20 93
 @dehto_school
 
-гарного дня!🍓`
+гарного дня!🍓`,
+    report: {
+      showClub: (position: number, title: string, teacher: string, date: string, time: string, addString: string) => `✅${position}
+🗣 ШРАХ-КЛУБ
+👉🏼 Тема: ${title}
+👉🏼 Викладач: ${teacher}\n
+👉🏼 Коли: ${date}
+👉🏼 На котру: ${time}\n
+${addString}`
+    }
   },
     
 

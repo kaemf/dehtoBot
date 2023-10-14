@@ -2113,19 +2113,6 @@ async function main() {
   onTextMessage('RespondAdminActionAndRootChoose', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    // [
-    //   {
-    //     text: "Додати"
-    //   },
-    //   {
-    //     text: "Редагувати"
-    //   }
-    // ],[
-    //   {
-    //     text: "Показати всі"
-    //   }
-    // ]
-
     if (data.text === 'Додати'){
       const toWrite = {
         title: "Bio-Lebensmittel",
@@ -2141,23 +2128,21 @@ async function main() {
   
     }
     else if (data.text === 'Показати всі'){
-      (await dbProcess.ShowAll()).forEach((collect) => {
-        let addString : string = '';
-        if (collect.count > 0){
-          addString = `кількість доступних місць: ${collect.count}`;
-        }
-        else{
-          addString = `❌ немає вільних місць ❌`;
-        }
-        ctx.reply(`🗣 ШРАХ-КЛУБ
-👉🏼 Тема: ${collect.title}
-👉🏼 Викладач: ${collect.teacher}\n
-👉🏼 Коли: ${collect.date}
-👉🏼 На котру: ${collect.time}\n
-${addString}`
-      )});
+      const results = await dbProcess.ShowAll();
+      let addString: string = '';
+    
+      for (let i = 0; i < results.length; i++) {
+          if (results[i].count > 0) {
+            addString = `кількість доступних місць: ${results[i].count}`;
+          } else {
+            addString = `❌ немає вільних місць ❌`;
+          }
+
+        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString));
+      }
     }
-  })
+  });
+
 
   // const updatePaymentStatusInGoogleSheets = async (
   //   id: number,
