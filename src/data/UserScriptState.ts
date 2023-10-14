@@ -25,3 +25,4 @@ export type UserScriptState =
   | "RespondPaymentAndGetCourseOrFinal"
   | "RespondCourseAndGetMail"
   | "RespondMailAndFinal"
+  | "RespondAdminActionAndRootChoose"

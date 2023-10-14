@@ -13,13 +13,14 @@ type HideableIKBtn = ReturnType<typeof Markup.button.callback>;
 import arch from './base/architecture';
 import { Request, Response } from 'express';
 import getCourses, { Course, Courses } from "./data/coursesAndTopics";
+import { time } from "console";
 const confirmationChat = '437316791',
   supportChat = '6081848014',
   devChat = '740129506',
   versionBot = '3.5.3';
 
 async function main() {
-  const [ onTextMessage, onContactMessage, onPhotoMessage, bot, db, app, token ] = await arch();
+  const [ onTextMessage, onContactMessage, onPhotoMessage, bot, db, app, token, clubdb, dbProcess ] = await arch();
 
   //Begin bot work, collecting user data (his telegram name) set up state_1
   bot.start((ctx) => {
@@ -272,7 +273,7 @@ async function main() {
       await set('state')('_GraphicRespondAndLevelRequest');
     }
     else if (data.text === "Шпрах-Клуби"){
-      ctx.reply("В розробці...", {
+      ctx.reply("Виберіть одну із запропонованих кнопок(В розробці...)", {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -310,32 +311,21 @@ async function main() {
           keyboard: [
             [
               {
-                text: "Вчитель на годину",
+                text: "Додати"
               },
-            ],[
               {
-                text: "Пробний урок",
-              },
-            ],[
-              {
-                text: "Оплата занять",
-              },
-            ],[
-              {
-                text: "Запис на заняття"
+                text: "Редагувати"
               }
             ],[
               {
-                text: "Шпрах-Клуби"
-              }
-            ],[
-              {
-                text: "Адмін Панель"
+                text: "Показати всі"
               }
             ]
           ],
         },
       })
+
+      await set('state')('RespondAdminActionAndRootChoose');
     }
     else{
       ctx.reply(script.errorException.chooseFunctionError, {
@@ -682,6 +672,9 @@ async function main() {
         }
       })
       await set('state')('FunctionRoot');
+    }
+    else if (data.text === 'Назад до реєстрації'){
+
     }
     else if (data.text === 'sysinfo'){
       ctx.reply(script.about(versionBot), {
@@ -1639,7 +1632,7 @@ async function main() {
       //process
     }
     else if (data.text === 'Залишок моїх занять'){
-      let number : number = 1
+      let number : number = 0
       if (number > 0){
         ctx.reply(script.speakingClub.lessLessons(number), {
           parse_mode: "HTML",
@@ -1790,23 +1783,23 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1);
 
     if (data.text === 'так'){
-      ctx.reply('В розробці', {
+      ctx.reply(script.speakingClub.payPacketLesson, {
         parse_mode: "HTML",
         reply_markup: {
           one_time_keyboard: true,
           keyboard: [
             [
               {
-                text: "так"
+                text: "Шпрах-Клуб"
               },
               {
-                text: "ні"
+                text: "Шпрах-Клуб+PLUS"
               }
             ]
           ],
         },
-      })
-      //process
+      });
+      await set('state')('RespondTypePacketAndGetPayment');
     }
     else if (data.text === 'ні'){
       ctx.reply(script.speakingClub.trialLesson.ifNo, {
@@ -2112,6 +2105,57 @@ async function main() {
     }
     else{
       ctx.reply(script.errorException.textGettingError.defaultException, {reply_markup: {remove_keyboard: true}});
+    }
+  })
+
+
+  // Admin Panel (start)
+  onTextMessage('RespondAdminActionAndRootChoose', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    // [
+    //   {
+    //     text: "Додати"
+    //   },
+    //   {
+    //     text: "Редагувати"
+    //   }
+    // ],[
+    //   {
+    //     text: "Показати всі"
+    //   }
+    // ]
+
+    if (data.text === 'Додати'){
+      const toWrite = {
+        title: "Bio-Lebensmittel",
+        teacher: "Марія Безчасна",
+        date: "21 жовтня (сб)",
+        time: "11:00 🇺🇦",
+        count: 0,
+        link: "Join Zoom Meeting\nhttps://us05web.zoom.us/j/5772747295?pwd=LFYDZrwERokE6KRwKyRTCx1wIazWp7.1\n\nMeeting ID:  577 274 7295\nPasscode: P0iVrL"
+      }
+      await dbProcess.AddData(toWrite);
+    }
+    else if (data.text === 'Редагувати'){
+  
+    }
+    else if (data.text === 'Показати всі'){
+      (await dbProcess.ShowAll()).forEach((collect) => {
+        let addString : string = '';
+        if (collect.count > 0){
+          addString = `кількість доступних місць: ${collect.count}`;
+        }
+        else{
+          addString = `❌ немає вільних місць ❌`;
+        }
+        ctx.reply(`🗣 ШРАХ-КЛУБ
+👉🏼 Тема: ${collect.title}
+👉🏼 Викладач: ${collect.teacher}\n
+👉🏼 Коли: ${collect.date}
+👉🏼 На котру: ${collect.time}\n
+${addString}`
+      )});
     }
   })
 

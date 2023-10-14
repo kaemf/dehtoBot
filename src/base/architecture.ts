@@ -5,7 +5,7 @@ import { UserScriptState } from "../data/UserScriptState";
 type ActionType<T> = (ctx: Context<Update>, user: {[x: string]: string}, additionalData: T) => void;
 
 export default async function arch() {
-  const [ bot, db, app, token ] = await init();
+  const [ bot, db, app, token, clubdb ] = await init();
 
   const onContactMessage = (startState: UserScriptState, action: ActionType<{ phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number, polls: string, voice: string, audio: string, video_circle: string }>) => 
   bot.on('message', async (ctx, next) => {
@@ -178,5 +178,20 @@ export default async function arch() {
     else return next();
   });
 
-  return [onTextMessage, onContactMessage, onPhotoMessage, bot, db, app, token] as const;
+  class DBProcess {
+    private clubdb = clubdb.db('SpeakingClub').collection('avaibleLessons');
+    // private clubdb = clubdb.db('mydb').collection('users');
+
+    async ShowAll() {
+      return await this.clubdb.find({}).toArray();
+    }
+
+    async AddData(data: {title: string, teacher: string, date: string, time: string, count: number, link: string}) {
+      await this.clubdb.insertOne(data);
+    }
+  }
+
+  const dbProcess : DBProcess = new DBProcess();
+
+  return [onTextMessage, onContactMessage, onPhotoMessage, bot, db, app, token, clubdb, dbProcess] as const;
 }

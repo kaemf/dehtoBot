@@ -7,8 +7,22 @@
 
 import { Telegraf } from "telegraf";
 import { createClient } from "redis";
+import { MongoClient } from "mongodb";
 import express from 'express';
 
+async function connectToClubDB() {
+  try {
+    const client = new MongoClient('mongodb://localhost:27017/?family=4');
+
+    await client.connect();
+
+    console.log("Done");
+    return client;
+  } catch (error) {
+    console.error('\n\nFatal Error to connect to MongoDB:\n', error);
+    process.exit(1);
+  }
+}
 
 export default async function init() {
 
@@ -27,19 +41,22 @@ export default async function init() {
   const port = 3000;
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
-  
-  app.listen(port, () => {
-    console.log(`\nServer started at ${port}\n`);
-  });
+
+  console.log("Connecting to mongodb...")
+  const dbclub = await connectToClubDB();
+  console.log("Done");
 
   console.log("Creating telegraf bot instanse...");
   // prod
   // const token : string = '6503582186:AAF-dg1FCpXR0jI_tXXoeEpw7lFJSmbwGUs';
+  // dev
   const token : string = '6192445742:AAHSlflbQoeylaqx3hZAh0WkS3fZ1Bt8sdU';
   const bot = new Telegraf(token);
-  // dev
-  // const bot = new Telegraf("6192445742:AAHSlflbQoeylaqx3hZAh0WkS3fZ1Bt8sdkU");
-  console.log("Done\n\n BOT READY TO WORK!\n\n");
+  console.log("Done\n");
+
+  app.listen(port, () => {
+    console.log(`Server started at ${port}\n\n\n BOT READY TO WORK!\n\n`);
+  });
 
 
   // console.log("Creating new google auth instanse")
@@ -93,7 +110,7 @@ export default async function init() {
   //   })
   // })
 
-  return [bot, wRedis, app, token] as const;
+  return [bot, wRedis, app, token, dbclub] as const;
 }
 
 
