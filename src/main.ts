@@ -14,6 +14,7 @@ import arch from './base/architecture';
 import { Request, Response } from 'express';
 import getCourses, { Course, Courses } from "./data/coursesAndTopics";
 import { time } from "console";
+import { ObjectId } from "mongodb";
 const confirmationChat = '437316791',
   supportChat = '6081848014',
   devChat = '740129506',
@@ -317,6 +318,9 @@ async function main() {
                 text: "Редагувати"
               }
             ],[
+              {
+                text: "Видалити"
+              },
               {
                 text: "Показати всі"
               }
@@ -2114,22 +2118,42 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1);
 
     if (data.text === 'Додати'){
-      const toWrite = {
-        title: "Bio-Lebensmittel",
-        teacher: "Марія Безчасна",
-        date: "21 жовтня (сб)",
-        time: "11:00 🇺🇦",
-        count: 0,
-        link: "Join Zoom Meeting\nhttps://us05web.zoom.us/j/5772747295?pwd=LFYDZrwERokE6KRwKyRTCx1wIazWp7.1\n\nMeeting ID:  577 274 7295\nPasscode: P0iVrL"
+      ctx.reply("Тема:");
+      await set('state')('ADD_RespondTitleAndGetTeacher');
+    }
+    else if (data.text === 'Видалити'){
+      const results = await dbProcess.ShowAll();
+      let addString : string = '';
+    
+      for (let i = 0; i < results.length; i++) {
+          if (results[i].count > 0) {
+            addString = `кількість доступних місць: ${results[i].count}`;
+          } else {
+            addString = `❌ немає вільних місць ❌`;
+          }
+
+        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString));
       }
-      await dbProcess.AddData(toWrite);
+
+      const keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
+        return [{ text: `${index + 1}` }];
+      });
+
+      await ctx.reply('Виберіть номер шпраха для видалення:', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboard
+        }
+      })
+
+      await set('state')('DeleteHandlerAndRoot');
     }
     else if (data.text === 'Редагувати'){
   
     }
     else if (data.text === 'Показати всі'){
       const results = await dbProcess.ShowAll();
-      let addString: string = '';
+      let addString : string = '';
     
       for (let i = 0; i < results.length; i++) {
           if (results[i].count > 0) {
@@ -2142,6 +2166,184 @@ async function main() {
       }
     }
   });
+
+  //Add Method
+  onTextMessage('ADD_RespondTitleAndGetTeacher', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (CheckException.TextException(data)){
+      await set('AP_title')(data.text);
+
+      ctx.reply('Вчитель:');
+      await set('state')('ADD_RespondTeacherAndGetDate');
+    }
+  })
+
+  onTextMessage('ADD_RespondTeacherAndGetDate', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (CheckException.TextException(data)){
+      await set("AP_teacher")(data.text);
+
+      ctx.reply('Коли (дата):');
+      await set('state')('ADD_RespondDateAndGetTime');
+    }
+  })
+
+  onTextMessage('ADD_RespondDateAndGetTime', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (CheckException.TextException(data)){
+      await set('AP_date')(data.text);
+
+      ctx.reply('Час:');
+      await set('state')('ADD_RespondTimeAndGetCount');
+    }
+  })
+
+  onTextMessage('ADD_RespondTimeAndGetCount', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (CheckException.TextException(data)){
+      await set('AP_time')(data.text);
+
+      ctx.reply('Кількість місць:');
+      await set('state')('ADD_RespondCountAndGetLink');
+    }
+  })
+
+  onTextMessage('ADD_RespondCountAndGetLink', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (CheckException.TextException(data)){
+      await set('AP_count')(data.text);
+
+      ctx.reply('Посилання:');
+      await set('state')('ADD_RespondLinkAndCheckRight');
+    }
+  })
+
+  onTextMessage('ADD_RespondLinkAndCheckRight', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (CheckException.TextException(data)){
+      await set('AP_link')(data.text);
+
+      await ctx.reply(script.speakingClub.report.checkClub(user['AP_title'], user['AP_teacher'], user['AP_date'], user['AP_time'], data.text, parseInt(user['AP_count'])))
+      await ctx.reply("Все вірно?", {
+        parse_mode: "HTML",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "так",
+              },
+              {
+                text: "ні",
+              },
+              // {
+              //   text: "Назад"
+              // }
+            ],
+          ],
+        },
+      })
+
+      await set('state')('ADD_CheckHandlerAndRoot');
+    }
+  })
+
+  onTextMessage('ADD_CheckHandlerAndRoot', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (data.text === 'так'){
+      const toWrite = {
+        title: user['AP_title'],
+        teacher: user['AP_teacher'],
+        date: user['AP_date'],
+        time: user['AP_time'],
+        count: parseInt(user['AP_count']),
+        link: user['AP_link']
+      }
+      await dbProcess.AddData(toWrite);
+      await ctx.reply('Успішно додано!', {
+        parse_mode: "HTML",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "В МЕНЮ",
+              },
+              // {
+              //   text: "Назад"
+              // }
+            ],
+          ],
+        },
+      })
+      
+      await set('state')('EndRootManager');
+    }
+    else if (data.text === 'ні'){
+      ctx.reply("Тема:");
+      await set('state')('ADD_RespondTitleAndGetTeacher')
+    }
+    else{
+
+    }
+  })
+
+  // Delete Handler
+  onTextMessage('DeleteHandlerAndRoot', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    const results = await dbProcess.ShowAll(),
+      deleteItem = results.map(result => result._id)
+
+    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length) {
+      dbProcess.DeleteData(deleteItem[parseInt(data.text) - 1]);
+
+      await ctx.reply(`Шпрах клаб №${data.text} успішно видалений.`, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Додати"
+              },
+              {
+                text: "Редагувати"
+              }
+            ],[
+              {
+                text: "Видалити"
+              },
+              {
+                text: "Показати всі"
+              }
+            ]
+          ],
+        },
+      });
+
+      await set('state')('RespondAdminActionAndRootChoose');
+    } 
+    else {
+      const results = await dbProcess.ShowAll();
+      const keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
+        return [{ text: `${index + 1}` }];
+      });
+      await ctx.reply('Помилка, видалення неможливе, так як цього елементу не існує.', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboard
+        }
+      });
+    }
+  })
 
 
   // const updatePaymentStatusInGoogleSheets = async (
