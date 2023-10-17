@@ -195,12 +195,20 @@ export default async function arch() {
       await this.clubdb.deleteOne({ _id: new ObjectId(id) });
     }
 
-    async ChangeKeyData(id: ObjectId, _key: string, value: string | number){
-      await this.clubdb.updateOne(id, {$set: {_key: value}});
+    async ChangeKeyData(id: Object, key: string, value: string | number){
+      
+      const updateObject = { $set: {} } as { $set: { [key: string]: string | number } };
+      updateObject.$set[key] = value;
+
+      await this.clubdb.updateOne(id, updateObject);
     }
 
     async ShowData(id: ObjectId) {
-      return await this.clubdb.find({ _id: new ObjectId(id) }).toArray();
+      return await this.clubdb.findOne({ _id: new ObjectId(id) });
+    }
+
+    async GetObject(id: ObjectId) {
+      return this.clubdb.find({ _id: new ObjectId(id) });
     }
   }
 

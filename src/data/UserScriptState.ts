@@ -34,3 +34,6 @@ export type UserScriptState =
   | "ADD_RespondLinkAndCheckRight"
   | "ADD_CheckHandlerAndRoot"
   | "DeleteHandlerAndRoot"
+  | "RespondKeyDataAndGetChanges"
+  | "GetChangesAndChangeThis"
+  | "ChangeThisAndReturn"

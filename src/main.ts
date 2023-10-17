@@ -13,8 +13,8 @@ type HideableIKBtn = ReturnType<typeof Markup.button.callback>;
 import arch from './base/architecture';
 import { Request, Response } from 'express';
 import getCourses, { Course, Courses } from "./data/coursesAndTopics";
-import { time } from "console";
-import { ObjectId } from "mongodb";
+import { Key } from "./base/changeKeyValue";
+import { ObjectId, WithId } from "mongodb";
 const confirmationChat = '437316791',
   supportChat = '6081848014',
   devChat = '740129506',
@@ -73,6 +73,16 @@ async function main() {
       res.status(500).json({ error: 'Error to Sent message, Check Console for Detail' });
     }
   });
+
+  interface MongoDBReturnType {
+    _id: ObjectId;
+    title: string;
+    teacher: string;
+    date: string;
+    time: string;
+    count: number;
+    link: string;
+  }
   
   //Get real user name and root to get phone number with this.function
   onTextMessage('WaitingForName', async (ctx, user, data) => {
@@ -2149,7 +2159,31 @@ async function main() {
       await set('state')('DeleteHandlerAndRoot');
     }
     else if (data.text === 'Редагувати'){
-  
+      const results = await dbProcess.ShowAll();
+      let addString : string = '';
+    
+      for (let i = 0; i < results.length; i++) {
+          if (results[i].count > 0) {
+            addString = `кількість доступних місць: ${results[i].count}`;
+          } else {
+            addString = `❌ немає вільних місць ❌`;
+          }
+
+        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString));
+      }
+
+      const keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
+        return [{ text: `${index + 1}` }];
+      });
+
+      await ctx.reply('Виберіть номер шпраха для редагування:', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboard
+        }
+      })
+
+      await set('state')('RespondKeyDataAndGetChanges');
     }
     else if (data.text === 'Показати всі'){
       const results = await dbProcess.ShowAll();
@@ -2291,7 +2325,25 @@ async function main() {
       await set('state')('ADD_RespondTitleAndGetTeacher')
     }
     else{
-
+      ctx.reply(script.errorException.chooseButtonError, {
+        parse_mode: "HTML",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "так",
+              },
+              {
+                text: "ні",
+              },
+              // {
+              //   text: "Назад"
+              // }
+            ],
+          ],
+        },
+      })
     }
   })
 
@@ -2300,7 +2352,7 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1);
 
     const results = await dbProcess.ShowAll(),
-      deleteItem = results.map(result => result._id)
+      deleteItem = results.map(result => result._id);
 
     if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length) {
       dbProcess.DeleteData(deleteItem[parseInt(data.text) - 1]);
@@ -2332,8 +2384,8 @@ async function main() {
       await set('state')('RespondAdminActionAndRootChoose');
     } 
     else {
-      const results = await dbProcess.ShowAll();
-      const keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
+      const results = await dbProcess.ShowAll(),
+        keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
         return [{ text: `${index + 1}` }];
       });
       await ctx.reply('Помилка, видалення неможливе, так як цього елементу не існує.', {
@@ -2345,6 +2397,86 @@ async function main() {
     }
   })
 
+  // Change Key Data
+  onTextMessage('RespondKeyDataAndGetChanges', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1),
+      results = await dbProcess.ShowAll();
+
+    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length){
+      await set('AP_respondkeydata_clubid')(data.text);
+
+      ctx.reply("Який саме пункт тре змінити?", {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Тема"
+              },
+              {
+                text: "Викладач"
+              },
+            ],[
+              {
+                text: "Дата"
+              },
+              {
+                text: "Час"
+              },
+            ],[
+              {
+                text: "Місця"
+              },
+              {
+                text: "Посилання"
+              }
+            ]
+          ]
+        }
+      });
+
+      await set('state')('GetChangesAndChangeThis');
+    }
+    else{
+      ctx.reply(script.errorException.chooseButtonError);
+    }
+  })
+
+  onTextMessage('GetChangesAndChangeThis', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (Key(data.text) !== null){
+      await set('AP_keyforchange')(Key(data.text)!);
+
+      ctx.reply("Введіть нові дані");
+      await set('state')('ChangeThisAndReturn');
+    }
+  })
+
+  onTextMessage('ChangeThisAndReturn', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1),
+      results = await dbProcess.ShowAll(),
+      currentItem = results.map(result => result._id);
+
+    if (CheckException.TextException(data)){
+      const getCurrentClub: (MongoDBReturnType | Object | WithId<Document> | null)[] = [
+        await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]),
+        dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
+      ];
+
+      console.log('Структура объекта club:', getCurrentClub[0], currentItem[parseInt(user['AP_respondkeydata_clubid']) + 1], parseInt(user['AP_respondkeydata_clubid']) + 1, currentItem );
+      
+        // getCurrentObjectClub = dbProcess.GetObject(new ObjectId(parseInt(user['AP_respondkeydata_clubid']) + 1));
+      await set('AP_prev_keyvalue(backup)')( typeof getCurrentClub[0] === 'object'
+      ? (getCurrentClub[0] as unknown as Record<string, any>).user['AP_keyforchange']
+      : null)
+
+      await set('AP_prev_keyvalue(backup)')(Array(getCurrentClub[0]).filter((club): club is MongoDBReturnType => typeof club === 'object')
+      .map((club) => club[user['AP_keyforchange'] as keyof MongoDBReturnType].toString())
+      .join(''))
+      await dbProcess.ChangeKeyData(getCurrentClub[1]!, user['AP_keyforchange'], data.text);
+    }
+  })
 
   // const updatePaymentStatusInGoogleSheets = async (
   //   id: number,
