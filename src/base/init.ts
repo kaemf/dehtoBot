@@ -1,7 +1,7 @@
 // DehtoBot for dehto German Course
 // Developed by Yaroslav Volkivskyi (TheLaidSon)
 
-// Actual v3.5.3
+// Actual v4.5.3
 
 // Initialization File
 
@@ -26,7 +26,7 @@ async function connectToClubDB() {
 
 export default async function init() {
 
-  console.log("\n     DehtoBot v3.5.3\n\n   Developed by Yaroslav Volkivskyi (TheLaidSon)\n\n\n");
+  console.log("\n     DehtoBot v4.5.3\n\n   Developed by Yaroslav Volkivskyi (TheLaidSon)\n\n\n");
 
   console.log("Creating redis client...");
   const redis = createClient();

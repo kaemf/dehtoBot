@@ -1,7 +1,7 @@
 // DehtoBot for dehto German Course
 // Developed by Yaroslav Volkivskyi (TheLaidSon)
 
-// Actual v3.5.3
+// Actual v4.5.3
 
 // Main File
 import script from "./data/script";
@@ -14,14 +14,14 @@ import arch from './base/architecture';
 import { Request, Response } from 'express';
 import getCourses, { Course, Courses } from "./data/coursesAndTopics";
 import { Key } from "./base/changeKeyValue";
-import { ObjectId, WithId } from "mongodb";
+import { ObjectId } from "mongodb";
 const confirmationChat = '437316791',
   supportChat = '6081848014',
   devChat = '740129506',
-  versionBot = '3.5.3';
+  versionBot = '4.5.3';
 
 async function main() {
-  const [ onTextMessage, onContactMessage, onPhotoMessage, bot, db, app, token, clubdb, dbProcess ] = await arch();
+  const [ onTextMessage, onContactMessage, onPhotoMessage, bot, db, app, token, dbProcess ] = await arch();
 
   //Begin bot work, collecting user data (his telegram name) set up state_1
   bot.start((ctx) => {
@@ -35,7 +35,6 @@ async function main() {
 
   app.post('/api/sendToTelegram', async (req: Request, res: Response) => {
     try {
-
       const {
         'Ваше імʼя': UserName,
         'Ваш телефон': PhoneNumber,
@@ -2449,32 +2448,110 @@ async function main() {
       await set('AP_keyforchange')(Key(data.text)!);
 
       ctx.reply("Введіть нові дані");
-      await set('state')('ChangeThisAndReturn');
+      await set('state')('ChangeThisAndCheckThis');
     }
   })
 
-  onTextMessage('ChangeThisAndReturn', async(ctx, user, data) => {
+  onTextMessage('ChangeThisAndCheckThis', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1),
       results = await dbProcess.ShowAll(),
       currentItem = results.map(result => result._id);
 
     if (CheckException.TextException(data)){
-      const getCurrentClub: (MongoDBReturnType | Object | WithId<Document> | null)[] = [
+      const getCurrentClub: (MongoDBReturnType | Object | null)[] = [
         await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]),
         dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
-      ];
+      ], keyForChange = user['AP_keyforchange'];
 
-      console.log('Структура объекта club:', getCurrentClub[0], currentItem[parseInt(user['AP_respondkeydata_clubid']) + 1], parseInt(user['AP_respondkeydata_clubid']) + 1, currentItem );
-      
-        // getCurrentObjectClub = dbProcess.GetObject(new ObjectId(parseInt(user['AP_respondkeydata_clubid']) + 1));
-      await set('AP_prev_keyvalue(backup)')( typeof getCurrentClub[0] === 'object'
-      ? (getCurrentClub[0] as unknown as Record<string, any>).user['AP_keyforchange']
-      : null)
+      // console.log('Структура объекта club:', Array(getCurrentClub[0]).filter((club): club is MongoDBReturnType => typeof club === 'object')
+      // .map((club) => club[keyForChange as keyof MongoDBReturnType].toString())
+      // .join(''), currentItem[parseInt(user['AP_respondkeydata_clubid']) + 1], parseInt(user['AP_respondkeydata_clubid']) + 1, currentItem );
 
       await set('AP_prev_keyvalue(backup)')(Array(getCurrentClub[0]).filter((club): club is MongoDBReturnType => typeof club === 'object')
-      .map((club) => club[user['AP_keyforchange'] as keyof MongoDBReturnType].toString())
-      .join(''))
-      await dbProcess.ChangeKeyData(getCurrentClub[1]!, user['AP_keyforchange'], data.text);
+      .map((club) => club[keyForChange as keyof MongoDBReturnType].toString()).join(''));
+
+      await set('AP_keydatatochange')(data.text);
+
+      ctx.reply('Готово! Зберегти зміни чи відновити попередні?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Зберегти"
+              },
+              {
+                text: "Відновити"
+              },
+            ]
+          ]
+        }
+      })
+
+      await set('state')('CheckedAndReturnToPanel');
+    }
+  })
+
+  onTextMessage('CheckedAndReturnToPanel', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1),
+      results = await dbProcess.ShowAll(),
+      currentItem = results.map(result => result._id),
+      toChange = user['AP_keydatatochange'];
+
+    if (data.text === 'Зберегти'){
+      await dbProcess.ChangeKeyData(dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]), user['AP_keyforchange'], toChange);
+      ctx.reply('Успішно виконана операція!', {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Додати"
+              },
+              {
+                text: "Редагувати"
+              }
+            ],[
+              {
+                text: "Видалити"
+              },
+              {
+                text: "Показати всі"
+              }
+            ]
+          ],
+        },
+      });
+
+      await set('state')('RespondAdminActionAndRootChoose');
+    }
+    else if (data.text === 'Відновити'){
+      ctx.reply('Змінені дані успішно відновлені!', {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Додати"
+              },
+              {
+                text: "Редагувати"
+              }
+            ],[
+              {
+                text: "Видалити"
+              },
+              {
+                text: "Показати всі"
+              }
+            ]
+          ],
+        },
+      });
+
+      await set('state')('RespondAdminActionAndRootChoose');
     }
   })
 

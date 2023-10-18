@@ -36,4 +36,5 @@ export type UserScriptState =
   | "DeleteHandlerAndRoot"
   | "RespondKeyDataAndGetChanges"
   | "GetChangesAndChangeThis"
-  | "ChangeThisAndReturn"
+  | "ChangeThisAndCheckThis"
+  | "CheckedAndReturnToPanel"

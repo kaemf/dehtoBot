@@ -214,5 +214,5 @@ export default async function arch() {
 
   const dbProcess : DBProcess = new DBProcess();
 
-  return [onTextMessage, onContactMessage, onPhotoMessage, bot, db, app, token, clubdb, dbProcess] as const;
+  return [onTextMessage, onContactMessage, onPhotoMessage, bot, db, app, token, dbProcess] as const;
 }
