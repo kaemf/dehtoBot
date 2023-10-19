@@ -14,7 +14,7 @@ import arch from './base/architecture';
 import { Request, Response } from 'express';
 import getCourses, { Course, Courses } from "./data/coursesAndTopics";
 import { Key } from "./base/changeKeyValue";
-import { ObjectId } from "mongodb";
+import { BSON, ObjectId, WithId } from 'mongodb';
 const confirmationChat = '437316791',
   supportChat = '6081848014',
   devChat = '740129506',
@@ -184,6 +184,15 @@ async function main() {
           ]
         }
       })
+
+      const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+
+      if (userObject){
+        await dbProcess.UpdateUserData(await dbProcess.GetUserObjectID(userObject), user['name'], data.phone_number, user['username'])
+      }
+      else{
+        dbProcess.AddUser({ id: ctx?.chat?.id ?? -1, name: user['name'], number: data.phone_number, username: user['username'], count: 0 });
+      }
 
       await set('state')('FunctionRoot');
     }

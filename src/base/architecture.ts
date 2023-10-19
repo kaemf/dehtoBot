@@ -2,7 +2,7 @@ import init from './init'
 import { Context } from "telegraf";
 import { Update } from "telegraf/typings/core/types/typegram";
 import { UserScriptState } from "../data/UserScriptState";
-import { ObjectId } from 'mongodb';
+import { BSON, ObjectId, WithId } from 'mongodb';
 type ActionType<T> = (ctx: Context<Update>, user: {[x: string]: string}, additionalData: T) => void;
 
 export default async function arch() {
@@ -181,7 +181,7 @@ export default async function arch() {
 
   class DBProcess {
     private clubdb = clubdb.db('SpeakingClub').collection('avaibleLessons');
-    // private clubdb = clubdb.db('mydb').collection('users');
+    private clubdbUsers = clubdb.db('SpeakingClub').collection('dataUsers');
 
     async ShowAll() {
       return await this.clubdb.find({}).toArray();
@@ -196,7 +196,6 @@ export default async function arch() {
     }
 
     async ChangeKeyData(id: Object, key: string, value: string | number){
-      
       const updateObject = { $set: {} } as { $set: { [key: string]: string | number } };
       updateObject.$set[key] = value;
 
@@ -209,6 +208,42 @@ export default async function arch() {
 
     async GetObject(id: ObjectId) {
       return this.clubdb.find({ _id: new ObjectId(id) });
+    }
+
+    async ShowAllUsers() {
+      return await this.clubdbUsers.find({}).toArray();
+    }
+
+    async AddUser(data : {id: number, name: string, number: string, username: string, count: number}) {
+      await this.clubdbUsers.insertOne(data);
+    }
+
+    async DeleteUser(id: string) {
+      await this.clubdbUsers.deleteOne({ id: id });
+    }
+
+    async ShowOneUser(id: number) {
+      return await this.clubdbUsers.findOne({ id: id })!;
+    }
+
+    async ChangeCountUser(id: ObjectId, newValue: number){
+      const updateObject = {$set: {count: newValue}};
+
+      await this.clubdbUsers.updateOne(id, updateObject);
+    }
+
+    async UpdateUserData(id: ObjectId, name: string, number: string, username: string){
+      const updateObject = {$set : {
+        name: name,
+        number: number,
+        username: username
+      }}
+
+      await this.clubdbUsers.updateOne({ _id: id }, updateObject);
+    }
+
+    async GetUserObjectID(user: WithId<BSON.Document>){
+      return user._id
     }
   }
 
