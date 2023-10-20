@@ -188,7 +188,7 @@ async function main() {
       const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
       if (userObject){
-        await dbProcess.UpdateUserData(await dbProcess.GetUserObjectID(userObject), user['name'], data.phone_number, user['username']);
+        await dbProcess.UpdateUserData(userObject._id, user['name'], data.phone_number, user['username']);
       }
       else{
         dbProcess.AddUser({ id: ctx?.chat?.id ?? -1, name: user['name'], number: data.phone_number, username: user['username'], count: 0 });
@@ -2729,6 +2729,39 @@ async function main() {
       if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1){
       const toWrite: number = getCurrentUserCount + parseInt(data.text);
       await dbProcess.ChangeCountUser(userID, toWrite);
+
+      await ctx.reply(`Успішно! На рахунку у студента: ${toWrite} занять`, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Додати"
+              },
+              {
+                text: "Редагувати"
+              }
+            ],[
+              {
+                text: "Видалити"
+              },
+              {
+                text: "Показати всі"
+              }
+            ],[
+              {
+                text: "Особові справи студентів"
+              },
+              {
+                text: "В МЕНЮ"
+              }
+            ]
+          ],
+        },
+      })
+
+      await set('state')('RespondAdminActionAndRootChoose');
     }
   })
 
