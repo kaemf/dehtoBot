@@ -315,6 +315,12 @@ UA773220010000026004330103247
 👉🏼 Коли: ${date}
 👉🏼 На котру: ${time}\n
 ${addString}`,
+      showUser: (position: number, name: string, id: number, username: string, phone_number: string, count: number) => `✅${position}
+ID: ${id}
+Ім'я: ${name}
+Telegram: ${username}
+Номер телефону: ${phone_number}
+Кількість доступних занять: ${count}`,
       checkClub: (title: string, teacher: string, date: string, time: string, link: string, count: number) => {
         let addString: string = '';
         if (count > 0) {

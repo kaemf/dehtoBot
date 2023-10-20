@@ -223,13 +223,21 @@ export default async function arch() {
     }
 
     async ShowOneUser(id: number) {
-      return await this.clubdbUsers.findOne({ id: id })!;
+      return await this.clubdbUsers.findOne({ id: id });
+    }
+
+    async ShowOneUserObjectId(id: ObjectId){
+      return await this.clubdbUsers.findOne({ _id: id });
+    }
+
+    async ShowUserObject(id: ObjectId) {
+      return this.clubdbUsers.find({ _id: new ObjectId(id) });
     }
 
     async ChangeCountUser(id: ObjectId, newValue: number){
       const updateObject = {$set: {count: newValue}};
 
-      await this.clubdbUsers.updateOne(id, updateObject);
+      await this.clubdbUsers.updateOne({_id: id}, updateObject);
     }
 
     async UpdateUserData(id: ObjectId, name: string, number: string, username: string){
@@ -239,7 +247,7 @@ export default async function arch() {
         username: username
       }}
 
-      await this.clubdbUsers.updateOne({ _id: id }, updateObject);
+      await this.clubdbUsers.updateOne({_id: id}, updateObject);
     }
 
     async GetUserObjectID(user: WithId<BSON.Document>){

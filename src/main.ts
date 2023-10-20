@@ -188,7 +188,7 @@ async function main() {
       const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
       if (userObject){
-        await dbProcess.UpdateUserData(await dbProcess.GetUserObjectID(userObject), user['name'], data.phone_number, user['username'])
+        await dbProcess.UpdateUserData(await dbProcess.GetUserObjectID(userObject), user['name'], data.phone_number, user['username']);
       }
       else{
         dbProcess.AddUser({ id: ctx?.chat?.id ?? -1, name: user['name'], number: data.phone_number, username: user['username'], count: 0 });
@@ -323,7 +323,7 @@ async function main() {
       await set('state')('ActionClubRespondAndRootAction');
     }
     else if (data.text === "Адмін Панель"){
-      ctx.reply("В розробці...", {
+      ctx.reply("З поверненням, Меркель! :)", {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -341,6 +341,13 @@ async function main() {
               },
               {
                 text: "Показати всі"
+              }
+            ],[
+              {
+                text: "Особові справи студентів"
+              },
+              {
+                text: "В МЕНЮ"
               }
             ]
           ],
@@ -2207,6 +2214,72 @@ async function main() {
         await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString));
       }
     }
+    else if (data.text === 'Особові справи студентів'){
+      ctx.reply('Виберіть, будь ласка, що вам потрібно', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Показати всіх студентів"
+              },
+              {
+                text: "Додати заняття студенту"
+              }
+            ],[
+              {
+                text: "Видалити студента"
+              },
+              {
+                text: "Оновити дані студенту"
+              }
+            ],
+            [
+              {
+                text: "В МЕНЮ"
+              }
+            ]
+          ]
+        }
+      })
+
+      await set('state')('PeronalStudentHandler');
+    }
+    else if (data.text === 'В МЕНЮ'){
+      //process
+    }
+    else{
+      ctx.reply(script.errorException.chooseButtonError, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Додати"
+              },
+              {
+                text: "Редагувати"
+              }
+            ],[
+              {
+                text: "Видалити"
+              },
+              {
+                text: "Показати всі"
+              }
+            ],[
+              {
+                text: "Особові справи студентів"
+              },
+              {
+                text: "В МЕНЮ"
+              }
+            ]
+          ],
+        },
+      })
+    }
   });
 
   //Add Method
@@ -2561,6 +2634,101 @@ async function main() {
       });
 
       await set('state')('RespondAdminActionAndRootChoose');
+    }
+  })
+
+  //Personal Student Handler
+  onTextMessage('PeronalStudentHandler', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (data.text === 'Показати всіх студентів'){
+      const results = await dbProcess.ShowAllUsers();
+    
+      for (let i = 0; i < results.length; i++) {
+        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count));
+      }
+    }
+    else if (data.text === 'Додати заняття студенту'){
+      const results = await dbProcess.ShowAllUsers(),
+        keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
+        return [{ text: `${index + 1}` }];
+      });
+    
+      for (let i = 0; i < results.length; i++) {
+        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count));
+      }
+
+      await ctx.reply('Виберіть номер студента, якому потрібно додати заняття', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboard
+        }
+      })
+
+      await set('state')('AddLessonForStudent');
+    }
+    else if (data.text === 'Видалити студента'){
+
+    }
+    else if (data.text === 'Оновити дані студенту'){
+
+    }
+    else if (data.text === 'В МЕНЮ'){
+
+    }
+    else{
+      ctx.reply(script.errorException.chooseButtonError, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Показати всіх студентів"
+              },
+              {
+                text: "Додати заняття студенту"
+              }
+            ],[
+              {
+                text: "Видалити студента"
+              },
+              {
+                text: "Оновити дані студенту"
+              }
+            ],
+            [
+              {
+                text: "В МЕНЮ"
+              }
+            ]
+          ]
+        }
+      })
+    }
+  })
+
+  // Add Lessons Student
+  onTextMessage('AddLessonForStudent', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1),
+      results = (await dbProcess.ShowAllUsers()).map(result => result._id);
+
+    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length){
+      await set('AP_student_id')(data.text);
+
+      await ctx.reply('Скільки додамо?');
+      await set('state')('ChangeCountLessonHandlerAndReturn');
+    }
+  })
+
+  onTextMessage('ChangeCountLessonHandlerAndReturn', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1),
+      userID: ObjectId = (await dbProcess.ShowAllUsers()).map(item => item._id)[parseInt(user['AP_student_id'] ) - 1],
+      userIDWithoutProcessing = parseInt(user['AP_student_id']),
+      getCurrentUserCount = (await dbProcess.ShowAllUsers()).map(item => item.count)[userIDWithoutProcessing - 1];
+      
+      if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1){
+      const toWrite: number = getCurrentUserCount + parseInt(data.text);
+      await dbProcess.ChangeCountUser(userID, toWrite);
     }
   })
 

@@ -38,3 +38,6 @@ export type UserScriptState =
   | "GetChangesAndChangeThis"
   | "ChangeThisAndCheckThis"
   | "CheckedAndReturnToPanel"
+  | "PeronalStudentHandler"
+  | "AddLessonForStudent"
+  | "ChangeCountLessonHandlerAndReturn"
