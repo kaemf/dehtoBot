@@ -2726,7 +2726,7 @@ async function main() {
       userIDWithoutProcessing = parseInt(user['AP_student_id']),
       getCurrentUserCount = (await dbProcess.ShowAllUsers()).map(item => item.count)[userIDWithoutProcessing - 1];
       
-      if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1){
+    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1){
       const toWrite: number = getCurrentUserCount + parseInt(data.text);
       await dbProcess.ChangeCountUser(userID, toWrite);
 
