@@ -41,3 +41,4 @@ export type UserScriptState =
   | "PeronalStudentHandler"
   | "AddLessonForStudent"
   | "ChangeCountLessonHandlerAndReturn"
+  | "DeleteStudentHandlerAndReturn"

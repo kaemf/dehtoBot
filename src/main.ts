@@ -2668,13 +2668,63 @@ async function main() {
       await set('state')('AddLessonForStudent');
     }
     else if (data.text === 'Видалити студента'){
+      const results = await dbProcess.ShowAllUsers(),
+      keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
+        return [{ text: `${index + 1}` }];
+      });
+  
+      for (let i = 0; i < results.length; i++) {
+        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count));
+      }
 
+      await ctx.reply('Виберіть номер студента, якого потрібно видалити', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboard
+        }
+      })
+
+      await set('state')('DeleteStudentHandlerAndReturn');
     }
     else if (data.text === 'Оновити дані студенту'){
 
     }
     else if (data.text === 'В МЕНЮ'){
+      ctx.reply(script.entire.chooseFunction, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Вчитель на годину",
+              },
+            ],[
+              {
+                text: "Пробний урок",
+              },
+            ],[
+              {
+                text: "Оплата занять",
+              },
+            ],[
+              {
+                text: "Запис на заняття"
+              }
+            ],[
+              {
+                text: "Шпрах-Клуби"
+              }
+            ],[
+              {
+                text: "Адмін Панель"
+              }
+            ]
+          ]
+        }
+      })
 
+      await set('state')('FunctionRoot');
     }
     else{
       ctx.reply(script.errorException.chooseButtonError, {
@@ -2762,6 +2812,58 @@ async function main() {
       })
 
       await set('state')('RespondAdminActionAndRootChoose');
+    }
+  })
+
+  // Delete Student Handler
+  onTextMessage('DeleteStudentHandlerAndReturn', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1),
+      results = await dbProcess.ShowAllUsers();
+
+    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) >= results.length){
+      await dbProcess.DeleteUser(results.map(item => item.id)[parseInt(data.text) - 1]);
+
+      ctx.reply(`Успішно видалено студента №${data.text}`, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Показати всіх студентів"
+              },
+              {
+                text: "Додати заняття студенту"
+              }
+            ],[
+              {
+                text: "Видалити студента"
+              },
+              {
+                text: "Оновити дані студенту"
+              }
+            ],
+            [
+              {
+                text: "В МЕНЮ"
+              }
+            ]
+          ]
+        }
+      })
+
+      await set('state')('PeronalStudentHandler');
+    }
+    else{
+      const keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
+        return [{ text: `${index + 1}` }];
+      });
+      
+      ctx.reply('Помилка', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboard
+        }
+      })
     }
   })
 
