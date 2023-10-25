@@ -42,3 +42,4 @@ export type UserScriptState =
   | "AddLessonForStudent"
   | "ChangeCountLessonHandlerAndReturn"
   | "DeleteStudentHandlerAndReturn"
+  | "RespondTrialClubAndCheckPayment"

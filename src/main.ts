@@ -15,6 +15,7 @@ import { Request, Response } from 'express';
 import getCourses, { Course, Courses } from "./data/coursesAndTopics";
 import { Key } from "./base/changeKeyValue";
 import { BSON, ObjectId, WithId } from 'mongodb';
+import { parse } from "path";
 const confirmationChat = '437316791',
   supportChat = '6081848014',
   devChat = '740129506',
@@ -1638,7 +1639,7 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1);
 
     if (data.text === 'Пробне заняття'){
-      ctx.reply(script.speakingClub.trialLesson, {
+      ctx.reply(script.speakingClub.trialLesson.entire, {
         parse_mode: "HTML",
         reply_markup: {
           one_time_keyboard: true,
@@ -1770,23 +1771,47 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1);
 
     if (data.text === 'так'){
-      ctx.reply('В розробці', {
-        parse_mode: "HTML",
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "так"
-              },
-              {
-                text: "ні"
-              }
-            ]
-          ],
-        },
-      })
+      // ctx.reply('В розробці', {
+      //   parse_mode: "HTML",
+      //   reply_markup: {
+      //     one_time_keyboard: true,
+      //     keyboard: [
+      //       [
+      //         {
+      //           text: "так"
+      //         },
+      //         {
+      //           text: "ні"
+      //         }
+      //       ]
+      //     ],
+      //   },
+      // })
       //process
+
+      await ctx.reply(script.speakingClub.trialLesson.ifYes)
+      const results = await dbProcess.ShowAll();
+      const keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
+        return [{ text: `${index + 1}` }];
+      });
+      let addString : string = '';
+    
+      for (let i = 0; i < results.length; i++) {
+          if (results[i].count > 0) {
+            addString = `кількість доступних місць: ${results[i].count}`;
+          } else {
+            addString = `❌ немає вільних місць ❌`;
+          }
+
+        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString), {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboard
+          }
+        });
+      }
+
+      await set('state')('RespondTrialClubAndCheckPayment');
     }
     else if (data.text === 'ні'){
       ctx.reply(script.speakingClub.trialLesson.ifNo, {
@@ -2137,6 +2162,16 @@ async function main() {
     }
   })
 
+  // Trial Club Handler with checking payment status
+  onTextMessage('RespondTrialClubAndCheckPayment', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1),
+      results = await dbProcess.ShowAll();
+
+    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length + 1){
+      
+    }
+  })
+
 
   // Admin Panel (start)
   onTextMessage('RespondAdminActionAndRootChoose', async(ctx, user, data) => {
@@ -2246,7 +2281,41 @@ async function main() {
       await set('state')('PeronalStudentHandler');
     }
     else if (data.text === 'В МЕНЮ'){
-      //process
+      ctx.reply(script.entire.chooseFunction, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Вчитель на годину",
+              },
+            ],[
+              {
+                text: "Пробний урок",
+              },
+            ],[
+              {
+                text: "Оплата занять",
+              },
+            ],[
+              {
+                text: "Запис на заняття"
+              }
+            ],[
+              {
+                text: "Шпрах-Клуби"
+              }
+            ],[
+              {
+                text: "Адмін Панель"
+              }
+            ]
+          ]
+        }
+      })
+
+      await set('state')('FunctionRoot');
     }
     else{
       ctx.reply(script.errorException.chooseButtonError, {
@@ -2532,6 +2601,37 @@ async function main() {
       ctx.reply("Введіть нові дані");
       await set('state')('ChangeThisAndCheckThis');
     }
+    else{
+      ctx.reply("Помилка", {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Тема"
+              },
+              {
+                text: "Викладач"
+              },
+            ],[
+              {
+                text: "Дата"
+              },
+              {
+                text: "Час"
+              },
+            ],[
+              {
+                text: "Місця"
+              },
+              {
+                text: "Посилання"
+              }
+            ]
+          ]
+        }
+      });
+    }
   })
 
   onTextMessage('ChangeThisAndCheckThis', async(ctx, user, data) => {
@@ -2686,9 +2786,6 @@ async function main() {
 
       await set('state')('DeleteStudentHandlerAndReturn');
     }
-    else if (data.text === 'Оновити дані студенту'){
-
-    }
     else if (data.text === 'В МЕНЮ'){
       ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
@@ -2742,11 +2839,6 @@ async function main() {
               {
                 text: "Видалити студента"
               },
-              {
-                text: "Оновити дані студенту"
-              }
-            ],
-            [
               {
                 text: "В МЕНЮ"
               }
@@ -2838,11 +2930,6 @@ async function main() {
               {
                 text: "Видалити студента"
               },
-              {
-                text: "Оновити дані студенту"
-              }
-            ],
-            [
               {
                 text: "В МЕНЮ"
               }
