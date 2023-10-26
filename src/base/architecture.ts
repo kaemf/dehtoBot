@@ -253,6 +253,47 @@ export default async function arch() {
     async GetUserObjectID(user: WithId<BSON.Document>){
       return user._id
     }
+
+    async WriteNewClubToUser(idUser: number, idClub: ObjectId){
+      const user = await this.ShowOneUser(idUser),
+        data = user!.recordClubs.toString();
+
+      console.log(user);
+
+      if (data){
+        const dataContain = user!.recordClubs.split(',');
+
+        if (data.indexOf(idClub.toString()) === -1){
+          dataContain.push(idClub);
+  
+          const updateObject = {$set : {
+            recordClubs: dataContain.join(',')
+          }}
+  
+          await this.clubdbUsers.updateOne({_id: user!._id}, updateObject);
+        }
+        else return false;
+      }
+      else{
+        const updateObject = {$set : {
+          recordClubs: idClub
+        }}
+
+        await this.clubdbUsers.updateOne({_id: user?._id}, updateObject);
+      }
+    }
+
+    async HasThisClubUser(idUser: number, idClub: ObjectId){
+      const user = await this.ShowOneUser(idUser),
+        data = user!.recordClubs.toString();
+
+        if (data.indexOf(idClub.toString()) === -1){
+          return false;
+        }
+        else{
+          return true;
+        }
+    }
   }
 
   const dbProcess : DBProcess = new DBProcess();

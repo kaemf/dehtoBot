@@ -1662,7 +1662,8 @@ async function main() {
       //process
     }
     else if (data.text === 'Залишок моїх занять'){
-      let number : number = 0
+      const currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+        number : number  = currentUser!.count;
       if (number > 0){
         ctx.reply(script.speakingClub.lessLessons(number), {
           parse_mode: "HTML",
@@ -1771,29 +1772,11 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1);
 
     if (data.text === 'так'){
-      // ctx.reply('В розробці', {
-      //   parse_mode: "HTML",
-      //   reply_markup: {
-      //     one_time_keyboard: true,
-      //     keyboard: [
-      //       [
-      //         {
-      //           text: "так"
-      //         },
-      //         {
-      //           text: "ні"
-      //         }
-      //       ]
-      //     ],
-      //   },
-      // })
-      //process
-
       await ctx.reply(script.speakingClub.trialLesson.ifYes)
-      const results = await dbProcess.ShowAll();
-      const keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
-        return [{ text: `${index + 1}` }];
-      });
+      const results = await dbProcess.ShowAll(),
+        keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
+          return [{ text: `${index + 1}` }];
+        });
       let addString : string = '';
     
       for (let i = 0; i < results.length; i++) {
@@ -2172,14 +2155,19 @@ async function main() {
         currentClub = await dbProcess.ShowData(currentItemIndex);
 
       if (currentClub!.count > 0){
-        await set('sc_triallesson_clubindex')(currentItemIndex.toString());
+        if (!await dbProcess.HasThisClubUser(ctx?.chat?.id ?? -1, currentItemIndex)){
+          await set('sc_triallesson_clubindex')(currentItemIndex.toString());
+    
+          await ctx.reply(script.speakingClub.report.showClubToUser(currentClub!.title, currentClub!.teacher, 
+            currentClub!.date, currentClub!.time));
   
-        await ctx.reply(script.speakingClub.report.showClubToUser(currentClub!.title, currentClub!.teacher, 
-          currentClub!.date, currentClub!.time));
-
-        await ctx.reply(script.speakingClub.trialLesson.getPayment, {reply_markup: {remove_keyboard: true}});
-
-        await set('state')('CheckPaymentAndReturn');
+          await ctx.reply(script.speakingClub.trialLesson.getPayment, {reply_markup: {remove_keyboard: true}});
+  
+          await set('state')('CheckPaymentAndReturn');
+        }
+        else{
+          ctx.reply('ви вже зареєстровані на цей шпрах! виберіть інший');
+        }
       }
       else{
         ctx.reply('у цього шпраху відсутні місця! оберіть, будь ласка, інший', {
@@ -2231,6 +2219,7 @@ async function main() {
       });
 
       if (paymentApprovedSeccussfully){
+        await dbProcess.WriteNewClubToUser(ctx?.chat?.id ?? -1, new ObjectId(user['sc_triallesson_clubindex']))
         await dbProcess.ChangeKeyData(club!, 'count', club!.count - 1);
 
         await ctx.reply(script.speakingClub.report.acceptedTrialLesson(user['name'], club!.date, club!.time, club!.link), {
