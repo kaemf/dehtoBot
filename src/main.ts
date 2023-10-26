@@ -2168,7 +2168,95 @@ async function main() {
       results = await dbProcess.ShowAll();
 
     if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length + 1){
-      
+      const currentItemIndex = results.map(item => item._id)[parseInt(data.text) - 1],
+        currentClub = await dbProcess.ShowData(currentItemIndex);
+
+      if (currentClub!.count > 0){
+        await set('sc_triallesson_clubindex')(currentItemIndex.toString());
+  
+        await ctx.reply(script.speakingClub.report.showClubToUser(currentClub!.title, currentClub!.teacher, 
+          currentClub!.date, currentClub!.time));
+
+        await ctx.reply(script.speakingClub.trialLesson.getPayment, {reply_markup: {remove_keyboard: true}});
+
+        await set('state')('CheckPaymentAndReturn');
+      }
+      else{
+        ctx.reply('у цього шпраху відсутні місця! оберіть, будь ласка, інший', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+              return [{ text: `${index + 1}` }];
+            })
+          }
+        })
+      }
+    }
+    else{
+      ctx.reply(script.errorException.chooseButtonError, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+            return [{ text: `${index + 1}` }];
+          })
+        }
+      })
+    }
+  })
+
+  // Waiting Payment for Trial Lesson Club
+  onPhotoMessage('CheckPaymentAndReturn', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1),
+      paymentApprovedSeccussfully : boolean = true;
+
+    if (CheckException.PhotoException(data)){
+      ctx.telegram.sendPhoto(devChat, data.photo, {
+        parse_mode: "HTML",
+        caption: 'Work'
+      });
+
+      const club = await dbProcess.ShowData(new ObjectId(user['sc_triallesson_clubindex']));
+
+      await ctx.reply('Ваше замовлення прийнято, очікуйте на підтвердження', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "В МЕНЮ"
+              }
+            ]
+          ]
+        }
+      });
+
+      if (paymentApprovedSeccussfully){
+        await dbProcess.ChangeKeyData(club!, 'count', club!.count - 1);
+
+        await ctx.reply(script.speakingClub.report.acceptedTrialLesson(user['name'], club!.date, club!.time, club!.link), {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: [
+              [
+                {
+                  text: "В МЕНЮ"
+                }
+              ]
+            ]
+          }
+        });
+      }
+
+      await set('state')('EndRootManager');
+    }
+    else if (CheckException.FileException(data)){
+      ctx.telegram.sendDocument(devChat, data.file, {
+        parse_mode: "HTML",
+        caption: 'Work'
+      })
+    }
+    else{
+      ctx.reply(script.errorException.paymentGettingError);
     }
   })
 
