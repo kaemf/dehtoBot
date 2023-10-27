@@ -2579,10 +2579,15 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1);
 
     const results = await dbProcess.ShowAll(),
+      users = await dbProcess.ShowAllUsers(),
       deleteItem = results.map(result => result._id);
 
     if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length) {
       dbProcess.DeleteData(deleteItem[parseInt(data.text) - 1]);
+
+      for (let i = 0; i < users.length; i++){
+        await dbProcess.DeleteClubFromUser(users[i].id, deleteItem[parseInt(data.text) - 1]);
+      }
 
       await ctx.reply(`Шпрах клаб №${data.text} успішно видалений.`, {
         parse_mode: "Markdown",
@@ -2826,10 +2831,7 @@ async function main() {
       }
     }
     else if (data.text === 'Додати заняття студенту'){
-      const results = await dbProcess.ShowAllUsers(),
-        keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
-        return [{ text: `${index + 1}` }];
-      });
+      const results = await dbProcess.ShowAllUsers();
     
       for (let i = 0; i < results.length; i++) {
         await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count));
@@ -2838,17 +2840,16 @@ async function main() {
       await ctx.reply('Виберіть номер студента, якому потрібно додати заняття', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboard
+          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+            return [{ text: `${index + 1}` }];
+          })
         }
       })
 
       await set('state')('AddLessonForStudent');
     }
     else if (data.text === 'Видалити студента'){
-      const results = await dbProcess.ShowAllUsers(),
-      keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
-        return [{ text: `${index + 1}` }];
-      });
+      const results = await dbProcess.ShowAllUsers();
   
       for (let i = 0; i < results.length; i++) {
         await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count));
@@ -2857,7 +2858,9 @@ async function main() {
       await ctx.reply('Виберіть номер студента, якого потрібно видалити', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboard
+          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+            return [{ text: `${index + 1}` }];
+          })
         }
       })
 
@@ -3018,14 +3021,12 @@ async function main() {
       await set('state')('PeronalStudentHandler');
     }
     else{
-      const keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
-        return [{ text: `${index + 1}` }];
-      });
-      
       ctx.reply('Помилка', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboard
+          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+            return [{ text: `${index + 1}` }];
+          })
         }
       })
     }

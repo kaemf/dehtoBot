@@ -256,12 +256,10 @@ export default async function arch() {
 
     async WriteNewClubToUser(idUser: number, idClub: ObjectId){
       const user = await this.ShowOneUser(idUser),
-        data = user!.recordClubs.toString();
-
-      console.log(user);
+        data = user!.recordClubs !== undefined ? user!.recordClubs.toString() : false;
 
       if (data){
-        const dataContain = user!.recordClubs.split(',');
+        const dataContain = data.split(',');
 
         if (data.indexOf(idClub.toString()) === -1){
           dataContain.push(idClub);
@@ -285,14 +283,36 @@ export default async function arch() {
 
     async HasThisClubUser(idUser: number, idClub: ObjectId){
       const user = await this.ShowOneUser(idUser),
-        data = user!.recordClubs.toString();
+        data = user!.recordClubs !== undefined ? user!.recordClubs.toString() : false;
 
-        if (data.indexOf(idClub.toString()) === -1){
-          return false;
+        if (data){
+          if (data.indexOf(idClub.toString()) === -1){
+            return false;
+          }
+          else{
+            return true;
+          }
         }
-        else{
-          return true;
+        else return false;
+    }
+
+    async DeleteClubFromUser(idUser: number, idClub: ObjectId){
+      const user = await this.ShowOneUser(idUser),
+        data = user!.recordClubs !== undefined ? user!.recordClubs.toString().split(',') : false;
+      
+      if (data){
+        const indexInMassive = data.indexOf(idClub.toString());
+
+        if (indexInMassive !== -1){
+          data.splice(indexInMassive, 1);
+
+          const updateObject = {$set : {
+            recordClubs: data.join(',')
+          }}
+
+          await this.clubdbUsers.updateOne({_id: user?._id}, updateObject);
         }
+      }
     }
   }
 
