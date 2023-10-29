@@ -2259,17 +2259,29 @@ async function main() {
       await set('state')('ADD_RespondTitleAndGetTeacher');
     }
     else if (data.text === 'Видалити'){
-      const results = await dbProcess.ShowAll();
+      const results = await dbProcess.ShowAll(),
+        users = await dbProcess.ShowAllUsers();
       let addString : string = '';
     
       for (let i = 0; i < results.length; i++) {
+        let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
+        for (let j = 0; j < users.length; j++) {
+          if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
+            userHaved += `- ${users[j].name} (@${users[j].username})\n📲${users[j].number}\n\n`;
+          }
+        }
+          if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
+            userHaved = '';
+          }
           if (results[i].count > 0) {
-            addString = `кількість доступних місць: ${results[i].count}`;
+            addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
           } else {
             addString = `❌ немає вільних місць ❌`;
           }
 
-        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString));
+        await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString, userHaved), {
+          parse_mode: "HTML"
+        });
       }
 
       const keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
@@ -2286,17 +2298,29 @@ async function main() {
       await set('state')('DeleteHandlerAndRoot');
     }
     else if (data.text === 'Редагувати'){
-      const results = await dbProcess.ShowAll();
+      const results = await dbProcess.ShowAll(),
+        users = await dbProcess.ShowAllUsers();
       let addString : string = '';
     
       for (let i = 0; i < results.length; i++) {
+        let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
+        for (let j = 0; j < users.length; j++) {
+          if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
+            userHaved += `- ${users[j].name} (@${users[j].username})\n📲${users[j].number}\n\n`;
+          }
+        }
+          if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
+            userHaved = '';
+          }
           if (results[i].count > 0) {
-            addString = `кількість доступних місць: ${results[i].count}`;
+            addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
           } else {
             addString = `❌ немає вільних місць ❌`;
           }
 
-        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString));
+        await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString, userHaved), {
+          parse_mode: "HTML"
+        });
       }
 
       const keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
@@ -2313,17 +2337,29 @@ async function main() {
       await set('state')('RespondKeyDataAndGetChanges');
     }
     else if (data.text === 'Показати всі'){
-      const results = await dbProcess.ShowAll();
+      const results = await dbProcess.ShowAll(),
+        users = await dbProcess.ShowAllUsers();
       let addString : string = '';
     
       for (let i = 0; i < results.length; i++) {
+        let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
+        for (let j = 0; j < users.length; j++) {
+          if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
+            userHaved += `- ${users[j].name} (@${users[j].username})\n📲${users[j].number}\n\n`;
+          }
+        }
+          if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
+            userHaved = '';
+          }
           if (results[i].count > 0) {
-            addString = `кількість доступних місць: ${results[i].count}`;
+            addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
           } else {
             addString = `❌ немає вільних місць ❌`;
           }
 
-        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString));
+        await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString, userHaved), {
+          parse_mode: "HTML"
+        });
       }
     }
     else if (data.text === 'Особові справи студентів'){
