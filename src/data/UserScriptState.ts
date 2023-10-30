@@ -44,3 +44,5 @@ export type UserScriptState =
   | "DeleteStudentHandlerAndReturn"
   | "RespondTrialClubAndCheckPayment"
   | "CheckPaymentAndReturn"
+  | "GetClubToRegistrationAndCheckPayment"
+  | "RegistrationChooseHandlerPayment"

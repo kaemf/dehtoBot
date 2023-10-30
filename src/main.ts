@@ -1660,10 +1660,37 @@ async function main() {
     }
     else if (data.text === 'Реєстрація на клуб'){
       //process
+      const results = await dbProcess.ShowAll();
+      let addString : string = '';
+    
+      for (let i = 0; i < results.length; i++) {
+          if (results[i].count > 0) {
+            addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
+          } else {
+            addString = `❌ немає вільних місць ❌`;
+          }
+
+        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString), {
+          parse_mode: "HTML"
+        });
+      }
+
+      const keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
+        return [{ text: `${index + 1}` }];
+      });
+
+      await ctx.reply('виберіть номер шпраха для запису:', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboard
+        }
+      })
+
+      await set('state')('GetClubToRegistrationAndCheckPayment');
     }
     else if (data.text === 'Залишок моїх занять'){
       const currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
-        number : number  = currentUser!.count;
+        number : number = currentUser!.count;
       if (number > 0){
         ctx.reply(script.speakingClub.lessLessons(number), {
           parse_mode: "HTML",
@@ -1931,6 +1958,13 @@ async function main() {
       // )
   
       if (user['club-typeclub'] === 'Шпрах-Клуб'){
+        if (user['sc_request_torecord_usertoclub'] !== ''){
+          const currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+            currentClub = await dbProcess.ShowData(new ObjectId(user['sc_request_torecord_usertoclub']));
+          await dbProcess.WriteNewClubToUser(ctx?.chat?.id ?? -1, new ObjectId(user['sc_request_torecord_usertoclub']));
+          await dbProcess.ChangeKeyData(currentClub!, 'count', currentClub!.count - 1);
+          await set('sc_request_torecord_usertoclub')('');
+        }
         ctx.reply(script.speakingClub.thanksType.typeStandart(user['name']), {
           parse_mode: "Markdown",
           reply_markup: {
@@ -2014,6 +2048,13 @@ async function main() {
       // )
 
       if (user['club-typeclub'] === 'Шпрах-Клуб'){
+        if (user['sc_request_torecord_usertoclub'] !== ''){
+          const currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+            currentClub = await dbProcess.ShowData(new ObjectId(user['sc_request_torecord_usertoclub']));
+          await dbProcess.WriteNewClubToUser(ctx?.chat?.id ?? -1, new ObjectId(user['sc_request_torecord_usertoclub']));
+          await dbProcess.ChangeKeyData(currentClub!, 'count', currentClub!.count - 1);
+          await set('sc_request_torecord_usertoclub')('');
+        }
         ctx.reply(script.speakingClub.thanksType.typeStandart(user['name']), {
           parse_mode: "Markdown",
           reply_markup: {
@@ -2118,6 +2159,14 @@ async function main() {
     //set mail
 
     if (CheckException.TextException(data)){
+      if (user['sc_request_torecord_usertoclub'] !== ''){
+        const currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+          currentClub = await dbProcess.ShowData(new ObjectId(user['sc_request_torecord_usertoclub']));
+        await dbProcess.WriteNewClubToUser(ctx?.chat?.id ?? -1, new ObjectId(user['sc_request_torecord_usertoclub']));
+        await dbProcess.ChangeKeyData(currentClub!, 'count', currentClub!.count - 1);
+        await set('sc_request_torecord_usertoclub')('');
+      }
+
       ctx.reply(script.speakingClub.thanksAfterMail(user['name'], user['club-coursename']), {
         parse_mode: "HTML",
         reply_markup: {
@@ -2246,6 +2295,149 @@ async function main() {
     }
     else{
       ctx.reply(script.errorException.paymentGettingError);
+    }
+  })
+
+  //Club Registration (start)
+  onTextMessage('GetClubToRegistrationAndCheckPayment', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1),
+      results = await dbProcess.ShowAll(),
+      currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+
+    if (currentUser!.count > 0){
+      if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length + 1){
+        const currentItemIndex = results.map(item => item._id)[parseInt(data.text) - 1],
+          currentClub = await dbProcess.ShowData(currentItemIndex);
+  
+        if (currentClub!.count > 0){
+          if (!await dbProcess.HasThisClubUser(ctx?.chat?.id ?? -1, currentItemIndex)){
+            await dbProcess.ChangeCountUser(currentUser!._id, currentUser!.count - 1);
+            await dbProcess.ChangeKeyData(currentClub!, 'count', currentClub!.count - 1);
+            await dbProcess.WriteNewClubToUser(ctx?.chat?.id ?? -1, currentClub!._id);
+
+            ctx.reply(script.speakingClub.registrationLesson.acceptedRegistration(user['name'], currentClub!.date, 
+            currentClub!.time, currentClub!.link));
+          }
+          else{
+            ctx.reply('ви вже зареєстровані на цей шпрах! виберіть інший');
+          }
+        }
+        else{
+          ctx.reply('у цього шпраху відсутні місця! оберіть, будь ласка, інший', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+                return [{ text: `${index + 1}` }];
+              })
+            }
+          })
+        }
+      }
+      else{
+        ctx.reply(script.errorException.chooseButtonError, {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+              return [{ text: `${index + 1}` }];
+            })
+          }
+        })
+      }
+    }
+    else{
+      if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length + 1){
+        const currentItemIndex = results.map(item => item._id)[parseInt(data.text) - 1],
+          currentClub = await dbProcess.ShowData(currentItemIndex);
+  
+        if (currentClub!.count > 0){
+          if (!await dbProcess.HasThisClubUser(ctx?.chat?.id ?? -1, currentItemIndex)){
+            await set('sc_request_torecord_usertoclub')(currentItemIndex!.toString());
+            ctx.reply(script.speakingClub.registrationLesson.paymentRequest(user['name']), {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: [
+                  [
+                    {
+                      text: "так"
+                    },
+                    {
+                      text: "ні"
+                    }
+                  ]
+                ]
+              }
+            })
+
+            await set('state')('RegistrationChooseHandlerPayment');
+          }
+          else{
+            ctx.reply('ви вже зареєстровані на цей шпрах! виберіть інший');
+          }
+        }
+        else{
+          ctx.reply('у цього шпраху відсутні місця! оберіть, будь ласка, інший', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+                return [{ text: `${index + 1}` }];
+              })
+            }
+          })
+        }
+      }
+      else{
+        ctx.reply(script.errorException.chooseButtonError, {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+              return [{ text: `${index + 1}` }];
+            })
+          }
+        })
+      }
+    }
+  })
+
+  onTextMessage('RegistrationChooseHandlerPayment', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (data.text === 'так'){
+      ctx.reply(script.speakingClub.payPacketLesson, {
+        parse_mode: "HTML",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Шпрах-Клуб"
+              },
+              {
+                text: "Шпрах-Клуб+PLUS"
+              }
+            ]
+          ],
+        },
+      });
+      await set('state')('RespondTypePacketAndGetPayment');
+    }
+    else if (data.text === 'ні'){
+      ctx.reply(script.speakingClub.defaultDecline, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "В МЕНЮ"
+              }
+            ]
+          ]
+        }
+      });
+
+      await set('state')('EndRootManager');
+    }
+    else{
+      ctx.reply(script.errorException.chooseButtonError);
     }
   })
 
