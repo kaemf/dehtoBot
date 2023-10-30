@@ -232,6 +232,9 @@ async function main() {
 
   onTextMessage('FunctionRoot', async (ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
+
+    await set('sc_request_torecord_usertoclub')('');
+
     if (data.text === "Вчитель на годину"){
       ctx.reply(script.teacherOnHour.whatsTheProblem, {
         parse_mode: "Markdown",
@@ -1959,12 +1962,16 @@ async function main() {
   
       if (user['club-typeclub'] === 'Шпрах-Клуб'){
         if (user['sc_request_torecord_usertoclub'] !== ''){
-          const currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
-            currentClub = await dbProcess.ShowData(new ObjectId(user['sc_request_torecord_usertoclub']));
+          const currentClub = await dbProcess.ShowData(new ObjectId(user['sc_request_torecord_usertoclub']));
           await dbProcess.WriteNewClubToUser(ctx?.chat?.id ?? -1, new ObjectId(user['sc_request_torecord_usertoclub']));
           await dbProcess.ChangeKeyData(currentClub!, 'count', currentClub!.count - 1);
           await set('sc_request_torecord_usertoclub')('');
         }
+        else{
+          const currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+          await dbProcess.ChangeCountUser(currentUser!._id, currentUser!.count + 5);
+        }
+
         ctx.reply(script.speakingClub.thanksType.typeStandart(user['name']), {
           parse_mode: "Markdown",
           reply_markup: {
@@ -2049,12 +2056,16 @@ async function main() {
 
       if (user['club-typeclub'] === 'Шпрах-Клуб'){
         if (user['sc_request_torecord_usertoclub'] !== ''){
-          const currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
-            currentClub = await dbProcess.ShowData(new ObjectId(user['sc_request_torecord_usertoclub']));
+          const currentClub = await dbProcess.ShowData(new ObjectId(user['sc_request_torecord_usertoclub']));
           await dbProcess.WriteNewClubToUser(ctx?.chat?.id ?? -1, new ObjectId(user['sc_request_torecord_usertoclub']));
           await dbProcess.ChangeKeyData(currentClub!, 'count', currentClub!.count - 1);
           await set('sc_request_torecord_usertoclub')('');
         }
+        else{
+          const currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+          await dbProcess.ChangeCountUser(currentUser!._id, currentUser!.count + 5);
+        }
+
         ctx.reply(script.speakingClub.thanksType.typeStandart(user['name']), {
           parse_mode: "Markdown",
           reply_markup: {
@@ -2155,39 +2166,48 @@ async function main() {
 
   onTextMessage('RespondMailAndFinal', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
-
     //set mail
 
     if (CheckException.TextException(data)){
-      if (user['sc_request_torecord_usertoclub'] !== ''){
-        const currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
-          currentClub = await dbProcess.ShowData(new ObjectId(user['sc_request_torecord_usertoclub']));
-        await dbProcess.WriteNewClubToUser(ctx?.chat?.id ?? -1, new ObjectId(user['sc_request_torecord_usertoclub']));
-        await dbProcess.ChangeKeyData(currentClub!, 'count', currentClub!.count - 1);
-        await set('sc_request_torecord_usertoclub')('');
-      }
-
-      ctx.reply(script.speakingClub.thanksAfterMail(user['name'], user['club-coursename']), {
-        parse_mode: "HTML",
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "В МЕНЮ",
-              },
-              {
-                text: "Назад до реєстрації",
-              },
-              // {
-              //   text: "Назад"
-              // }
+      if (await dbProcess.SetMailForUser(ctx?.chat?.id ?? -1, data.text)){
+        await set('sc_local_user_mail')(data.text);
+        if (user['sc_request_torecord_usertoclub'] !== ''){
+          const index = new ObjectId(user['sc_request_torecord_usertoclub']),
+           currentClub = await dbProcess.ShowData(index);
+          await dbProcess.WriteNewClubToUser(ctx?.chat?.id ?? -1, new ObjectId(user['sc_request_torecord_usertoclub']));
+          await dbProcess.ChangeKeyData(currentClub!, 'count', currentClub!.count - 1);
+          await set('sc_request_torecord_usertoclub')('');
+        }
+        else{
+          const currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+          await dbProcess.ChangeCountUser(currentUser!._id, currentUser!.count + 5);
+        }
+  
+        ctx.reply(script.speakingClub.thanksAfterMail(user['name'], user['club-coursename']), {
+          parse_mode: "HTML",
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: [
+              [
+                {
+                  text: "В МЕНЮ",
+                },
+                {
+                  text: "Назад до реєстрації",
+                },
+                // {
+                //   text: "Назад"
+                // }
+              ],
             ],
-          ],
-        },
-      });
-
-      await set('state')('EndRootManager');
+          },
+        });
+  
+        await set('state')('EndRootManager');
+      }
+      else{
+        ctx.reply(script.errorException.textGettingError.mailException, {reply_markup: {remove_keyboard: true}});
+      }
     }
     else{
       ctx.reply(script.errorException.textGettingError.defaultException, {reply_markup: {remove_keyboard: true}});
@@ -2954,10 +2974,6 @@ async function main() {
         await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]),
         dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
       ], keyForChange = user['AP_keyforchange'];
-
-      // console.log('Структура объекта club:', Array(getCurrentClub[0]).filter((club): club is MongoDBReturnType => typeof club === 'object')
-      // .map((club) => club[keyForChange as keyof MongoDBReturnType].toString())
-      // .join(''), currentItem[parseInt(user['AP_respondkeydata_clubid']) + 1], parseInt(user['AP_respondkeydata_clubid']) + 1, currentItem );
 
       await set('AP_prev_keyvalue(backup)')(Array(getCurrentClub[0]).filter((club): club is MongoDBReturnType => typeof club === 'object')
       .map((club) => club[keyForChange as keyof MongoDBReturnType].toString()).join(''));

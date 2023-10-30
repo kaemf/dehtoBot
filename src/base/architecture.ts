@@ -226,14 +226,6 @@ export default async function arch() {
       return await this.clubdbUsers.findOne({ id: id });
     }
 
-    async ShowOneUserObjectId(id: ObjectId){
-      return await this.clubdbUsers.findOne({ _id: id });
-    }
-
-    async ShowUserObject(id: ObjectId) {
-      return this.clubdbUsers.find({ _id: new ObjectId(id) });
-    }
-
     async ChangeCountUser(id: ObjectId, newValue: number){
       const updateObject = {$set: {count: newValue}};
 
@@ -248,10 +240,6 @@ export default async function arch() {
       }}
 
       await this.clubdbUsers.updateOne({_id: id}, updateObject);
-    }
-
-    async GetUserObjectID(user: WithId<BSON.Document>){
-      return user._id
     }
 
     async WriteNewClubToUser(idUser: number, idClub: ObjectId){
@@ -313,6 +301,21 @@ export default async function arch() {
           await this.clubdbUsers.updateOne({_id: user?._id}, updateObject);
         }
       }
+    }
+
+    async SetMailForUser(idUser: number, mail: string){
+      const user = await this.ShowOneUser(idUser),
+        emailCheck = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      
+      if (emailCheck.test(mail)){
+        const updateObject = {$set : {
+          email: mail
+        }}
+
+        await this.clubdbUsers.updateOne({_id: user?._id}, updateObject); 
+        return true;
+      }
+      else return false;
     }
   }
 
