@@ -83,24 +83,23 @@ async function main() {
     count: number;
     link: string;
   }
+
+  const formattedName = (name : String) => {
+    const words = name.split(' ');
+
+    const formattedWords = words.map(word => {
+      const firstLetter = word.charAt(0).toUpperCase(),
+        restOfWord = word.slice(1).toLowerCase();
+      return firstLetter + restOfWord;
+    });
+
+    return formattedWords.join(' ');
+  }
   
   //Get real user name and root to get phone number with this.function
   onTextMessage('WaitingForName', async (ctx, user, data) => {
-
     if (CheckException.TextException(data)){
-      const formattedName = (name : String) => {
-        const words = name.split(' ');
-  
-        const formattedWords = words.map(word => {
-          const firstLetter = word.charAt(0).toUpperCase(),
-            restOfWord = word.slice(1).toLowerCase();
-          return firstLetter + restOfWord;
-        });
-  
-        return formattedWords.join(' ');
-      },
-  
-        name = formattedName(data.text),
+      const name = formattedName(data.text),
         set = db.set(ctx?.chat?.id ?? -1);
       
       console.log(`Name: ${name}`)
@@ -133,7 +132,11 @@ async function main() {
   onContactMessage('AskingForPhoneNumber', async (ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (!CheckException.PhoneException(data)){
+    if (CheckException.BackRoot(data)){
+      ctx.reply(script.entire.greeting, {reply_markup: { remove_keyboard: true }});
+      await set('state')('WaitingForName');
+    }
+    else if (!CheckException.PhoneException(data)){
       ctx.reply(script.errorException.phoneGettingError.defaultException, {
         parse_mode: "Markdown",
         reply_markup: {
@@ -235,7 +238,24 @@ async function main() {
 
     await set('sc_request_torecord_usertoclub')('');
 
-    if (data.text === "Вчитель на годину"){
+    if (CheckException.BackRoot(data)){
+      ctx.reply(script.entire.niceNameAndGetPhone(user['name']), {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: script.entire.shareYourPhone,
+                request_contact: true,
+              },
+            ],
+          ],
+        },
+      });
+      await set('state')('AskingForPhoneNumber');
+    }
+    else if (data.text === "Вчитель на годину"){
       ctx.reply(script.teacherOnHour.whatsTheProblem, {
         parse_mode: "Markdown",
         reply_markup: {
@@ -254,10 +274,7 @@ async function main() {
               },
               {
                 text: "A2.2", //Added text
-              },
-              // {
-              //   text: "Назад"
-              // }
+              }
             ],
           ],
         },
@@ -296,7 +313,7 @@ async function main() {
       await set('state')('_GraphicRespondAndLevelRequest');
     }
     else if (data.text === "Шпрах-Клуби"){
-      ctx.reply("Виберіть одну із запропонованих кнопок(В розробці...)", {
+      ctx.reply("Виберіть одну із запропонованих кнопок", {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -399,7 +416,8 @@ async function main() {
 
   onTextMessage('GraphicRespondAndLevelRequest', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
-    if (data.text === 'Назад') {
+
+    if (CheckException.BackRoot(data)) {
       ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
         reply_markup: {
@@ -439,19 +457,9 @@ async function main() {
 
   onTextMessage('LevelRespondAndRequestQuestions', async (ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
-    if (data.text === 'Назад'){
-      ctx.reply(script.trialLesson.niceWhatATime, {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Назад"
-              }
-            ]
-          ]
-        }
-      });
+
+    if (CheckException.BackRoot(data)){
+      ctx.reply(script.trialLesson.niceWhatATime, {reply_markup: {remove_keyboard: true}});
       await set('state')('GraphicRespondAndLevelRequest')
     }
     else if (CheckException.TextException(data)){
@@ -487,7 +495,11 @@ async function main() {
   onTextMessage('TrialLessonQuestionsManager', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (data.text === 'так, є'){
+    if (CheckException.BackRoot(data)){
+      ctx.reply(script.trialLesson.levelLanguageRequest, {reply_markup: {remove_keyboard: true}});
+      await set('state')('LevelRespondAndRequestQuestions');
+    }
+    else if (data.text === 'так, є'){
       await set('addquesttrial')('');
       ctx.reply(script.trialLesson.question, {reply_markup: {remove_keyboard: true}});
       await set('state')('GetQuestionsAndSendData');
@@ -532,21 +544,6 @@ async function main() {
 
       await set('state')('EndRootManager');
     }
-    else if (data.text === 'Назад'){
-      ctx.reply(script.trialLesson.levelLanguageRequest, {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Назад"
-              }
-            ]
-          ]
-        }
-      });
-      await set('state')('LevelRespondAndRequestQuestions');
-    }
     else{
       ctx.reply(script.errorException.chooseButtonError, {
         reply_markup: {
@@ -575,7 +572,7 @@ async function main() {
       dateFormat = (date.getDate() < 10 ? '0' : '') + (date.getDate()),
       formattedDateRecord = `${dateFormat}.${monthFormat}.${date.getFullYear()}`;
 
-    if (data.text === 'Назад'){
+    if (CheckException.BackRoot(data)){
       ctx.reply(script.trialLesson.thanksAndGetQuestion(user['name']), {
         parse_mode: "Markdown",
         reply_markup: {
@@ -583,14 +580,11 @@ async function main() {
           keyboard: [
             [
               {
-                text: "маю",
+                text: "так, є",
               },
               {
-                text: "не маю",
+                text: "ні, не має",
               },
-              // {
-              //   text: "Назад"
-              // }
             ],
           ],
         },
@@ -707,7 +701,33 @@ async function main() {
       await set('state')('FunctionRoot');
     }
     else if (data.text === 'Назад до реєстрації'){
+      const results = await dbProcess.ShowAll();
+      let addString : string = '';
+    
+      for (let i = 0; i < results.length; i++) {
+          if (results[i].count > 0) {
+            addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
+          } else {
+            addString = `❌ немає вільних місць ❌`;
+          }
 
+        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString), {
+          parse_mode: "HTML"
+        });
+      }
+
+      const keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
+        return [{ text: `${index + 1}` }];
+      });
+
+      await ctx.reply('виберіть номер шпраха для запису:', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboard
+        }
+      })
+
+      await set('state')('GetClubToRegistrationAndCheckPayment');
     }
     else if (data.text === 'sysinfo'){
       ctx.reply(script.about(versionBot), {
@@ -718,23 +738,6 @@ async function main() {
             [
               {
                 text: 'В МЕНЮ'
-              }
-            ]
-          ]
-        }
-      })
-    }
-    else if (data.text === 'Назад до реєстрації'){
-      ctx.reply("В розробці...", {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "В МЕНЮ"
-              },
-              {
-                text: "Назад до реєстрації"
               }
             ]
           ]
@@ -761,7 +764,43 @@ async function main() {
   onTextMessage('RespondCourseAndGetPacket', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
     
-    if (data.text === 'Рівень С1-С2' || data.text === 'Рівень В1-В2' || data.text === 'Рівень А1-А2'){
+    if (CheckException.BackRoot(data)){
+      ctx.reply(script.entire.chooseFunction, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Вчитель на годину",
+              },
+            ],[
+              {
+                text: "Пробний урок",
+              },
+            ],[
+              {
+                text: "Оплата занять",
+              },
+            ],[
+              {
+                text: "Запис на заняття"
+              }
+            ],[
+              {
+                text: "Шпрах-Клуби"
+              }
+            ],[
+              {
+                text: "Адмін Панель"
+              }
+            ]
+          ]
+        }
+      })
+      await set('state')('FunctionRoot');
+    }
+    else if (data.text === 'Рівень С1-С2' || data.text === 'Рівень В1-В2' || data.text === 'Рівень А1-А2'){
       const showLevel = packet[data.text as keyof typeof packet];
   
       await set('courseLevel')(data.text);
@@ -785,10 +824,7 @@ async function main() {
               },
               {
                 text: "🟡",
-              },
-              // {
-              //   text: "Назад"
-              // }
+              }
             ],
           ],
         },
@@ -823,34 +859,29 @@ async function main() {
   onTextMessage('RespondPacketAndGetPayment', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (data.text === 'Назад'){
-      ctx.reply(script.entire.chooseFunction, {
+    if (CheckException.BackRoot(data)){
+      ctx.reply(script.payInvidualLesson.chooseLevelCourse, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
           keyboard: [
             [
               {
-                text: "Вчитель на годину",
+                text: "Рівень А1-А2",
               },
             ],[
               {
-                text: "Пробний урок",
-              }
+                text: "Рівень В1-В2",
+              },
+              {
+                text: "Рівень С1-С2",
+              },
             ],
-            [
-              {
-                text: "Оплата занять",
-              },
-            ],[
-              {
-                text: "Запис на заняття"
-              }
-            ]
-          ]
-        }
-      })
-      await set('state')('FunctionRoot');
+          ],
+        },
+      });
+
+      await set('state')('RespondCourseAndGetPacket');
     }
     else if (data.text === '🟡' || data.text === '🟢' || data.text === '🔴' || data.text === '🔵'){
       const answer = data.text,
@@ -905,7 +936,37 @@ async function main() {
 
     // Оплата занять
 
-    if (CheckException.PhotoException(data)){
+    if (CheckException.BackRoot(data)){
+      const showLevel = packet[data.text as keyof typeof packet];
+
+      ctx.reply(script.payInvidualLesson.choosePacket(showLevel['🔵']['price'], showLevel['🔴']['price'], showLevel['🟢']['price'], showLevel['🟡']['price']), {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "🔵",
+              },
+              {
+                text: "🔴",
+              },
+            ],
+            [
+              {
+                text: "🟢",
+              },
+              {
+                text: "🟡",
+              }
+            ],
+          ],
+        },
+      });
+  
+      await set('state')('RespondPacketAndGetPayment');
+    }
+    else if (CheckException.PhotoException(data)){
       const paymentStatus: string = await get('paymentStatus') ?? 'unknown',
         name = get("name") ?? "учень",
         date : Date = new Date(),
@@ -1015,7 +1076,8 @@ async function main() {
   //
   onTextMessage('HaveAdditionalQuestion', async (ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
-    if (data.text === 'Назад'){
+
+    if (CheckException.BackRoot(data)){
       ctx.reply(script.teacherOnHour.additionalQuestions.question, {
         parse_mode: "Markdown",
         reply_markup: {
@@ -1027,10 +1089,7 @@ async function main() {
               },
               {
                 text: script.teacherOnHour.additionalQuestions.no,
-              },
-              // {
-              //   text: "Назад"
-              // }
+              }
             ],
           ],
         },
@@ -1051,18 +1110,13 @@ async function main() {
 
   onTextMessage('AnswerForAdditionalQuestions', async (ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
-    if (data.text === 'Назад'){
+
+    if (CheckException.BackRoot(data)){
       const courses = getCourses(user['course'] as Courses);
       set('course')(user['course']);
   
       console.log('Courses\n' + user['course']);
       console.log(courses);
-
-      // const newButton = [
-      //   {
-      //     text: 'Назад',
-      //   }
-      // ];
   
       //skiping process
       const keyboard = courses.map((el: Course, idx) => {
@@ -1070,8 +1124,6 @@ async function main() {
         if (courseNumbersToSkip[user['course']].includes(displayedIndex)) return null;
         return [{ text: `${displayedIndex}. ${el}` }];
       }).filter(buttons => buttons !== null);
-
-      // keyboard.unshift(newButton);
   
       ctx.reply(script.teacherOnHour.whatLecture, {
         parse_mode: "Markdown",
@@ -1118,7 +1170,7 @@ async function main() {
   onTextMessage('AdditionalQuestions', async (ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (data.text === 'Назад'){
+    if (CheckException.BackRoot(data)){
       ctx.reply(script.teacherOnHour.whatsTheProblem, {
         parse_mode: "Markdown",
         reply_markup: {
@@ -1137,10 +1189,7 @@ async function main() {
               },
               {
                 text: "A2.2", //Added text
-              },
-              // {
-              //   text: "Назад"
-              // }
+              }
             ],
           ],
         },
@@ -1160,10 +1209,7 @@ async function main() {
               },
               {
                 text: script.teacherOnHour.additionalQuestions.no,
-              },
-              // {
-              //   text: "Назад"
-              // }
+              }
             ],
           ],
         },
@@ -1195,27 +1241,29 @@ async function main() {
 
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (data.text === 'Назад'){
+    if (CheckException.BackRoot(data)){
       ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
+          keyboard:[
             [
               {
-                text: "Вчитель на годину",
+                text: "Пробне заняття"
               },
+              {
+                text: "Реєстрація на клуб"
+              }
             ],[
               {
-                text: "Пробний урок",
+                text: "Залишок моїх занять"
               },
+              {
+                text: "Оплатити пакет занять"
+              }
             ],[
               {
-                text: "Оплата занять",
-              },
-            ],[
-              {
-                text: "Запис на заняття"
+                text: "Про шпрах-клаб"
               }
             ]
           ]
@@ -1331,7 +1379,7 @@ async function main() {
 
     // Вчитель на годину
 
-    if (data.text === 'Назад'){
+    if (CheckException.BackRoot(data)){
       ctx.reply(script.teacherOnHour.additionalQuestions.question, {
         parse_mode: "Markdown",
         reply_markup: {
@@ -1343,9 +1391,6 @@ async function main() {
               },
               {
                 text: script.teacherOnHour.additionalQuestions.no,
-              },
-              {
-                text: "Назад"
               }
             ],
           ],
@@ -1476,41 +1521,10 @@ async function main() {
     }
   })
 
-  // onTextMessage('MoreOrderTeacher', async (ctx, user, data) => {
-  //   const set = db.set(ctx?.chat?.id ?? -1);
-  //   console.log('MoreOrderTeacher');
-
-  //   if(data.text != 'Замовити ще одну зустріч') return;
-    
-  //   ctx.reply(script.teacherOnHour.whatsTheProblem, {
-  //     parse_mode: "Markdown",
-  //     reply_markup: {
-  //       one_time_keyboard: true,
-  //       keyboard: [
-  //         [
-  //           {
-  //             text: "A1.1",
-  //           },
-  //           {
-  //             text: "A1.2",
-  //           },
-  //           {
-  //             text: "A2.1", //Added text
-  //           },
-  //           {
-  //             text: "A2.2", //Added text
-  //           },
-  //         ],
-  //       ],
-  //     },
-  //   });
-  //   await set('state')('ChoosingCourses');
-  // });
-
   onTextMessage('_GraphicRespondAndLevelRequest', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (data.text === 'Назад'){
+    if (CheckException.BackRoot(data)){
       ctx.reply(script.entire.chooseFunction, {
       parse_mode: "Markdown",
       reply_markup: {
@@ -1520,14 +1534,25 @@ async function main() {
             {
               text: "Вчитель на годину",
             },
+          ],[
             {
               text: "Пробний урок",
             },
+          ],[
             {
               text: "Оплата занять",
             },
+          ],[
             {
               text: "Запис на заняття"
+            }
+          ],[
+            {
+              text: "Шпрах-Клуби"
+            }
+          ],[
+            {
+              text: "Адмін Панель"
             }
           ]
         ]
@@ -1549,26 +1574,14 @@ async function main() {
   onTextMessage('_LevelRespondAndRequestQuestions', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (data.text === 'Назад'){
-      ctx.reply(script.registrationLesson.niceWhatATime, {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              // {
-              //   text: "Назад"
-              // }
-            ]
-          ]
-        }
-      });
+    if (CheckException.BackRoot(data)){
+      ctx.reply(script.registrationLesson.niceWhatATime, {reply_markup: {remove_keyboard: true}});
       await set('state')('_GraphicRespondAndLevelRequest');
     }
     else if (CheckException.TextException(data)){
       await set('_languagelevel')(data.text);
   
       await ctx.reply(script.registrationLesson.thanks(user['name'], user['_graphic']));
-      // await ctx.reply(script.registrationLesson.getQuestion, {reply_markup: {remove_keyboard: true}});
       await set('state')('_GetQuestionsAndSendData');
     }
     else{
@@ -1584,18 +1597,8 @@ async function main() {
       dateFormat = (date.getDate() < 10 ? '0' : '') + (date.getDate()),
       formattedDateRecord = `${dateFormat}.${monthFormat}.${date.getFullYear()}`;
 
-    if (data.text === 'Назад'){
-      ctx.reply(script.registrationLesson.levelLanguageRequest, {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Назад"
-              }
-            ]
-          ]
-        }});
+    if (CheckException.BackRoot(data)){
+      ctx.reply(script.registrationLesson.levelLanguageRequest, {reply_markup: {remove_keyboard: true}});
       await set('state')('_LevelRespondAndRequestQuestions');
     }
     else if (CheckException.TextException(data)){
@@ -1641,7 +1644,42 @@ async function main() {
   onTextMessage('ActionClubRespondAndRootAction', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (data.text === 'Пробне заняття'){
+    if (CheckException.BackRoot(data)){
+      ctx.reply(script.entire.chooseFunction, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Вчитель на годину",
+              },
+            ],[
+              {
+                text: "Пробний урок",
+              },
+            ],[
+              {
+                text: "Оплата занять",
+              },
+            ],[
+              {
+                text: "Запис на заняття"
+              }
+            ],[
+              {
+                text: "Шпрах-Клуби"
+              }
+            ],[
+              {
+                text: "Адмін Панель"
+              }
+            ]
+          ],
+        },
+      });
+    }
+    else if (data.text === 'Пробне заняття'){
       ctx.reply(script.speakingClub.trialLesson.entire, {
         parse_mode: "HTML",
         reply_markup: {
@@ -1662,7 +1700,6 @@ async function main() {
       await set('state')('RespondChooseAndRespondGetLesson');
     }
     else if (data.text === 'Реєстрація на клуб'){
-      //process
       const results = await dbProcess.ShowAll();
       let addString : string = '';
     
