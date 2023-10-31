@@ -14,8 +14,7 @@ import arch from './base/architecture';
 import { Request, Response } from 'express';
 import getCourses, { Course, Courses } from "./data/coursesAndTopics";
 import { Key } from "./base/changeKeyValue";
-import { BSON, ObjectId, WithId } from 'mongodb';
-import { parse } from "path";
+import { ObjectId } from 'mongodb';
 const confirmationChat = '437316791',
   supportChat = '6081848014',
   devChat = '740129506',
@@ -201,37 +200,6 @@ async function main() {
       await set('state')('FunctionRoot');
     }
   });
-
-  // onTextMessage('FunctionRequest', async(ctx, user, data) => {
-  //   const set = db.set(ctx?.chat?.id ?? -1);
-
-  //   ctx.reply(script.entire.chooseFunction, {
-  //     parse_mode: "Markdown",
-  //     reply_markup: {
-  //       one_time_keyboard: true,
-  //       keyboard: [
-  //         [
-  //           {
-  //             text: "Вчитель на годину",
-  //           },
-  //         ],[
-  //           {
-  //             text: "Пробний урок",
-  //           },
-  //         ],[
-  //           {
-  //             text: "Оплата занять",
-  //           },
-  //         ],[
-  //           {
-  //             text: "Запис на заняття"
-  //           }
-  //         ]
-  //       ]
-  //     }
-  //   })
-  //   await set('state')('FunctionRoot');
-  // })
 
   onTextMessage('FunctionRoot', async (ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
@@ -477,10 +445,7 @@ async function main() {
             ],[
               {
                 text: "ні, немає",
-              },
-              // {
-              //   text: "Назад"
-              // }
+              }
             ],
           ],
         },
@@ -1838,7 +1803,38 @@ async function main() {
   onTextMessage('RespondChooseAndRespondGetLesson', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (data.text === 'так'){
+    if (CheckException.BackRoot(data)){
+      ctx.reply("Виберіть одну із запропонованих кнопок", {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Пробне заняття"
+              },
+              {
+                text: "Реєстрація на клуб"
+              }
+            ],[
+              {
+                text: "Залишок моїх занять"
+              },
+              {
+                text: "Оплатити пакет занять"
+              }
+            ],[
+              {
+                text: "Про шпрах-клаб"
+              }
+            ]
+          ],
+        },
+      });
+
+      await set('state')('ActionClubRespondAndRootAction');
+    }
+    else if (data.text === 'так'){
       await ctx.reply(script.speakingClub.trialLesson.ifYes)
       const results = await dbProcess.ShowAll(),
         keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
@@ -1928,7 +1924,38 @@ async function main() {
   onTextMessage('RespondTypePacketAndGetPayment', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (data.text === 'Шпрах-Клуб'){
+    if (CheckException.BackRoot(data)){
+      ctx.reply("Виберіть одну із запропонованих кнопок", {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Пробне заняття"
+              },
+              {
+                text: "Реєстрація на клуб"
+              }
+            ],[
+              {
+                text: "Залишок моїх занять"
+              },
+              {
+                text: "Оплатити пакет занять"
+              }
+            ],[
+              {
+                text: "Про шпрах-клаб"
+              }
+            ]
+          ],
+        },
+      });
+
+      await set('state')('ActionClubRespondAndRootAction');
+    }
+    else if (data.text === 'Шпрах-Клуб'){
       ctx.reply(script.speakingClub.standartClub);
       await set('club-typeclub')(data.text);
       await set('state')('RespondPaymentAndGetCourseOrFinal');
@@ -2231,10 +2258,7 @@ async function main() {
                 },
                 {
                   text: "Назад до реєстрації",
-                },
-                // {
-                //   text: "Назад"
-                // }
+                }
               ],
             ],
           },
@@ -2256,7 +2280,27 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1),
       results = await dbProcess.ShowAll();
 
-    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length + 1){
+    if (CheckException.BackRoot(data)){
+      ctx.reply(script.speakingClub.trialLesson.entire, {
+        parse_mode: "HTML",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "так"
+              },
+              {
+                text: "ні"
+              }
+            ]
+          ],
+        },
+      })
+
+      await set('state')('RespondChooseAndRespondGetLesson');
+    }
+    else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length + 1){
       const currentItemIndex = results.map(item => item._id)[parseInt(data.text) - 1],
         currentClub = await dbProcess.ShowData(currentItemIndex);
 
@@ -2303,7 +2347,10 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1),
       paymentApprovedSeccussfully : boolean = true;
 
-    if (CheckException.PhotoException(data)){
+    if (CheckException.BackRoot(data)){
+
+    }
+    else if (CheckException.PhotoException(data)){
       ctx.telegram.sendPhoto(devChat, data.photo, {
         parse_mode: "HTML",
         caption: 'Work'
@@ -2361,7 +2408,38 @@ async function main() {
       results = await dbProcess.ShowAll(),
       currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
-    if (currentUser!.count > 0){
+    if (CheckException.BackRoot(data)){
+      ctx.reply("Виберіть одну із запропонованих кнопок", {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Пробне заняття"
+              },
+              {
+                text: "Реєстрація на клуб"
+              }
+            ],[
+              {
+                text: "Залишок моїх занять"
+              },
+              {
+                text: "Оплатити пакет занять"
+              }
+            ],[
+              {
+                text: "Про шпрах-клаб"
+              }
+            ]
+          ],
+        },
+      });
+
+      await set('state')('ActionClubRespondAndRootAction');
+    }
+    else if (currentUser!.count > 0){
       if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length + 1){
         const currentItemIndex = results.map(item => item._id)[parseInt(data.text) - 1],
           currentClub = await dbProcess.ShowData(currentItemIndex);
