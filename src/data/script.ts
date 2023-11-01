@@ -382,7 +382,7 @@ UA773220010000026004330103247
 👉🏼 Тема: ${title}
 👉🏼 Викладач: ${teacher}\n
 👉🏼 Коли: ${date}
-👉🏼 На котру: ${time}\n
+👉🏼 На котру: ${time} 🇺🇦\n
 ${addString}`,
 
       showClubTypeAdmin: (position: number, title: string, teacher: string, date: string, time: string, addString: string, recordedUsers: string) => `✅${position}
@@ -390,7 +390,7 @@ ${addString}`,
 👉🏼 <b>Тема</b>: ${title}
 👉🏼 <b>Викладач</b>: ${teacher}\n
 👉🏼 <b>Коли</b>: ${date}
-👉🏼 <b>На котру</b>: ${time}
+👉🏼 <b>На котру</b>: ${time} 🇺🇦
 ${recordedUsers}
 ${addString}`,
 
@@ -398,27 +398,28 @@ ${addString}`,
 👉🏼 Тема: ${title}
 👉🏼 Викладач: ${teacher}\n
 👉🏼 Коли: ${date}
-👉🏼 На котру: ${time}`,
+👉🏼 На котру: ${time} 🇺🇦`,
 
       showUser: (position: number, name: string, id: number, username: string, phone_number: string, count: number) => `✅${position}
 ID: ${id}
 Ім'я: ${name}
-Telegram: ${username}
+Telegram: @${username}
 Номер телефону: ${phone_number}
-Кількість доступних занять: ${count}`,
+Кількість доступних занять: ${count > 0 ? count : '❌'}`,
 
       checkClub: (title: string, teacher: string, date: string, time: string, link: string, count: number) => {
         let addString: string = '';
         if (count > 0) {
           addString = `кількість доступних місць: ${count}`;
-        } else {
+        } 
+        else {
           addString = `❌ немає вільних місць ❌`;
         }
         return `🗣 ШРАХ-КЛУБ
 👉🏼 Тема: ${title}
 👉🏼 Викладач: ${teacher}\n
 👉🏼 Коли: ${date}
-👉🏼 На котру: ${time}\n
+👉🏼 На котру: ${time} 🇺🇦\n
 ${addString}\n
 Посилання:
 ${link}`

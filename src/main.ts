@@ -2076,10 +2076,7 @@ async function main() {
                 },
                 {
                   text: "A2.2", //Added text
-                },
-                // {
-                //   text: "Назад"
-                // }
+                }
               ],
             ],
           },
@@ -2170,10 +2167,7 @@ async function main() {
                 },
                 {
                   text: "A2.2", //Added text
-                },
-                // {
-                //   text: "Назад"
-                // }
+                }
               ],
             ],
           },
@@ -2217,10 +2211,7 @@ async function main() {
               },
               {
                 text: "A2.2", //Added text
-              },
-              // {
-              //   text: "Назад"
-              // }
+              }
             ],
           ],
         },
@@ -2622,7 +2613,7 @@ async function main() {
         }
       })
 
-      await set('state')('DeleteHandlerAndRoot');
+      await set('state')('DeleteClubAndCheckAction');
     }
     else if (data.text === 'Редагувати'){
       const results = await dbProcess.ShowAll(),
@@ -2870,10 +2861,7 @@ async function main() {
               },
               {
                 text: "ні",
-              },
-              // {
-              //   text: "Назад"
-              // }
+              }
             ],
           ],
         },
@@ -2937,18 +2925,58 @@ async function main() {
   })
 
   // Delete Handler
-  onTextMessage('DeleteHandlerAndRoot', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
-    const results = await dbProcess.ShowAll(),
-      users = await dbProcess.ShowAllUsers(),
-      deleteItem = results.map(result => result._id);
+  onTextMessage('DeleteClubAndCheckAction', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1),
+      results = await dbProcess.ShowAll();
 
     if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length) {
-      dbProcess.DeleteData(deleteItem[parseInt(data.text) - 1]);
+      await set('AP_DeleteHandler_indextodelete')(data.text);
+
+      await ctx.reply(`Ви впевнені, що хочете видалити клаб №${data.text}?`, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "так"
+              },
+              {
+                text: "ні"
+              }
+            ]
+          ],
+        },
+      });
+
+      await set('state')('CheckingActionDeleteAndReturn');
+    } 
+    else {
+      const results = await dbProcess.ShowAll(),
+        keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
+        return [{ text: `${index + 1}` }];
+      });
+      await ctx.reply('Помилка, видалення неможливе, так як цього елементу не існує.', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboard
+        }
+      });
+    }
+  })
+
+  onTextMessage('CheckingActionDeleteAndReturn', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1),
+      results = await dbProcess.ShowAll(),
+      users = await dbProcess.ShowAllUsers(),
+      deleteItem = results.map(result => result._id),
+      indexToDelete = user['AP_DeleteHandler_indextodelete'];
+
+    if (data.text === 'так'){
+      dbProcess.DeleteData(deleteItem[parseInt(indexToDelete) - 1]);
 
       for (let i = 0; i < users.length; i++){
-        await dbProcess.DeleteClubFromUser(users[i].id, deleteItem[parseInt(data.text) - 1]);
+        await dbProcess.DeleteClubFromUser(users[i].id, deleteItem[parseInt(indexToDelete) - 1]);
       }
 
       await ctx.reply(`Шпрах клаб №${data.text} успішно видалений.`, {
@@ -2976,18 +3004,36 @@ async function main() {
       });
 
       await set('state')('RespondAdminActionAndRootChoose');
-    } 
-    else {
-      const results = await dbProcess.ShowAll(),
-        keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
-        return [{ text: `${index + 1}` }];
-      });
-      await ctx.reply('Помилка, видалення неможливе, так як цього елементу не існує.', {
+    }
+    else if (data.text === 'ні'){
+      await ctx.reply(`Поточна операція відмінена.`, {
+        parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboard
-        }
+          keyboard: [
+            [
+              {
+                text: "Додати"
+              },
+              {
+                text: "Редагувати"
+              }
+            ],[
+              {
+                text: "Видалити"
+              },
+              {
+                text: "Показати всі"
+              }
+            ]
+          ],
+        },
       });
+
+      await set('state')('RespondAdminActionAndRootChoose');
+    }
+    else{
+      ctx.reply(script.errorException.chooseButtonError);
     }
   })
 
@@ -3084,96 +3130,90 @@ async function main() {
       currentItem = results.map(result => result._id);
 
     if (CheckException.TextException(data)){
-      const getCurrentClub: (MongoDBReturnType | Object | null)[] = [
-        await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]),
-        dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
-      ], keyForChange = user['AP_keyforchange'];
-
-      await set('AP_prev_keyvalue(backup)')(Array(getCurrentClub[0]).filter((club): club is MongoDBReturnType => typeof club === 'object')
-      .map((club) => club[keyForChange as keyof MongoDBReturnType].toString()).join(''));
-
-      await set('AP_keydatatochange')(data.text);
-
-      ctx.reply('Готово! Зберегти зміни чи відновити попередні?', {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Зберегти"
-              },
-              {
-                text: "Відновити"
-              },
-            ]
-          ]
+      if (user['AP_keyforchange'] === 'count'){
+        if (parseInt(data.text) > 5){
+          ctx.reply('Кількість можливих місць не може бути більше 5-ти');
         }
-      })
+        else if (parseInt(data.text) < 0){
+          ctx.reply('Кількість можливих місць не може бути менше 0-я');
+        }
+        else{
+          const getCurrentClub: (MongoDBReturnType | Object | null)[] = [
+            await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]),
+            dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
+          ], keyForChange = user['AP_keyforchange'];
+    
+          await set('AP_prev_keyvalue(backup)')(Array(getCurrentClub[0]).filter((club): club is MongoDBReturnType => typeof club === 'object')
+          .map((club) => club[keyForChange as keyof MongoDBReturnType].toString()).join(''));
+    
+          await set('AP_keydatatochange')(data.text);
+    
+          await dbProcess.ChangeKeyData(dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]), keyForChange, data.text);
+          ctx.reply('Успішно виконана операція!', {
+            parse_mode: "Markdown",
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: [
+                [
+                  {
+                    text: "Додати"
+                  },
+                  {
+                    text: "Редагувати"
+                  }
+                ],[
+                  {
+                    text: "Видалити"
+                  },
+                  {
+                    text: "Показати всі"
+                  }
+                ]
+              ],
+            },
+          });
 
-      await set('state')('CheckedAndReturnToPanel');
-    }
-  })
+          await set('state')('RespondAdminActionAndRootChoose');
+        }
+      }
+      else{
+        const getCurrentClub: (MongoDBReturnType | Object | null)[] = [
+          await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]),
+          dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
+        ], keyForChange = user['AP_keyforchange'];
+  
+        await set('AP_prev_keyvalue(backup)')(Array(getCurrentClub[0]).filter((club): club is MongoDBReturnType => typeof club === 'object')
+        .map((club) => club[keyForChange as keyof MongoDBReturnType].toString()).join(''));
+  
+        await set('AP_keydatatochange')(data.text);
+  
+        await dbProcess.ChangeKeyData(dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]), keyForChange, data.text);
+        ctx.reply('Успішно виконана операція!', {
+          parse_mode: "Markdown",
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: [
+              [
+                {
+                  text: "Додати"
+                },
+                {
+                  text: "Редагувати"
+                }
+              ],[
+                {
+                  text: "Видалити"
+                },
+                {
+                  text: "Показати всі"
+                }
+              ]
+            ],
+          },
+        });
 
-  onTextMessage('CheckedAndReturnToPanel', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      results = await dbProcess.ShowAll(),
-      currentItem = results.map(result => result._id),
-      toChange = user['AP_keydatatochange'];
-
-    if (data.text === 'Зберегти'){
-      await dbProcess.ChangeKeyData(dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]), user['AP_keyforchange'], toChange);
-      ctx.reply('Успішно виконана операція!', {
-        parse_mode: "Markdown",
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Додати"
-              },
-              {
-                text: "Редагувати"
-              }
-            ],[
-              {
-                text: "Видалити"
-              },
-              {
-                text: "Показати всі"
-              }
-            ]
-          ],
-        },
-      });
-
-      await set('state')('RespondAdminActionAndRootChoose');
-    }
-    else if (data.text === 'Відновити'){
-      ctx.reply('Змінені дані успішно відновлені!', {
-        parse_mode: "Markdown",
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Додати"
-              },
-              {
-                text: "Редагувати"
-              }
-            ],[
-              {
-                text: "Видалити"
-              },
-              {
-                text: "Показати всі"
-              }
-            ]
-          ],
-        },
-      });
-
-      await set('state')('RespondAdminActionAndRootChoose');
+        await set('state')('RespondAdminActionAndRootChoose');
+      }
     }
   })
 
@@ -3222,7 +3262,7 @@ async function main() {
         }
       })
 
-      await set('state')('DeleteStudentHandlerAndReturn');
+      await set('state')('DeleteStudentAndCheckAction');
     }
     else if (data.text === 'В МЕНЮ'){
       ctx.reply(script.entire.chooseFunction, {
@@ -3304,13 +3344,14 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1),
       userID: ObjectId = (await dbProcess.ShowAllUsers()).map(item => item._id)[parseInt(user['AP_student_id'] ) - 1],
       userIDWithoutProcessing = parseInt(user['AP_student_id']),
-      getCurrentUserCount = (await dbProcess.ShowAllUsers()).map(item => item.count)[userIDWithoutProcessing - 1];
+      getCurrentUserCount = (await dbProcess.ShowAllUsers()).map(item => item.count)[userIDWithoutProcessing - 1],
+      getUserActualName = (await dbProcess.ShowAllUsers()).map(item => item.name)[userIDWithoutProcessing - 1];
       
     if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1){
       const toWrite: number = getCurrentUserCount + parseInt(data.text);
       await dbProcess.ChangeCountUser(userID, toWrite);
 
-      await ctx.reply(`Успішно! На рахунку у студента: ${toWrite} занять`, {
+      await ctx.reply(`Успішно! На рахунку у студента ${getUserActualName}: ${toWrite} занять`, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -3346,14 +3387,78 @@ async function main() {
   })
 
   // Delete Student Handler
-  onTextMessage('DeleteStudentHandlerAndReturn', async(ctx, user, data) => {
+  onTextMessage('DeleteStudentAndCheckAction', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1),
       results = await dbProcess.ShowAllUsers();
 
-    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) >= results.length){
-      await dbProcess.DeleteUser(results.map(item => item.id)[parseInt(data.text) - 1]);
+    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length){
+      await set('AP_DeleteStudentHandler_deleteindex')(data.text)
 
-      ctx.reply(`Успішно видалено студента №${data.text}`, {
+      ctx.reply(`Ви впевнені, що хочете видалити користувача №${data.text}`, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "так"
+              },
+              {
+                text: "ні"
+              }
+            ]
+          ]
+        }
+      })
+
+      await set('state')('DeleteStudentHandlerAndReturn');
+    }
+    else{
+      ctx.reply('Помилка', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+            return [{ text: `${index + 1}` }];
+          })
+        }
+      })
+    }
+  })
+
+  onTextMessage('DeleteStudentHandlerAndReturn', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1),
+      results = await dbProcess.ShowAllUsers(),
+      indexToDelete = user['AP_DeleteStudentHandler_deleteindex'];
+
+    if (data.text === 'так'){
+      await dbProcess.DeleteUser(results.map(item => item.id)[parseInt(indexToDelete) - 1]);
+
+      ctx.reply(`Успішно видалено студента №${indexToDelete}`, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Показати всіх студентів"
+              },
+              {
+                text: "Додати заняття студенту"
+              }
+            ],[
+              {
+                text: "Видалити студента"
+              },
+              {
+                text: "В МЕНЮ"
+              }
+            ]
+          ]
+        }
+      })
+
+      await set('state')('PeronalStudentHandler');
+    }
+    else if (data.text === 'ні'){
+      ctx.reply(`Поточну операцію відмінено.`, {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: [
@@ -3379,14 +3484,7 @@ async function main() {
       await set('state')('PeronalStudentHandler');
     }
     else{
-      ctx.reply('Помилка', {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
-            return [{ text: `${index + 1}` }];
-          })
-        }
-      })
+      ctx.reply(script.errorException.chooseButtonError);
     }
   })
 
