@@ -319,22 +319,12 @@ async function main() {
           keyboard: [
             [
               {
-                text: "Додати"
+                text: "Шпрах-Клуби"
               },
-              {
-                text: "Редагувати"
-              }
-            ],[
-              {
-                text: "Видалити"
-              },
-              {
-                text: "Показати всі"
-              }
-            ],[
               {
                 text: "Особові справи студентів"
-              },
+              }
+            ],[
               {
                 text: "В МЕНЮ"
               }
@@ -343,7 +333,7 @@ async function main() {
         },
       })
 
-      await set('state')('RespondAdminActionAndRootChoose');
+      await set('state')('AdminRootHandler');
     }
     else{
       ctx.reply(script.errorException.chooseFunctionError, {
@@ -2441,6 +2431,16 @@ async function main() {
             await dbProcess.ChangeKeyData(currentClub!, 'count', currentClub!.count - 1);
             await dbProcess.WriteNewClubToUser(ctx?.chat?.id ?? -1, currentClub!._id);
 
+            if (currentUser!.count === 1){
+              await ctx.telegram.sendMessage(devChat, script.speakingClub.report.notEnoughLessons(
+                user['name'], user['username'], user['phone_number'], currentUser!.email !== undefined ? currentUser!.email : "Пошта відсутня", user['club-typeclub']
+              ));
+              
+              await ctx.telegram.sendMessage(confirmationChat, script.speakingClub.report.notEnoughLessons(
+                user['name'], user['username'], user['phone_number'], currentUser!.email !== undefined ? currentUser!.email : "Пошта відсутня", user['club-typeclub']
+              ));
+            }
+
             ctx.reply(script.speakingClub.registrationLesson.acceptedRegistration(user['name'], currentClub!.date, 
             currentClub!.time, currentClub!.link));
           }
@@ -2567,6 +2567,113 @@ async function main() {
     }
   })
 
+  // Admin Root Handler
+  onTextMessage('AdminRootHandler', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (data.text === 'Шпрах-Клуби'){
+      ctx.reply("З поверненням, Меркель! :)", {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Додати"
+              },
+              {
+                text: "Редагувати"
+              }
+            ],[
+              {
+                text: "Видалити"
+              },
+              {
+                text: "Показати всі"
+              }
+            ],[
+              {
+                text: "В МЕНЮ"
+              }
+            ]
+          ],
+        },
+      })
+
+      await set('state')('RespondAdminActionAndRootChoose');
+    }
+    else if (data.text === 'Особові справи студентів'){
+      ctx.reply('Виберіть, будь ласка, що вам потрібно', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Показати всіх студентів"
+              },
+              {
+                text: "Додати заняття студенту"
+              }
+            ],[
+              {
+                text: "Видалити студента"
+              },
+              {
+                text: "Оновити дані студенту"
+              }
+            ],
+            [
+              {
+                text: "В МЕНЮ"
+              }
+            ]
+          ]
+        }
+      })
+
+      await set('state')('PeronalStudentHandler');
+    }
+    else if (data.text === 'В МЕНЮ'){
+      ctx.reply(script.entire.chooseFunction, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Вчитель на годину",
+              },
+            ],[
+              {
+                text: "Пробний урок",
+              },
+            ],[
+              {
+                text: "Оплата занять",
+              },
+            ],[
+              {
+                text: "Запис на заняття"
+              }
+            ],[
+              {
+                text: "Шпрах-Клуби"
+              }
+            ],[
+              {
+                text: "Адмін Панель"
+              }
+            ]
+          ]
+        }
+      })
+
+      await set('state')('FunctionRoot');
+    }
+    else{
+      ctx.reply(script.errorException.chooseButtonError);
+    }
+  })
 
   // Admin Panel (start)
   onTextMessage('RespondAdminActionAndRootChoose', async(ctx, user, data) => {
@@ -2679,37 +2786,6 @@ async function main() {
           parse_mode: "HTML"
         });
       }
-    }
-    else if (data.text === 'Особові справи студентів'){
-      ctx.reply('Виберіть, будь ласка, що вам потрібно', {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Показати всіх студентів"
-              },
-              {
-                text: "Додати заняття студенту"
-              }
-            ],[
-              {
-                text: "Видалити студента"
-              },
-              {
-                text: "Оновити дані студенту"
-              }
-            ],
-            [
-              {
-                text: "В МЕНЮ"
-              }
-            ]
-          ]
-        }
-      })
-
-      await set('state')('PeronalStudentHandler');
     }
     else if (data.text === 'В МЕНЮ'){
       ctx.reply(script.entire.chooseFunction, {
