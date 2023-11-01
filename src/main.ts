@@ -2840,10 +2840,15 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1);
 
     if (CheckException.TextException(data)){
-      await set('AP_count')(data.text);
-
-      ctx.reply('Посилання:');
-      await set('state')('ADD_RespondLinkAndCheckRight');
+      if (parseInt(data.text) <= 5 && parseInt(data.text) > 0){
+        await set('AP_count')(data.text);
+  
+        ctx.reply('Посилання:');
+        await set('state')('ADD_RespondLinkAndCheckRight');
+      }
+      else{
+        ctx.reply('Кількість місць не може бути більше 5-ти і менше або 0');
+      }
     }
   })
 
@@ -2899,10 +2904,7 @@ async function main() {
             [
               {
                 text: "В МЕНЮ",
-              },
-              // {
-              //   text: "Назад"
-              // }
+              }
             ],
           ],
         },
@@ -2927,9 +2929,6 @@ async function main() {
               {
                 text: "ні",
               },
-              // {
-              //   text: "Назад"
-              // }
             ],
           ],
         },
