@@ -214,7 +214,7 @@ export default async function arch() {
       return await this.clubdbUsers.find({}).toArray();
     }
 
-    async AddUser(data : {id: number, name: string, number: string, username: string, count: number}) {
+    async AddUser(data : {id: number, name: string, number: string, username: string, role: string, count: number}) {
       await this.clubdbUsers.insertOne(data);
     }
 
@@ -313,6 +313,31 @@ export default async function arch() {
         }}
 
         await this.clubdbUsers.updateOne({_id: user?._id}, updateObject); 
+        return true;
+      }
+      else return false;
+    }
+
+    async SwitchToCompletTrialLesson(idUser: number, haveTrialLessonClub: string){
+      const user = await this.ShowOneUser(idUser);
+      
+      const updateObject = {$set : {
+        haveTrialLessonClub: haveTrialLessonClub
+      }}
+      
+      await this.clubdbUsers.updateOne({_id: user?._id}, updateObject);
+    }
+
+    async ChangeUserRole(idUser: number, newRole: string){
+      const user = await this.ShowOneUser(idUser);
+
+      if (newRole === 'student' || newRole === 'teacher' || newRole === 'admin'){
+        const updateObject = {$set : {
+          role: newRole
+        }}
+
+        await this.clubdbUsers.updateOne({_id: user?._id}, updateObject);
+
         return true;
       }
       else return false;

@@ -78,5 +78,4 @@ type PacketType = {
 };
 
 const packet: PacketType = packetData;
-
 export default packet;

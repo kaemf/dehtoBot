@@ -48,3 +48,5 @@ export type UserScriptState =
   | "GetClubToRegistrationAndCheckPayment"
   | "RegistrationChooseHandlerPayment"
   | "AdminRootHandler"
+  | "RespondUserToActionAndGetRole"
+  | "RespondRoleAndReturn"

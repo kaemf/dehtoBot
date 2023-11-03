@@ -1,4 +1,4 @@
-export function Key(data: string){
+export default function Key(data: string){
     if (data === 'Тема'){
         return 'title';
     }

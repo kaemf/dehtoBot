@@ -9,13 +9,15 @@ import packet from "./data/packets";
 import { confirmationChat, supportChat, devChat, versionBot } from './data/chats';
 import { CheckException } from "./base/check";
 import arch from './base/architecture';
-import getCourses, { Course, Courses } from "./data/coursesAndTopics";
-import { Key } from "./base/changeKeyValue";
-import { keyboards } from "./base/keyboards";
+import getCourses, { Course, Courses, courseNumbersToSkip } from "./data/coursesAndTopics";
+import Key from "./base/changeKeyValue";
+import Role from "./base/changeRoleValue";
+import keyboards from "./base/keyboards";
 import { Markup } from "telegraf";
 import axios from "axios";
 import { Request, Response } from 'express';
 import { ObjectId } from 'mongodb';
+import { text } from "stream/consumers";
 type HideableIKBtn = ReturnType<typeof Markup.button.callback>;
 
 async function main() {
@@ -165,9 +167,7 @@ async function main() {
       if (userObject){
         await dbProcess.UpdateUserData(userObject._id, user['name'], data.phone_number, user['username']);
       }
-      else{
-        dbProcess.AddUser({ id: ctx?.chat?.id ?? -1, name: user['name'], number: data.phone_number, username: user['username'], count: 0 });
-      }
+      else dbProcess.AddUser({ id: ctx?.chat?.id ?? -1, name: user['name'], number: data.phone_number, username: user['username'], role: 'student', count: 0 });
 
       await set('state')('FunctionRoot');
     }
@@ -200,7 +200,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.coursesTeacherOnHour
+          keyboard: keyboards.coursesTeacherOnHour()
         },
       });
       await set('state')('ChoosingCourses');
@@ -214,7 +214,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.chooseLevelCourses
+          keyboard: keyboards.chooseLevelCourses()
         },
       });
       await set('state')('RespondCourseAndGetPacket');
@@ -224,31 +224,13 @@ async function main() {
       await set('state')('_GraphicRespondAndLevelRequest');
     }
     else if (data.text === "Шпрах-Клуби"){
+      const user = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+        line = user!.haveTrialLessonClub;
       ctx.reply("Виберіть одну із запропонованих кнопок", {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Пробне заняття"
-              },
-              {
-                text: "Реєстрація на клуб"
-              }
-            ],[
-              {
-                text: "Залишок моїх занять"
-              },
-              {
-                text: "Оплатити пакет занять"
-              }
-            ],[
-              {
-                text: "Про шпрах-клаб"
-              }
-            ]
-          ],
+          keyboard: await keyboards.speakingClubMenu(line)
         },
       });
 
@@ -283,33 +265,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Вчитель на годину",
-              },
-            ],[
-              {
-                text: "Пробний урок",
-              },
-            ],[
-              {
-                text: "Оплата занять",
-              },
-            ],[
-              {
-                text: "Запис на заняття"
-              }
-            ],[
-              {
-                text: "Шпрах-Клуби"
-              }
-            ],[
-              {
-                text: "Адмін Панель"
-              }
-            ]
-          ],
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1)
         },
       });
     }
@@ -323,25 +279,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Вчитель на годину",
-              },
-            ],[
-              {
-                text: "Пробний урок",
-              },
-            ],[
-              {
-                text: "Оплата занять",
-              },
-            ],[
-              {
-                text: "Запис на заняття"
-              }
-            ]
-          ]
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1)
         }
       })
       await set('state')('FunctionRoot'); 
@@ -540,23 +478,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "A1.1",
-              },
-              {
-                text: "A1.2",
-              },
-            ],[
-              {
-                text: "A2.1", //Added text
-              },
-              {
-                text: "A2.2", //Added text
-              },
-            ],
-          ],
+          keyboard: keyboards.coursesTeacherOnHour()
         },
       });
       await set('state')('ChoosingCourses');
@@ -567,33 +489,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Вчитель на годину",
-              },
-            ],[
-              {
-                text: "Пробний урок",
-              },
-            ],[
-              {
-                text: "Оплата занять",
-              },
-            ],[
-              {
-                text: "Запис на заняття"
-              }
-            ],[
-              {
-                text: "Шпрах-Клуби"
-              }
-            ],[
-              {
-                text: "Адмін Панель"
-              }
-            ]
-          ]
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1)
         }
       })
       await set('state')('FunctionRoot');
@@ -614,14 +510,12 @@ async function main() {
         });
       }
 
-      const keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
-        return [{ text: `${index + 1}` }];
-      });
-
       await ctx.reply('виберіть номер шпраха для запису:', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboard
+          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+            return [{ text: `${index + 1}` }];
+          })
         }
       })
 
@@ -667,33 +561,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Вчитель на годину",
-              },
-            ],[
-              {
-                text: "Пробний урок",
-              },
-            ],[
-              {
-                text: "Оплата занять",
-              },
-            ],[
-              {
-                text: "Запис на заняття"
-              }
-            ],[
-              {
-                text: "Шпрах-Клуби"
-              }
-            ],[
-              {
-                text: "Адмін Панель"
-              }
-            ]
-          ]
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1)
         }
       })
       await set('state')('FunctionRoot');
@@ -735,20 +603,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Рівень А1-А2",
-              },
-            ],[
-              {
-                text: "Рівень В1-В2",
-              },
-              {
-                text: "Рівень С1-С2",
-              },
-            ],
-          ],
+          keyboard: keyboards.chooseLevelCourses()
         },
       })
     }
@@ -762,20 +617,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Рівень А1-А2",
-              },
-            ],[
-              {
-                text: "Рівень В1-В2",
-              },
-              {
-                text: "Рівень С1-С2",
-              },
-            ],
-          ],
+          keyboard: keyboards.chooseLevelCourses()
         },
       });
 
@@ -815,10 +657,7 @@ async function main() {
               },
               {
                 text: "🟡",
-              },
-              // {
-              //   text: "Назад"
-              // }
+              }
             ],
           ],
         },
@@ -1054,10 +893,7 @@ async function main() {
               },
               {
                 text: script.teacherOnHour.additionalQuestions.no,
-              },
-              // {
-              //   text: "Назад"
-              // }
+              }
             ],
           ],
         },
@@ -1073,25 +909,10 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "A1.1",
-              },
-              {
-                text: "A1.2",
-              },
-            ],[
-              {
-                text: "A2.1", //Added text
-              },
-              {
-                text: "A2.2", //Added text
-              }
-            ],
-          ],
+          keyboard: keyboards.coursesTeacherOnHour()
         },
       });
+
       await set('state')('ChoosingCourses');
     }
     else if (getCourses(user['course'] as Courses).some((item) => data.text.includes(item))){
@@ -1140,31 +961,13 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1);
 
     if (CheckException.BackRoot(data)){
+      const user = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+        line = user!.haveTrialLessonClub;
       ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard:[
-            [
-              {
-                text: "Пробне заняття"
-              },
-              {
-                text: "Реєстрація на клуб"
-              }
-            ],[
-              {
-                text: "Залишок моїх занять"
-              },
-              {
-                text: "Оплатити пакет занять"
-              }
-            ],[
-              {
-                text: "Про шпрах-клаб"
-              }
-            ]
-          ]
+          keyboard: await keyboards.speakingClubMenu(line)
         }
       })
       await set('state')('FunctionRoot');
@@ -1175,12 +978,6 @@ async function main() {
   
       console.log('Courses\n' + data.text);
       console.log(courses);
-
-      // const newButton = [
-      //   {
-      //     text: 'Назад',
-      //   }
-      // ];
   
       //skiping process
       const keyboard = courses.map((el: Course, idx) => {
@@ -1188,8 +985,6 @@ async function main() {
         if (courseNumbersToSkip[data.text].includes(displayedIndex)) return null;
         return [{ text: `${displayedIndex}. ${el}` }];
       }).filter(buttons => buttons !== null);
-
-      // keyboard.unshift(newButton);
   
       ctx.reply(script.teacherOnHour.whatLecture, {
         parse_mode: "Markdown",
@@ -1205,26 +1000,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "A1.1",
-              },
-              {
-                text: "A1.2",
-              },
-            ],[
-              {
-                text: "A2.1", //Added text
-              },
-              {
-                text: "A2.2", //Added text
-              },
-              // {
-              //   text: "Назад"
-              // }
-            ],
-          ],
+          keyboard: keyboards.coursesTeacherOnHour()
         },
       })
     }
@@ -1257,23 +1033,10 @@ async function main() {
     return [];
   };
 
-  //For formating MarkedownV2 function escaping special symbols
-  // function text: string) {
-  //   return text.replace(/[*_~`=#.{}[\]()+<>|!\\-]/g, "\\$&");
-  // }
-
-  const courseNumbersToSkip = {
-    "A1.1": [10, 16, 21, 27, 35, 43, 47],
-    "A1.2": [10, 14, 21, 29, 34, 37, 42, 48],
-    "A2.1": [7, 10, 14, 19, 23, 28, 32, 36],
-    "A2.2": [7, 14, 18, 24, 29, 33, 38]
-  } as {[key : string] : number[]}
-
   onPhotoMessage('WaitingForPayment', async (ctx, user, data) => {
     const id = ctx?.chat?.id ?? -1,
       set = db.set(id),
       get = db.get(id);
-
 
     // Вчитель на годину
 
@@ -1427,33 +1190,7 @@ async function main() {
       parse_mode: "Markdown",
       reply_markup: {
         one_time_keyboard: true,
-        keyboard: [
-          [
-            {
-              text: "Вчитель на годину",
-            },
-          ],[
-            {
-              text: "Пробний урок",
-            },
-          ],[
-            {
-              text: "Оплата занять",
-            },
-          ],[
-            {
-              text: "Запис на заняття"
-            }
-          ],[
-            {
-              text: "Шпрах-Клуби"
-            }
-          ],[
-            {
-              text: "Адмін Панель"
-            }
-          ]
-        ]
+        keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1)
       }
     })
     await set('state')('FunctionRoot');
@@ -1547,33 +1284,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Вчитель на годину",
-              },
-            ],[
-              {
-                text: "Пробний урок",
-              },
-            ],[
-              {
-                text: "Оплата занять",
-              },
-            ],[
-              {
-                text: "Запис на заняття"
-              }
-            ],[
-              {
-                text: "Шпрах-Клуби"
-              }
-            ],[
-              {
-                text: "Адмін Панель"
-              }
-            ]
-          ],
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1),
         },
       });
     }
@@ -1702,31 +1413,13 @@ async function main() {
       await set('state')('EndRootManager');
     }
     else{
+      const user = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+        line = user!.haveTrialLessonClub;
       ctx.reply(script.errorException.chooseButtonError, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Пробне заняття"
-              },
-              {
-                text: "Реєстрація на клуб"
-              }
-            ],[
-              {
-                text: "Залишок моїх занять"
-              },
-              {
-                text: "Оплатити пакет занять"
-              }
-            ],[
-              {
-                text: "Про шпрах-клаб"
-              }
-            ]
-          ],
+          keyboard: await keyboards.speakingClubMenu(line)
         },
       });
     }
@@ -1858,31 +1551,13 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1);
 
     if (CheckException.BackRoot(data)){
+      const user = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+        line = user!.haveTrialLessonClub;
       ctx.reply("Виберіть одну із запропонованих кнопок", {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Пробне заняття"
-              },
-              {
-                text: "Реєстрація на клуб"
-              }
-            ],[
-              {
-                text: "Залишок моїх занять"
-              },
-              {
-                text: "Оплатити пакет занять"
-              }
-            ],[
-              {
-                text: "Про шпрах-клаб"
-              }
-            ]
-          ],
+          keyboard: await keyboards.speakingClubMenu(line)
         },
       });
 
@@ -1997,23 +1672,7 @@ async function main() {
           parse_mode: "Markdown",
           reply_markup: {
             one_time_keyboard: true,
-            keyboard: [
-              [
-                {
-                  text: "A1.1",
-                },
-                {
-                  text: "A1.2",
-                },
-              ],[
-                {
-                  text: "A2.1", //Added text
-                },
-                {
-                  text: "A2.2", //Added text
-                }
-              ],
-            ],
+            keyboard: keyboards.coursesTeacherOnHour()
           },
         });
         await set('state')('RespondCourseAndGetMail')
@@ -2089,23 +1748,7 @@ async function main() {
           parse_mode: "Markdown",
           reply_markup: {
             one_time_keyboard: true,
-            keyboard: [
-              [
-                {
-                  text: "A1.1",
-                },
-                {
-                  text: "A1.2",
-                },
-              ],[
-                {
-                  text: "A2.1", //Added text
-                },
-                {
-                  text: "A2.2", //Added text
-                }
-              ],
-            ],
+            keyboard: keyboards.coursesTeacherOnHour()
           },
         });
         await set('state')('RespondCourseAndGetMail')
@@ -2133,23 +1776,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "A1.1",
-              },
-              {
-                text: "A1.2",
-              },
-            ],[
-              {
-                text: "A2.1", //Added text
-              },
-              {
-                text: "A2.2", //Added text
-              }
-            ],
-          ],
+          keyboard: keyboards.coursesTeacherOnHour()
         },
       });
     }
@@ -2302,6 +1929,7 @@ async function main() {
       if (paymentApprovedSeccussfully){
         await dbProcess.WriteNewClubToUser(ctx?.chat?.id ?? -1, new ObjectId(user['sc_triallesson_clubindex']))
         await dbProcess.ChangeKeyData(club!, 'count', club!.count - 1);
+        await dbProcess.SwitchToCompletTrialLesson(ctx?.chat?.id ?? -1, 'true');
 
         await ctx.reply(script.speakingClub.report.acceptedTrialLesson(user['name'], club!.date, club!.time, club!.link), {
           reply_markup: {
@@ -2338,31 +1966,13 @@ async function main() {
       currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
     if (CheckException.BackRoot(data)){
+      const user = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+        line = user!.haveTrialLessonClub;
       ctx.reply("Виберіть одну із запропонованих кнопок", {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Пробне заняття"
-              },
-              {
-                text: "Реєстрація на клуб"
-              }
-            ],[
-              {
-                text: "Залишок моїх занять"
-              },
-              {
-                text: "Оплатити пакет занять"
-              }
-            ],[
-              {
-                text: "Про шпрах-клаб"
-              }
-            ]
-          ],
+          keyboard: await keyboards.speakingClubMenu(line)
         },
       });
 
@@ -2524,27 +2134,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Додати"
-              },
-              {
-                text: "Редагувати"
-              }
-            ],[
-              {
-                text: "Видалити"
-              },
-              {
-                text: "Показати всі"
-              }
-            ],[
-              {
-                text: "В МЕНЮ"
-              }
-            ]
-          ],
+          keyboard: keyboards.spekingClubAdminPanel()
         },
       })
 
@@ -2554,28 +2144,7 @@ async function main() {
       ctx.reply('Виберіть, будь ласка, що вам потрібно', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Показати всіх студентів"
-              },
-              {
-                text: "Додати заняття студенту"
-              }
-            ],[
-              {
-                text: "Видалити студента"
-              },
-              {
-                text: "Оновити дані студенту"
-              }
-            ],
-            [
-              {
-                text: "В МЕНЮ"
-              }
-            ]
-          ]
+          keyboard: keyboards.personalStudentAdminPanel()
         }
       })
 
@@ -2586,33 +2155,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Вчитель на годину",
-              },
-            ],[
-              {
-                text: "Пробний урок",
-              },
-            ],[
-              {
-                text: "Оплата занять",
-              },
-            ],[
-              {
-                text: "Запис на заняття"
-              }
-            ],[
-              {
-                text: "Шпрах-Клуби"
-              }
-            ],[
-              {
-                text: "Адмін Панель"
-              }
-            ]
-          ]
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1)
         }
       })
 
@@ -2696,14 +2239,12 @@ async function main() {
         });
       }
 
-      const keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
-        return [{ text: `${index + 1}` }];
-      });
-
       await ctx.reply('Виберіть номер шпраха для редагування:', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboard
+          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+            return [{ text: `${index + 1}` }];
+          })
         }
       })
 
@@ -2740,33 +2281,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Вчитель на годину",
-              },
-            ],[
-              {
-                text: "Пробний урок",
-              },
-            ],[
-              {
-                text: "Оплата занять",
-              },
-            ],[
-              {
-                text: "Запис на заняття"
-              }
-            ],[
-              {
-                text: "Шпрах-Клуби"
-              }
-            ],[
-              {
-                text: "Адмін Панель"
-              }
-            ]
-          ]
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1)
         }
       })
 
@@ -3007,23 +2522,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Додати"
-              },
-              {
-                text: "Редагувати"
-              }
-            ],[
-              {
-                text: "Видалити"
-              },
-              {
-                text: "Показати всі"
-              }
-            ]
-          ],
+          keyboard: keyboards.spekingClubAdminPanel()
         },
       });
 
@@ -3034,23 +2533,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Додати"
-              },
-              {
-                text: "Редагувати"
-              }
-            ],[
-              {
-                text: "Видалити"
-              },
-              {
-                text: "Показати всі"
-              }
-            ]
-          ],
+          keyboard: keyboards.spekingClubAdminPanel()
         },
       });
 
@@ -3072,30 +2555,7 @@ async function main() {
       ctx.reply("Який саме пункт тре змінити?", {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Тема"
-              },
-              {
-                text: "Викладач"
-              },
-            ],[
-              {
-                text: "Дата"
-              },
-              {
-                text: "Час"
-              },
-            ],[
-              {
-                text: "Місця"
-              },
-              {
-                text: "Посилання"
-              }
-            ]
-          ]
+          keyboard: keyboards.adminPanelChangeClub()
         }
       });
 
@@ -3119,30 +2579,7 @@ async function main() {
       ctx.reply("Помилка", {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Тема"
-              },
-              {
-                text: "Викладач"
-              },
-            ],[
-              {
-                text: "Дата"
-              },
-              {
-                text: "Час"
-              },
-            ],[
-              {
-                text: "Місця"
-              },
-              {
-                text: "Посилання"
-              }
-            ]
-          ]
+          keyboard: keyboards.adminPanelChangeClub()
         }
       });
     }
@@ -3177,23 +2614,7 @@ async function main() {
             parse_mode: "Markdown",
             reply_markup: {
               one_time_keyboard: true,
-              keyboard: [
-                [
-                  {
-                    text: "Додати"
-                  },
-                  {
-                    text: "Редагувати"
-                  }
-                ],[
-                  {
-                    text: "Видалити"
-                  },
-                  {
-                    text: "Показати всі"
-                  }
-                ]
-              ],
+              keyboard: keyboards.spekingClubAdminPanel()
             },
           });
 
@@ -3216,23 +2637,7 @@ async function main() {
           parse_mode: "Markdown",
           reply_markup: {
             one_time_keyboard: true,
-            keyboard: [
-              [
-                {
-                  text: "Додати"
-                },
-                {
-                  text: "Редагувати"
-                }
-              ],[
-                {
-                  text: "Видалити"
-                },
-                {
-                  text: "Показати всі"
-                }
-              ]
-            ],
+            keyboard: keyboards.spekingClubAdminPanel()
           },
         });
 
@@ -3288,38 +2693,30 @@ async function main() {
 
       await set('state')('DeleteStudentAndCheckAction');
     }
+    else if (data.text === 'Змінити роль користувача'){
+      const results = await dbProcess.ShowAllUsers();
+  
+      for (let i = 0; i < results.length; i++) {
+        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count));
+      }
+
+      await ctx.reply('Виберіть номер студента, якого потрібно видалити', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+            return [{ text: `${index + 1}` }];
+          })
+        }
+      })
+
+      await set('state')('RespondUserToActionAndGetRole');
+    }
     else if (data.text === 'В МЕНЮ'){
       ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Вчитель на годину",
-              },
-            ],[
-              {
-                text: "Пробний урок",
-              },
-            ],[
-              {
-                text: "Оплата занять",
-              },
-            ],[
-              {
-                text: "Запис на заняття"
-              }
-            ],[
-              {
-                text: "Шпрах-Клуби"
-              }
-            ],[
-              {
-                text: "Адмін Панель"
-              }
-            ]
-          ]
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1)
         }
       })
 
@@ -3329,23 +2726,7 @@ async function main() {
       ctx.reply(script.errorException.chooseButtonError, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Показати всіх студентів"
-              },
-              {
-                text: "Додати заняття студенту"
-              }
-            ],[
-              {
-                text: "Видалити студента"
-              },
-              {
-                text: "В МЕНЮ"
-              }
-            ]
-          ]
+          keyboard: keyboards.personalStudentAdminPanel()
         }
       })
     }
@@ -3379,30 +2760,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Додати"
-              },
-              {
-                text: "Редагувати"
-              }
-            ],[
-              {
-                text: "Видалити"
-              },
-              {
-                text: "Показати всі"
-              }
-            ],[
-              {
-                text: "Особові справи студентів"
-              },
-              {
-                text: "В МЕНЮ"
-              }
-            ]
-          ],
+          keyboard: keyboards.personalStudentAdminPanel()
         },
       })
 
@@ -3459,23 +2817,7 @@ async function main() {
       ctx.reply(`Успішно видалено студента №${indexToDelete}`, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Показати всіх студентів"
-              },
-              {
-                text: "Додати заняття студенту"
-              }
-            ],[
-              {
-                text: "Видалити студента"
-              },
-              {
-                text: "В МЕНЮ"
-              }
-            ]
-          ]
+          keyboard: keyboards.personalStudentAdminPanel()
         }
       })
 
@@ -3485,23 +2827,7 @@ async function main() {
       ctx.reply(`Поточну операцію відмінено.`, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Показати всіх студентів"
-              },
-              {
-                text: "Додати заняття студенту"
-              }
-            ],[
-              {
-                text: "Видалити студента"
-              },
-              {
-                text: "В МЕНЮ"
-              }
-            ]
-          ]
+          keyboard: keyboards.personalStudentAdminPanel()
         }
       })
 
@@ -3509,6 +2835,56 @@ async function main() {
     }
     else{
       ctx.reply(script.errorException.chooseButtonError);
+    }
+  })
+
+  // Change user role
+  onTextMessage('RespondUserToActionAndGetRole', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1),
+      results = await dbProcess.ShowAllUsers();
+
+    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length){
+      const getUserActualName = (await dbProcess.ShowAllUsers()).map(item => item.name)[parseInt(data.text) - 1];
+      await set('AP_StudentHandler_idToChange')(data.text);
+
+      ctx.reply(`Виберіть нову роль для ${getUserActualName}`, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.roleChange()
+        }
+      })
+
+      await set('state')('RespondRoleAndReturn');
+    }
+    else{
+      ctx.reply(script.errorException.chooseButtonError);
+    }
+  })
+
+  onTextMessage('RespondRoleAndReturn', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1),
+      results = await dbProcess.ShowAllUsers(),
+      currentUserObjectID = results.map(item => item.id)[parseInt(user['AP_StudentHandler_idToChange']) - 1];
+
+    if (CheckException.TextException(data) && Role(data.text)){
+      await dbProcess.ChangeUserRole(currentUserObjectID, Role(data.text).toString());
+
+      ctx.reply(`Успішно виконана операція!`, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.personalStudentAdminPanel()
+        }
+      })
+
+      await set('state')('PeronalStudentHandler');
+    }
+    else{
+      ctx.reply(script.errorException.chooseButtonError, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.roleChange()
+        }
+      })
     }
   })
 
@@ -3601,6 +2977,7 @@ async function main() {
     return ctx.answerCbQuery(`Користувач: ${id}, стан: НЕ ОПЛАЧЕНО`);
   });
 
+  
   bot.launch();
 }
 

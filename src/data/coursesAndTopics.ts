@@ -214,4 +214,11 @@ const getCourses = (c: Courses) => {
   }
 };
 
+export const courseNumbersToSkip = {
+  "A1.1": [10, 16, 21, 27, 35, 43, 47],
+  "A1.2": [10, 14, 21, 29, 34, 37, 42, 48],
+  "A2.1": [7, 10, 14, 19, 23, 28, 32, 36],
+  "A2.2": [7, 14, 18, 24, 29, 33, 38]
+} as {[key : string] : number[]}
+
 export default getCourses;
