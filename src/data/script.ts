@@ -1,5 +1,3 @@
-import { time } from 'console';
-import { link } from 'fs';
 import { ParsedQs } from 'qs';
 
 const script = {

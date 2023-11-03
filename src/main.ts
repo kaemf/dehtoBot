@@ -6,19 +6,17 @@
 // Main File
 import script from "./data/script";
 import packet from "./data/packets";
-import { Markup } from "telegraf";
-import axios from "axios";
+import { confirmationChat, supportChat, devChat, versionBot } from './data/chats';
 import { CheckException } from "./base/check";
-type HideableIKBtn = ReturnType<typeof Markup.button.callback>;
 import arch from './base/architecture';
-import { Request, Response } from 'express';
 import getCourses, { Course, Courses } from "./data/coursesAndTopics";
 import { Key } from "./base/changeKeyValue";
+import { keyboards } from "./base/keyboards";
+import { Markup } from "telegraf";
+import axios from "axios";
+import { Request, Response } from 'express';
 import { ObjectId } from 'mongodb';
-const confirmationChat = '437316791',
-  supportChat = '6081848014',
-  devChat = '740129506',
-  versionBot = '4.5.3';
+type HideableIKBtn = ReturnType<typeof Markup.button.callback>;
 
 async function main() {
   const [ onTextMessage, onContactMessage, onPhotoMessage, bot, db, app, token, dbProcess ] = await arch();
@@ -158,33 +156,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Вчитель на годину",
-              },
-            ],[
-              {
-                text: "Пробний урок",
-              },
-            ],[
-              {
-                text: "Оплата занять",
-              },
-            ],[
-              {
-                text: "Запис на заняття"
-              }
-            ],[
-              {
-                text: "Шпрах-Клуби"
-              }
-            ],[
-              {
-                text: "Адмін Панель"
-              }
-            ]
-          ]
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1)
         }
       })
 
@@ -228,23 +200,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "A1.1",
-              },
-              {
-                text: "A1.2",
-              },
-            ],[
-              {
-                text: "A2.1", //Added text
-              },
-              {
-                text: "A2.2", //Added text
-              }
-            ],
-          ],
+          keyboard: keyboards.coursesTeacherOnHour
         },
       });
       await set('state')('ChoosingCourses');
@@ -258,20 +214,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Рівень А1-А2",
-              },
-            ],[
-              {
-                text: "Рівень В1-В2",
-              },
-              {
-                text: "Рівень С1-С2",
-              },
-            ],
-          ],
+          keyboard: keyboards.chooseLevelCourses
         },
       });
       await set('state')('RespondCourseAndGetPacket');
@@ -2045,6 +1988,8 @@ async function main() {
             ],
           },
         });
+
+        await set('SC_TrialLessonComplet_active')('true');
         await set('state')('EndRootManager');
       }
       else if (user['club-typeclub'] === 'Шпрах-Клуб+PLUS'){
@@ -2136,6 +2081,7 @@ async function main() {
             ],
           },
         });
+        await set('SC_TrialLessonComplet_active')('true');
         await set('state')('EndRootManager');
       }
       else if (user['club-typeclub'] === 'Шпрах-Клуб+PLUS'){
@@ -2245,6 +2191,7 @@ async function main() {
           },
         });
   
+        await set('SC_TrialLessonComplet_active')('true');
         await set('state')('EndRootManager');
       }
       else{
@@ -2370,6 +2317,7 @@ async function main() {
         });
       }
 
+      await set('SC_TrialLessonComplet_active')('true'); 
       await set('state')('EndRootManager');
     }
     else if (CheckException.FileException(data)){
