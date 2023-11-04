@@ -398,11 +398,12 @@ ${addString}`,
 👉🏼 Коли: ${date}
 👉🏼 На котру: ${time} 🇺🇦`,
 
-      showUser: (position: number, name: string, id: number, username: string, phone_number: string, count: number) => `✅${position}
+      showUser: (position: number, name: string, id: number, username: string, phone_number: string, count: number, role: string) => `✅${position}
 ID: ${id}
 Ім'я: ${name}
 Telegram: @${username}
 Номер телефону: ${phone_number}
+Користувач є: ${role}
 Кількість доступних занять: ${count > 0 ? count : '❌'}`,
 
       checkClub: (title: string, teacher: string, date: string, time: string, link: string, count: number) => {

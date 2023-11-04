@@ -1,37 +1,28 @@
 // DehtoBot for dehto German Course
 // Developed by Yaroslav Volkivskyi (TheLaidSon)
 
-// Actual v4.5.3
+// Actual v4.8.3
 
 // Main File
-import script from "./data/script";
-import packet from "./data/packets";
-import { confirmationChat, supportChat, devChat, versionBot } from './data/chats';
-import { CheckException } from "./base/check";
-import arch from './base/architecture';
-import getCourses, { Course, Courses, courseNumbersToSkip } from "./data/coursesAndTopics";
-import Key from "./base/changeKeyValue";
-import Role from "./base/changeRoleValue";
-import keyboards from "./base/keyboards";
+import script from "./data/datapoint/point/script";
+import packet from "./data/course/packets";
+import { confirmationChat, supportChat, devChat, versionBot, eugeneChat } from './data/datapoint/point/chats';
+import { CheckException } from "./base/handlers/check";
+import arch from './base/main/architecture';
+import getCourses, { Course, Courses, courseNumbersToSkip } from "./data/course/coursesAndTopics";
+import Key from "./base/handlersdb/changeKeyValue";
+import Role, { ConvertRole } from "./base/handlersdb/changeRoleValue";
+import keyboards from "./base/handlers/keyboards";
+import { inlineApprovePayment, inlineAcceptTrialPayment } from "./data/datapoint/function/paymentButtons";
+import formattedName from "./data/datapoint/function/nameFormatt";
+import MongoDBReturnType from "./data/datapoint/point/mongoDBType";
 import { Markup } from "telegraf";
 import axios from "axios";
-import { Request, Response } from 'express';
+import e, { Request, Response } from 'express';
 import { ObjectId } from 'mongodb';
-import { text } from "stream/consumers";
-type HideableIKBtn = ReturnType<typeof Markup.button.callback>;
 
 async function main() {
   const [ onTextMessage, onContactMessage, onPhotoMessage, bot, db, app, token, dbProcess ] = await arch();
-
-  //Begin bot work, collecting user data (his telegram name) set up state_1
-  bot.start((ctx) => {
-    console.log('STARTED');
-    ctx.reply(script.entire.greeting, {reply_markup: { remove_keyboard: true }});
-
-    const username = ctx.chat.type === "private" ? ctx.chat.username ?? null : null;
-    db.set(ctx.chat.id)('username')(username ?? 'unknown')
-    db.set(ctx.chat.id)('state')('WaitingForName') 
-  });
 
   app.post('/api/sendToTelegram', async (req: Request, res: Response) => {
     try {
@@ -73,27 +64,15 @@ async function main() {
     }
   });
 
-  interface MongoDBReturnType {
-    _id: ObjectId;
-    title: string;
-    teacher: string;
-    date: string;
-    time: string;
-    count: number;
-    link: string;
-  }
+  //Begin bot work, collecting user data (his telegram name) set up state_1
+  bot.start((ctx) => {
+    console.log('STARTED');
+    ctx.reply(script.entire.greeting, {reply_markup: { remove_keyboard: true }});
 
-  const formattedName = (name : String) => {
-    const words = name.split(' ');
-
-    const formattedWords = words.map(word => {
-      const firstLetter = word.charAt(0).toUpperCase(),
-        restOfWord = word.slice(1).toLowerCase();
-      return firstLetter + restOfWord;
-    });
-
-    return formattedWords.join(' ');
-  }
+    const username = ctx.chat.type === "private" ? ctx.chat.username ?? null : null;
+    db.set(ctx.chat.id)('username')(username ?? 'unknown')
+    db.set(ctx.chat.id)('state')('WaitingForName')
+  });
   
   //Get real user name and root to get phone number with this.function
   onTextMessage('WaitingForName', async (ctx, user, data) => {
@@ -351,14 +330,19 @@ async function main() {
       await set('addquesttrial')(data.text);
 
       // For Developer
-      // ctx.reply(script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, formattedDateRecord),
-      //   {parse_mode: 'HTML'});
+      // ctx.telegram.sendMessage(devChat,
+      //   script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, formattedDateRecord),
+      //   {parse_mode: 'HTML'})
 
       ctx.telegram.sendMessage(confirmationChat,
         script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, formattedDateRecord),
         {parse_mode: 'HTML'})
 
       ctx.telegram.sendMessage(supportChat,
+        script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, formattedDateRecord),
+        {parse_mode: 'HTML'})
+
+      ctx.telegram.sendMessage(eugeneChat,
         script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, formattedDateRecord),
         {parse_mode: 'HTML'})
 
@@ -431,8 +415,10 @@ async function main() {
       await set('addquesttrial')(user['addquesttrial'] ?? data.text);
   
       // For Developer
-      // ctx.reply(script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, formattedDateRecord),
-      //   {parse_mode: 'HTML'});
+      // ctx.telegram.sendMessage(devChat, 
+      //   script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, formattedDateRecord),
+      //   {parse_mode: 'HTML'}
+      // )
   
       ctx.telegram.sendMessage(confirmationChat, 
         script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, formattedDateRecord),
@@ -440,6 +426,11 @@ async function main() {
       )
   
       ctx.telegram.sendMessage(supportChat,
+        script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, formattedDateRecord),
+        {parse_mode: 'HTML'}
+      )
+
+      ctx.telegram.sendMessage(eugeneChat,
         script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, formattedDateRecord),
         {parse_mode: 'HTML'}
       )
@@ -714,9 +705,9 @@ async function main() {
         unique_file_id = data.photo;
   
       // For Developer
-      // ctx.telegram.sendPhoto(id, unique_file_id, {
-      //   caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], formattedDateRecord),
-      //   parse_mode: 'HTML', 
+      // ctx.telegram.sendPhoto(devChat, unique_file_id, {
+      //   caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], formattedDateRecord), 
+      //   parse_mode: 'HTML',
       //   ...Markup.inlineKeyboard(inline)
       //   }
       // )
@@ -729,6 +720,13 @@ async function main() {
       )
   
       ctx.telegram.sendPhoto(supportChat, unique_file_id, {
+        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], formattedDateRecord),
+        parse_mode: 'HTML', 
+        ...Markup.inlineKeyboard(inline)
+        }
+      )
+
+      ctx.telegram.sendPhoto(eugeneChat, unique_file_id, {
         caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], formattedDateRecord),
         parse_mode: 'HTML', 
         ...Markup.inlineKeyboard(inline)
@@ -765,9 +763,9 @@ async function main() {
         unique_file_id = data.file;
   
       // For Developer
-      // ctx.telegram.sendDocument(id, unique_file_id, {
-      //   caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], formattedDateRecord),
-      //   parse_mode: 'HTML', 
+      // ctx.telegram.sendDocument(devChat, unique_file_id, {
+      //   caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], formattedDateRecord), 
+      //   parse_mode: 'HTML',
       //   ...Markup.inlineKeyboard(inline)
       //   }
       // )
@@ -780,6 +778,13 @@ async function main() {
       )
   
       ctx.telegram.sendDocument(supportChat, unique_file_id, {
+        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], formattedDateRecord),
+        parse_mode: 'HTML', 
+        ...Markup.inlineKeyboard(inline)
+        }
+      )
+
+      ctx.telegram.sendDocument(eugeneChat, unique_file_id, {
         caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], formattedDateRecord),
         parse_mode: 'HTML', 
         ...Markup.inlineKeyboard(inline)
@@ -1007,31 +1012,31 @@ async function main() {
   })
 
   //Generate button for payment status (change when paymentStatus changed)
-  const inlineApprovePayment = (id: number, paymentStatus: string): HideableIKBtn[][] => {
-    if (paymentStatus === 'unknown') {
-        return [
-            [
-                Markup.button.callback("👌", `approvePayment:${id}`),
-                Markup.button.callback("❌", `rejectPayment:${id}`),
-            ]
-        ];
-    } else if (paymentStatus === 'paid') {
-        return [
-            [
-                Markup.button.callback("🟢 Оплачено", `paidCheck:${id}`),
-                Markup.button.callback("❌", `resetPaymentStatus:${id}`),
-            ]
-        ];
-    } else if (paymentStatus === 'nopaid') {
-        return [
-            [
-                Markup.button.callback("🔴 Не оплачено", `nopaidCheck:${id}`),
-                Markup.button.callback("❌", `resetPaymentStatus:${id}`),
-            ]
-        ];
-    }
-    return [];
-  };
+  // const inlineApprovePayment = (id: number, paymentStatus: string): HideableIKBtn[][] => {
+  //   if (paymentStatus === 'unknown') {
+  //       return [
+  //           [
+  //               Markup.button.callback("👌", `approvePayment:${id}`),
+  //               Markup.button.callback("❌", `rejectPayment:${id}`),
+  //           ]
+  //       ];
+  //   } else if (paymentStatus === 'paid') {
+  //       return [
+  //           [
+  //               Markup.button.callback("🟢 Оплачено", `paidCheck:${id}`),
+  //               Markup.button.callback("❌", `resetPaymentStatus:${id}`),
+  //           ]
+  //       ];
+  //   } else if (paymentStatus === 'nopaid') {
+  //       return [
+  //           [
+  //               Markup.button.callback("🔴 Не оплачено", `nopaidCheck:${id}`),
+  //               Markup.button.callback("❌", `resetPaymentStatus:${id}`),
+  //           ]
+  //       ];
+  //   }
+  //   return [];
+  // };
 
   onPhotoMessage('WaitingForPayment', async (ctx, user, data) => {
     const id = ctx?.chat?.id ?? -1,
@@ -1073,9 +1078,9 @@ async function main() {
       const unique_file_id = data.photo;
       
       // For Developer
-      // ctx.telegram.sendPhoto(id, unique_file_id, {
+      // ctx.telegram.sendPhoto(devChat, unique_file_id, {
       //   caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
-      //   parse_mode: 'HTML',
+      //   parse_mode: 'HTML', 
       //   ...Markup.inlineKeyboard(inline)
       //   }
       // )
@@ -1088,6 +1093,13 @@ async function main() {
       )
   
       ctx.telegram.sendPhoto(supportChat, unique_file_id, {
+        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard(inline)
+        }
+      )
+
+      ctx.telegram.sendPhoto(eugeneChat, unique_file_id, {
         caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard(inline)
@@ -1132,9 +1144,9 @@ async function main() {
       const unique_file_id = data.file;
       
       // For Developer
-      // ctx.telegram.sendDocument(id, unique_file_id, {
+      // ctx.telegram.sendDocument(devChat, unique_file_id, {
       //   caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
-      //   parse_mode: 'HTML',
+      //   parse_mode: 'HTML', 
       //   ...Markup.inlineKeyboard(inline)
       //   }
       // )
@@ -1147,6 +1159,13 @@ async function main() {
       )
   
       ctx.telegram.sendDocument(supportChat, unique_file_id, {
+        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard(inline)
+        }
+      )
+
+      ctx.telegram.sendDocument(eugeneChat, unique_file_id, {
         caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard(inline)
@@ -1240,7 +1259,8 @@ async function main() {
       await set('_addquesttrial')(data.text);
       
       // For Developer
-      // ctx.reply(script.registrationLesson.report(user['name'], user['username'], user['phone_number'], user['_graphic'], user['_languagelevel'], data.text, formattedDateRecord),
+      // ctx.telegram.sendMessage(devChat,
+      //   script.registrationLesson.report(user['name'], user['username'], user['phone_number'], user['_graphic'], user['_languagelevel'], data.text, formattedDateRecord),
       //   { parse_mode: 'HTML' });
   
       ctx.telegram.sendMessage(confirmationChat,
@@ -1248,6 +1268,10 @@ async function main() {
         { parse_mode: 'HTML' });
   
       ctx.telegram.sendMessage(supportChat,
+        script.registrationLesson.report(user['name'], user['username'], user['phone_number'], user['_graphic'], user['_languagelevel'], data.text, formattedDateRecord),
+        { parse_mode: 'HTML' });
+
+      ctx.telegram.sendMessage(eugeneChat,
         script.registrationLesson.report(user['name'], user['username'], user['phone_number'], user['_graphic'], user['_languagelevel'], data.text, formattedDateRecord),
         { parse_mode: 'HTML' });
   
@@ -1277,7 +1301,8 @@ async function main() {
 
   // Club Handler
   onTextMessage('ActionClubRespondAndRootAction', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
+    const set = db.set(ctx?.chat?.id ?? -1),
+      userA = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
     if (CheckException.BackRoot(data)){
       ctx.reply(script.entire.chooseFunction, {
@@ -1289,75 +1314,8 @@ async function main() {
       });
     }
     else if (data.text === 'Пробне заняття'){
-      ctx.reply(script.speakingClub.trialLesson.entire, {
-        parse_mode: "HTML",
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "так"
-              },
-              {
-                text: "ні"
-              }
-            ]
-          ],
-        },
-      })
-
-      await set('state')('RespondChooseAndRespondGetLesson');
-    }
-    else if (data.text === 'Реєстрація на клуб'){
-      const results = await dbProcess.ShowAll();
-      let addString : string = '';
-    
-      for (let i = 0; i < results.length; i++) {
-          if (results[i].count > 0) {
-            addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
-          } else {
-            addString = `❌ немає вільних місць ❌`;
-          }
-
-        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString), {
-          parse_mode: "HTML"
-        });
-      }
-
-      const keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
-        return [{ text: `${index + 1}` }];
-      });
-
-      await ctx.reply('виберіть номер шпраха для запису:', {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: keyboard
-        }
-      })
-
-      await set('state')('GetClubToRegistrationAndCheckPayment');
-    }
-    else if (data.text === 'Залишок моїх занять'){
-      const currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
-        number : number = currentUser!.count;
-      if (number > 0){
-        ctx.reply(script.speakingClub.lessLessons(number), {
-          parse_mode: "HTML",
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: [
-              [
-                {
-                  text: "В МЕНЮ"
-                },
-              ]
-            ],
-          },
-        });
-        await set('state')('EndRootManager');
-      }
-      else{
-        ctx.reply(script.speakingClub.lessLessons(number), {
+      if (userA!.role !== 'teacher'){
+        ctx.reply(script.speakingClub.trialLesson.entire, {
           parse_mode: "HTML",
           reply_markup: {
             one_time_keyboard: true,
@@ -1372,28 +1330,112 @@ async function main() {
               ]
             ],
           },
-        });
-        await set('state')('RespondCheckLessonsAndGetLessons');
+        })
+  
+        await set('state')('RespondChooseAndRespondGetLesson');
+      }
+      else{
+        ctx.reply('викладачі не можуть брати пробне заняття');
+      }
+    }
+    else if (data.text === 'Реєстрація на клуб'){
+      if (userA!.role !== 'teacher'){
+        const results = await dbProcess.ShowAll();
+        let addString : string = '';
+      
+        for (let i = 0; i < results.length; i++) {
+            if (results[i].count > 0) {
+              addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
+            } else {
+              addString = `❌ немає вільних місць ❌`;
+            }
+  
+          await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString), {
+            parse_mode: "HTML"
+          });
+        }
+  
+        await ctx.reply('виберіть номер шпраха для запису:', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+              return [{ text: `${index + 1}` }];
+            })
+          }
+        })
+  
+        await set('state')('GetClubToRegistrationAndCheckPayment');
+      }
+      else{
+        ctx.reply('викладачі не можуть записатись.')
+      }
+    }
+    else if (data.text === 'Залишок моїх занять'){
+      if (userA!.role !== 'teacher'){
+        if (userA!.count > 0){
+          ctx.reply(script.speakingClub.lessLessons(userA!.count), {
+            parse_mode: "HTML",
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: [
+                [
+                  {
+                    text: "В МЕНЮ"
+                  },
+                ]
+              ],
+            },
+          });
+          await set('state')('EndRootManager');
+        }
+        else{
+          ctx.reply(script.speakingClub.lessLessons(userA!.count), {
+            parse_mode: "HTML",
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: [
+                [
+                  {
+                    text: "так"
+                  },
+                  {
+                    text: "ні"
+                  }
+                ]
+              ],
+            },
+          });
+          await set('state')('RespondCheckLessonsAndGetLessons');
+        }
+      }
+      else{
+        ctx.reply('викладач немає занять');
       }
     }
     else if (data.text === 'Оплатити пакет занять'){
-      ctx.reply(script.speakingClub.payPacketLesson, {
-        parse_mode: "HTML",
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Шпрах-Клуб"
-              },
-              {
-                text: "Шпрах-Клуб+PLUS"
-              }
-            ]
-          ],
-        },
-      });
-      await set('state')('RespondTypePacketAndGetPayment');
+      const user = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+      if (user!.role !== 'teacher'){
+        ctx.reply(script.speakingClub.payPacketLesson, {
+          parse_mode: "HTML",
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: [
+              [
+                {
+                  text: "Шпрах-Клуб"
+                },
+                {
+                  text: "Шпрах-Клуб+PLUS"
+                }
+              ]
+            ],
+          },
+        });
+        await set('state')('RespondTypePacketAndGetPayment');
+      }
+      else{
+        ctx.reply('викладачі не можуть оплачувати заняття.')
+      }
     }
     else if (data.text === 'Про шпрах-клаб'){
       ctx.reply(script.speakingClub.about, {
@@ -1900,18 +1942,21 @@ async function main() {
   // Waiting Payment for Trial Lesson Club
   onPhotoMessage('CheckPaymentAndReturn', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1),
-      paymentApprovedSeccussfully : boolean = true;
+      get = db.get(ctx?.chat?.id ?? -1);
 
     if (CheckException.BackRoot(data)){
 
     }
     else if (CheckException.PhotoException(data)){
+      await set('paymentStatusTrialLesson')('unknown');
+      const paymentStatus: string = await get('paymentStatusTrialLesson') ?? 'unknown',
+        inline = inlineAcceptTrialPayment(ctx?.chat?.id ?? -1, user['sc_triallesson_clubindex'], paymentStatus);
+      
       ctx.telegram.sendPhoto(devChat, data.photo, {
         parse_mode: "HTML",
-        caption: 'Work'
+        caption: 'Work',
+        ...Markup.inlineKeyboard(inline)
       });
-
-      const club = await dbProcess.ShowData(new ObjectId(user['sc_triallesson_clubindex']));
 
       await ctx.reply('Ваше замовлення прийнято, очікуйте на підтвердження', {
         reply_markup: {
@@ -1926,26 +1971,6 @@ async function main() {
         }
       });
 
-      if (paymentApprovedSeccussfully){
-        await dbProcess.WriteNewClubToUser(ctx?.chat?.id ?? -1, new ObjectId(user['sc_triallesson_clubindex']))
-        await dbProcess.ChangeKeyData(club!, 'count', club!.count - 1);
-        await dbProcess.SwitchToCompletTrialLesson(ctx?.chat?.id ?? -1, 'true');
-
-        await ctx.reply(script.speakingClub.report.acceptedTrialLesson(user['name'], club!.date, club!.time, club!.link), {
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: [
-              [
-                {
-                  text: "В МЕНЮ"
-                }
-              ]
-            ]
-          }
-        });
-      }
-
-      await set('SC_TrialLessonComplet_active')('true'); 
       await set('state')('EndRootManager');
     }
     else if (CheckException.FileException(data)){
@@ -2491,14 +2516,11 @@ async function main() {
       await set('state')('CheckingActionDeleteAndReturn');
     } 
     else {
-      const results = await dbProcess.ShowAll(),
-        keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
-        return [{ text: `${index + 1}` }];
-      });
       await ctx.reply('Помилка, видалення неможливе, так як цього елементу не існує.', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboard
+          keyboard: (await dbProcess.ShowAll()).map(result => result._id).map((value : ObjectId, index : number) => {
+            return [{ text: `${index + 1}` }]})
         }
       });
     }
@@ -2650,18 +2672,45 @@ async function main() {
   onTextMessage('PeronalStudentHandler', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (data.text === 'Показати всіх студентів'){
+    if (data.text === 'Показати всіх користувачів'){
       const results = await dbProcess.ShowAllUsers();
     
       for (let i = 0; i < results.length; i++) {
-        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count));
+        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
+      }
+    }
+    else if (data.text === 'Показати студентів'){
+      const results = await dbProcess.ShowAllUsers();
+    
+      for (let i = 0; i < results.length; i++) {
+        if (results[i].role === 'student'){
+          await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
+        }
+      }
+    }
+    else if (data.text === 'Показати викладачів'){
+      const results = await dbProcess.ShowAllUsers();
+    
+      for (let i = 0; i < results.length; i++) {
+        if (results[i].role === 'teacher'){
+          await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
+        }
+      }
+    }
+    else if (data.text === 'Показати Адмінів та Розробника'){
+      const results = await dbProcess.ShowAllUsers();
+    
+      for (let i = 0; i < results.length; i++) {
+        if (results[i].role === 'admin' || results[i].role === 'developer'){
+          await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
+        }
       }
     }
     else if (data.text === 'Додати заняття студенту'){
       const results = await dbProcess.ShowAllUsers();
     
       for (let i = 0; i < results.length; i++) {
-        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count));
+        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
       }
 
       await ctx.reply('Виберіть номер студента, якому потрібно додати заняття', {
@@ -2679,7 +2728,7 @@ async function main() {
       const results = await dbProcess.ShowAllUsers();
   
       for (let i = 0; i < results.length; i++) {
-        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count));
+        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
       }
 
       await ctx.reply('Виберіть номер студента, якого потрібно видалити', {
@@ -2697,7 +2746,7 @@ async function main() {
       const results = await dbProcess.ShowAllUsers();
   
       for (let i = 0; i < results.length; i++) {
-        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count));
+        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
       }
 
       await ctx.reply('Виберіть номер студента, якого потрібно видалити', {
@@ -2903,6 +2952,8 @@ async function main() {
   //   sheets.updateRow(`Sheet1!H${rowNumberString}:H${rowNumberString}`, [status ? "Заплатив" : "Ні :C"]);
   // };
 
+
+  // Payment Main Bot Function Action
   bot.action(/^approvePayment:(\d+)$/, async (ctx) => {
     const id = Number.parseInt(ctx.match[1]);
 
@@ -2977,7 +3028,110 @@ async function main() {
     return ctx.answerCbQuery(`Користувач: ${id}, стан: НЕ ОПЛАЧЕНО`);
   });
 
-  
+  // Club trial lesson payment action
+  bot.action(/^acceptPayment:(\d+),(.+)$/, async (ctx) => {
+    const idUser = Number.parseInt(ctx.match[1]);
+    const idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2]));
+
+    await dbProcess.WriteNewClubToUser(idUser, idClub!._id)
+    await dbProcess.ChangeKeyData(idClub!, 'count', idClub!.count - 1);
+    await dbProcess.SwitchToCompletTrialLesson(idUser, 'true');
+
+    await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedTrialLesson((await db.get(idUser)('name'))!.toString(), idClub!.date, idClub!.time, idClub!.link));
+
+    await db.set(idUser)('SC_TrialLessonComplet_active')('true');
+
+    try {
+      // set up payment status "paid"
+      await db.set(idUser)('paymentStatusTrialLesson')('paid');
+      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'paid'),
+        newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
+      await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
+
+    } catch (e) {
+      console.log(e);
+    }
+
+    return ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}`);
+  })
+
+  bot.action(/^declinePayment:(\d+),(.+)$/, async (ctx) => {
+    const idUser = Number.parseInt(ctx.match[1]);
+    const idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2]));
+
+    await ctx.telegram.sendMessage(idUser, `вибачте, ${await db.get(idUser)('name')}, але нажаль ваша оплата не успішна.\nповторіть будь ласка змовлення`);
+
+    try {
+      // set up payment status "nopaid"
+      await db.set(idUser)('paymentStatusTrialLesson')('nopaid');
+      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'nopaid'),
+        newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
+      await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
+
+    } catch (e) {
+      console.log(e);
+    }
+
+    return ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}`);
+  })
+
+  bot.action(/^paidCheckT:(\d+)$/, async (ctx) => {
+    const idUser = Number.parseInt(ctx.match[1]);
+    return ctx.answerCbQuery(`Користувач: ${await db.get(idUser)('name')}, стан: ОПЛАЧЕНО`);
+  });
+
+  bot.action(/^nopaidCheckT:(\d+)$/, async (ctx) => {
+    const idUser = Number.parseInt(ctx.match[1]);
+    return ctx.answerCbQuery(`Користувач: ${await db.get(idUser)('name')}, стан: НЕ ОПЛАЧЕНО`);
+  });
+
+  // Club Packet Payment
+  bot.action(/^acceptPaymentP:(\d+),(.+)$/, async (ctx) => {
+    const idUser = Number.parseInt(ctx.match[1]);
+    const idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2]));
+
+    await dbProcess.WriteNewClubToUser(idUser, idClub!._id)
+    await dbProcess.ChangeKeyData(idClub!, 'count', idClub!.count - 1);
+    await dbProcess.SwitchToCompletTrialLesson(idUser, 'true');
+
+    await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedTrialLesson((await db.get(idUser)('name'))!.toString(), idClub!.date, idClub!.time, idClub!.link));
+
+    await db.set(idUser)('SC_TrialLessonComplet_active')('true');
+
+    try {
+      // set up payment status "paid"
+      await db.set(idUser)('paymentStatusTrialLesson')('paid');
+      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'paid'),
+        newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
+      await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
+
+    } catch (e) {
+      console.log(e);
+    }
+
+    return ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}`);
+  })
+
+  bot.action(/^declinePaymentP:(\d+),(.+)$/, async (ctx) => {
+    const idUser = Number.parseInt(ctx.match[1]);
+    const idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2]));
+
+    await ctx.telegram.sendMessage(idUser, `вибачте, ${await db.get(idUser)('name')}, але нажаль ваша оплата не успішна.\nповторіть будь ласка змовлення`);
+
+    try {
+      // set up payment status "nopaid"
+      await db.set(idUser)('paymentStatusTrialLesson')('nopaid');
+      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'nopaid'),
+        newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
+      await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
+
+    } catch (e) {
+      console.log(e);
+    }
+
+    return ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}`);
+  })
+
   bot.launch();
 }
 

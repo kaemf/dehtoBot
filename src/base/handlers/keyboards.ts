@@ -1,11 +1,12 @@
-import { devChat, confirmationChat, supportChat } from "../data/chats";
+import { devChat, confirmationChat, supportChat, eugeneChat} from "../../data/datapoint/point/chats";
 
 const devChatInt = parseInt(devChat),
     confirmationChatInt = parseInt(confirmationChat),
-    supportChatInt = parseInt(supportChat);
+    supportChatInt = parseInt(supportChat),
+    eugeneChatInt = parseInt(eugeneChat);
 
 function checkChats(currentChatId: number){
-    if (currentChatId === devChatInt || currentChatId === confirmationChatInt || currentChatId === supportChatInt){
+    if (currentChatId === devChatInt || currentChatId === confirmationChatInt || currentChatId === supportChatInt || currentChatId === eugeneChatInt){
         return true;
     } 
     else return false;
@@ -179,23 +180,33 @@ class Keyboard{
     return [
       [
         {
-          text: "Показати всіх студентів"
+          text: "Показати всіх користувачів"
         },
         {
-          text: "Додати заняття студенту"
+          text: "Показати викладачів"
+        },
+      ],[
+        {
+          text: "Показати Адмінів та Розробника"
+        },
+        {
+          text: "Показати студентів"
         }
       ],[
         {
-          text: "Видалити студента"
+          text: "Додати заняття студенту"
         },
         {
+          text: "Видалити студента"
+        },
+      ],[
+        {
           text: "Оновити дані студенту"
-        }
-      ],
-      [
+        },
         {
           text: "Змінити роль користувача"
         },
+      ],[
         {
           text: "В МЕНЮ"
         }
