@@ -17,5 +17,8 @@ export default function Key(data: string){
     else if (data === 'Посилання'){
         return 'link';
     }
+    else if (data === 'Документація'){
+        return 'documentation';
+    }
     else return null;
 }

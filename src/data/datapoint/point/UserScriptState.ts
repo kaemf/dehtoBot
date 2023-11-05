@@ -50,3 +50,5 @@ export type UserScriptState =
   | "AdminRootHandler"
   | "RespondUserToActionAndGetRole"
   | "RespondRoleAndReturn"
+  | "ADD_RespondDocumentationAndGetLink"
+  | "ChangeThisDocAndCheckThis"

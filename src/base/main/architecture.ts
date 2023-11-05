@@ -179,6 +179,70 @@ export default async function arch() {
     else return next();
   });
 
+  const onDocumentationMessage = (startState: UserScriptState, action: ActionType<{ phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number, polls: string, voice: string, audio: string, video_circle: string }>) => 
+  bot.on('message', async (ctx, next) => {
+    const id = ctx.chat.id,
+      user = (await db.getAll(id)()),
+      message = ctx.message,
+      supportedFormats : string[] = ['.pdf', '.PDF'];
+    
+    console.log(user['state']);
+  
+    if (user.state === startState) {
+      if ('text' in message) {
+        action(ctx, user, { phone_number: '', text: message.text, photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&PHOTO = UNDEFINED, TEXT: ${message.text}, CODE: 1\n`);
+      } 
+      else if ('photo' in message) {
+        action(ctx, user, { phone_number: '', text: '', photo: message.photo[0].file_id, file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        console.log(`TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, PHOTO GET, CODE: 2\n`);
+      }
+      else if ('document' in message) {
+        const fileExtension0 = message.document.file_name!.substr(message.document.file_name!.lastIndexOf('.')).toLowerCase() || '';
+        const fileExtension1 = message.document.file_name!.substr(message.document.file_name!.lastIndexOf('.')).toUpperCase() || '';
+        const fileExtension = fileExtension0 + fileExtension1;
+
+        if (supportedFormats.includes(fileExtension0) || supportedFormats.includes(fileExtension1)){
+          action(ctx, user, { phone_number: '', text: '', photo: '', file: message.document.file_id, stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+          console.log(`TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, FILE GET (${fileExtension}), CODE: 3\n`);
+        }
+        else{
+          action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+          console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, UNSUPPORTED FILE GET (${fileExtension}), CODE: 3\n`);
+        }
+      }
+      else if ('sticker' in message) {
+        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: message.sticker.file_id, video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, STICKER GET, CODE: 4\n`);
+      }
+      else if ('video' in message) {
+        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: message.video.file_id, location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, VIDEO GET, CODE: 5\n`);
+      }
+      else if ('location' in message) {
+        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: message.location.longitude, polls: '', voice: '', audio: '', video_circle: '' });
+        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, LOCATION GET, CODE: 6\n`);
+      }
+      else if ('poll' in message) {
+        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: message.poll.question, voice: '', audio: '', video_circle: ''});
+        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, POLL GET, CODE: 7\n`);
+      }
+      else if ('voice' in message) {
+        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: message.voice.file_id, audio: '', video_circle: '' });
+        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
+      }
+      else if ('audio' in message) {
+        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
+        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
+      }
+      else if ('video_note' in message) {
+        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
+        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, CIRCLE VIDEO GET, CODE: 9\n`);
+      }
+    }
+    else return next();
+  });
+
   class DBProcess {
     private clubdb = clubdb.db('SpeakingClub').collection('avaibleLessons');
     private clubdbUsers = clubdb.db('SpeakingClub').collection('dataUsers');
@@ -361,9 +425,27 @@ export default async function arch() {
 
       await this.clubdbUsers.updateOne({_id: user?._id}, updateObject);
     }
+
+    async GetTeacherBool(name: string){
+      const haveTeacher = await this.clubdbUsers.findOne({ name: name });
+
+      if (haveTeacher){
+        return true;
+      }
+      else return false;
+    }
+
+    async GetTeacherNameAndID(name: string, choose: boolean){
+      const teacher = await this.clubdbUsers.findOne({ name: name });
+
+      if (choose){
+        return [teacher!.name, teacher!.id]
+      }
+      else return teacher!.id;
+    }
   }
 
   const dbProcess : DBProcess = new DBProcess();
 
-  return [onTextMessage, onContactMessage, onPhotoMessage, bot, db, app, token, dbProcess] as const;
+  return [onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, db, app, token, dbProcess] as const;
 }

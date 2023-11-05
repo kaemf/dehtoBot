@@ -1,4 +1,3 @@
-import { ObjectId } from "mongodb";
 import { Markup } from "telegraf";
 type HideableIKBtn = ReturnType<typeof Markup.button.callback>;
 
@@ -59,26 +58,53 @@ export const inlineAcceptTrialPayment = (id: number, ObjectIDClub: string, payme
 }
 
 //Generate button for payment status in Club Packet
-export const inlineAcceptPacketPayment = (id: number, ObjectIDClub: string, paymentStatus: string): HideableIKBtn[][] => {
+export const inlineAcceptPacketPayment = (id: number, paymentStatus: string, packet: string): HideableIKBtn[][] => {
     if (paymentStatus === 'unknown') {
         return [
             [
-                Markup.button.callback("👌", `acceptPaymentP:${id},${ObjectIDClub}`),
-                Markup.button.callback("❌", `declinePaymentP:${id},${ObjectIDClub}`),
+                Markup.button.callback("👌", `acceptPaymentP:${id},${packet}`),
+                Markup.button.callback("❌", `declinePaymentP:${id},${packet}`),
             ]
         ];
         } 
     else if (paymentStatus === 'paid') {
         return [
             [
-                Markup.button.callback("🟢 Оплачено", `paidCheckP:${id}`)
+                Markup.button.callback("🟢 Оплачено", `paidCheckT:${id}`)
             ]
         ];
     } 
     else if (paymentStatus === 'nopaid') {
         return [
             [
-                Markup.button.callback("🔴 Не оплачено", `nopaidCheckP:${id}`)
+                Markup.button.callback("🔴 Не оплачено", `nopaidCheckT:${id}`)
+            ]
+        ];
+    }
+    return [];
+}
+
+//Generate button for payment status in Club Packet
+export const inlineAcceptClubWithPacketPayment = (id: number, ObjectIDClub: string, paymentStatus: string, packet: string): HideableIKBtn[][] => {
+    if (paymentStatus === 'unknown') {
+        return [
+            [
+                Markup.button.callback("👌", `acceptPaymentCP:${id},${ObjectIDClub},${packet}`),
+                Markup.button.callback("❌", `declinePaymentCP:${id},${ObjectIDClub},${packet}`),
+            ]
+        ];
+        } 
+    else if (paymentStatus === 'paid') {
+        return [
+            [
+                Markup.button.callback("🟢 Оплачено", `paidCheckCP:${id}`)
+            ]
+        ];
+    } 
+    else if (paymentStatus === 'nopaid') {
+        return [
+            [
+                Markup.button.callback("🔴 Не оплачено", `nopaidCheckCP:${id}`)
             ]
         ];
     }
