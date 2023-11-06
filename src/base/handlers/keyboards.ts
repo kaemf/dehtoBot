@@ -1,19 +1,19 @@
 import { devChat, confirmationChat, supportChat, eugeneChat} from "../../data/datapoint/point/chats";
 
 const devChatInt = parseInt(devChat),
-    confirmationChatInt = parseInt(confirmationChat),
-    supportChatInt = parseInt(supportChat),
-    eugeneChatInt = parseInt(eugeneChat);
+  confirmationChatInt = parseInt(confirmationChat),
+  supportChatInt = parseInt(supportChat),
+  eugeneChatInt = parseInt(eugeneChat);
 
 function checkChats(currentChatId: number){
-    if (currentChatId === devChatInt || currentChatId === confirmationChatInt || currentChatId === supportChatInt || currentChatId === eugeneChatInt){
-        return true;
-    } 
-    else return false;
+  if (currentChatId === devChatInt || currentChatId === confirmationChatInt || currentChatId === supportChatInt || currentChatId === eugeneChatInt){
+    return true;
+  } 
+  else return false;
 }
 
 class Keyboard{
-  mainMenu(currentChatId: number){
+  mainMenu(currentChatId: number, role: string){
       if (checkChats(currentChatId)){
           return [
               [
@@ -42,6 +42,35 @@ class Keyboard{
                 }
               ]
           ]
+      }
+      else if (role === 'teacher'){
+        return [
+          [
+            {
+              text: "Вчитель на годину",
+            },
+          ],[
+            {
+              text: "Пробний урок",
+            },
+          ],[
+            {
+              text: "Оплата занять",
+            },
+          ],[
+            {
+              text: "Запис на заняття"
+            }
+          ],[
+            {
+              text: "Шпрах-Клуби"
+            }
+          ],[
+            {
+              text: "Для Викладача"
+            }
+          ]
+        ]
       }
       else{
           return [
@@ -236,6 +265,10 @@ class Keyboard{
         },
         {
           text: "Посилання"
+        }
+      ],[
+        {
+          text: "Документація"
         }
       ]
     ]

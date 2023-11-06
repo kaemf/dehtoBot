@@ -443,6 +443,25 @@ export default async function arch() {
       }
       else return teacher!.id;
     }
+
+    private isTimeExpired(deleteAt: Date): boolean {
+      return deleteAt < new Date();
+    }
+  
+    async DeleteExpiredClubs() {
+      const clubs = await this.ShowAll(),
+        users = await this.ShowAllUsers();
+
+      for(let i = 0; i < clubs.length; i++){
+        if (this.isTimeExpired(new Date(`${clubs[i].date}T${clubs[i].time}`))){
+          console.log('\nFounded Expired Club And Deleted\n')
+          this.DeleteData(clubs[i]._id);
+          for (let j = 0; j < users.length; j++){
+            this.DeleteClubFromUser(users[j].id, clubs[i]._id);
+          }
+        }
+      }
+    }
   }
 
   const dbProcess : DBProcess = new DBProcess();

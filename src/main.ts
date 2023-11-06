@@ -6,6 +6,7 @@
 // Main File
 import script from "./data/datapoint/point/script";
 import packet from "./data/course/packets";
+import * as schedule from 'node-schedule';
 import { confirmationChat, supportChat, devChat, versionBot, eugeneChat } from './data/datapoint/point/chats';
 import { CheckException } from "./base/handlers/check";
 import arch from './base/main/architecture';
@@ -65,7 +66,7 @@ async function main() {
   });
 
   //Begin bot work, collecting user data (his telegram name) set up state_1
-  bot.start((ctx) => {
+  bot.start( (ctx) => {
     console.log('STARTED');
     ctx.reply(script.entire.greeting, {reply_markup: { remove_keyboard: true }});
 
@@ -74,6 +75,10 @@ async function main() {
     db.set(ctx.chat.id)('state')('WaitingForName')
   });
   
+  schedule.scheduleJob('0 */2 * * *', async () => {
+    await dbProcess.DeleteExpiredClubs();
+  });
+
   //Get real user name and root to get phone number with this.function
   onTextMessage('WaitingForName', async (ctx, user, data) => {
     if (CheckException.TextException(data)){
@@ -133,14 +138,6 @@ async function main() {
     else{
       set('phone_number')(data.phone_number);
 
-      ctx.reply(script.entire.chooseFunction, {
-        parse_mode: "Markdown",
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1)
-        }
-      })
-
       const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
       if (userObject){
@@ -148,12 +145,22 @@ async function main() {
       }
       else dbProcess.AddUser({ id: ctx?.chat?.id ?? -1, name: user['name'], number: data.phone_number, username: user['username'], role: 'student', count: 0 });
 
+      ctx.reply(script.entire.chooseFunction, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject!.role)
+        }
+      })
+
+
       await set('state')('FunctionRoot');
     }
   });
 
   onTextMessage('FunctionRoot', async (ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
+    const set = db.set(ctx?.chat?.id ?? -1),
+      userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
     await set('sc_request_torecord_usertoclub')('');
 
@@ -239,26 +246,56 @@ async function main() {
 
       await set('state')('AdminRootHandler');
     }
+    else if (data.text === 'Для Викладача'){
+      const results = await dbProcess.ShowAll(),
+        users = await dbProcess.ShowAllUsers();
+
+      let addString = '';
+
+      for (let i = 0; i < results.length; i++){
+        if (results[i].teacher_id === ctx?.chat?.id ?? -1){
+          let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
+          for (let j = 0; j < users.length; j++) {
+            if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
+              userHaved += `- ${users[j].name} (@${users[j].username})\n📲${users[j].number}\n\n`;
+            }
+          }
+            if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
+              userHaved = '';
+            }
+            if (results[i].count > 0) {
+              addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
+            } else {
+              addString = `❌ немає вільних місць ❌`;
+            }
+  
+          await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString, userHaved), {
+            parse_mode: "HTML"
+          });
+        }
+      }
+    }
     else{
       ctx.reply(script.errorException.chooseFunctionError, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1)
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
         },
       });
     }
   })
 
   onTextMessage('GraphicRespondAndLevelRequest', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
+    const set = db.set(ctx?.chat?.id ?? -1),
+      userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
     if (CheckException.BackRoot(data)) {
       ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1)
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
         }
       })
       await set('state')('FunctionRoot'); 
@@ -476,11 +513,12 @@ async function main() {
     } 
     else if (data.text === 'В МЕНЮ'){
       console.log('FunctionRoot');
+      const userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
       ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1)
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
         }
       })
       await set('state')('FunctionRoot');
@@ -545,14 +583,15 @@ async function main() {
   })
 
   onTextMessage('RespondCourseAndGetPacket', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
+    const set = db.set(ctx?.chat?.id ?? -1),
+      userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
     
     if (CheckException.BackRoot(data)){
       ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1)
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
         }
       })
       await set('state')('FunctionRoot');
@@ -1011,33 +1050,6 @@ async function main() {
     }
   })
 
-  //Generate button for payment status (change when paymentStatus changed)
-  // const inlineApprovePayment = (id: number, paymentStatus: string): HideableIKBtn[][] => {
-  //   if (paymentStatus === 'unknown') {
-  //       return [
-  //           [
-  //               Markup.button.callback("👌", `approvePayment:${id}`),
-  //               Markup.button.callback("❌", `rejectPayment:${id}`),
-  //           ]
-  //       ];
-  //   } else if (paymentStatus === 'paid') {
-  //       return [
-  //           [
-  //               Markup.button.callback("🟢 Оплачено", `paidCheck:${id}`),
-  //               Markup.button.callback("❌", `resetPaymentStatus:${id}`),
-  //           ]
-  //       ];
-  //   } else if (paymentStatus === 'nopaid') {
-  //       return [
-  //           [
-  //               Markup.button.callback("🔴 Не оплачено", `nopaidCheck:${id}`),
-  //               Markup.button.callback("❌", `resetPaymentStatus:${id}`),
-  //           ]
-  //       ];
-  //   }
-  //   return [];
-  // };
-
   onPhotoMessage('WaitingForPayment', async (ctx, user, data) => {
     const id = ctx?.chat?.id ?? -1,
       set = db.set(id),
@@ -1202,14 +1214,15 @@ async function main() {
   })
 
   onTextMessage('_GraphicRespondAndLevelRequest', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
+    const set = db.set(ctx?.chat?.id ?? -1),
+      userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
     if (CheckException.BackRoot(data)){
       ctx.reply(script.entire.chooseFunction, {
       parse_mode: "Markdown",
       reply_markup: {
         one_time_keyboard: true,
-        keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1)
+        keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
       }
     })
     await set('state')('FunctionRoot');
@@ -1309,7 +1322,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1),
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userA!.role),
         },
       });
     }
@@ -2045,13 +2058,23 @@ async function main() {
     else if (currentUser!.count > 0){
       if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length + 1){
         const currentItemIndex = results.map(item => item._id)[parseInt(data.text) - 1],
-          currentClub = await dbProcess.ShowData(currentItemIndex);
+          currentClub = await dbProcess.ShowData(currentItemIndex),
+          users = await dbProcess.ShowAllUsers();
+
+        let recordedUsers = '';
   
         if (currentClub!.count > 0){
           if (!await dbProcess.HasThisClubUser(ctx?.chat?.id ?? -1, currentItemIndex)){
             await dbProcess.ChangeCountUser(currentUser!._id, currentUser!.count - 1);
             await dbProcess.ChangeKeyData(currentClub!, 'count', currentClub!.count - 1);
             await dbProcess.WriteNewClubToUser(ctx?.chat?.id ?? -1, currentClub!._id);
+
+            for(let i = 0; i < users.length; i++){
+              recordedUsers != `${users[i].name} (@${users[i].username})\n${users[i].number}`;
+            }
+        
+            await ctx.telegram.sendMessage(currentClub!.teacher_id, script.speakingClub.report.showClubTypeAdmin(1, currentClub!.title, currentClub!.teacher_name, 
+              currentClub!.date, currentClub!.time, currentClub!.count > 0 ? currentClub!.count : "Немає місць", recordedUsers));
 
             if (currentUser!.count === 1){
               await ctx.telegram.sendMessage(devChat, script.speakingClub.report.notEnoughLessons(
@@ -2215,11 +2238,12 @@ async function main() {
       await set('state')('PeronalStudentHandler');
     }
     else if (data.text === 'В МЕНЮ'){
+      const userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
       ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1)
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
         }
       })
 
@@ -2342,11 +2366,12 @@ async function main() {
       }
     }
     else if (data.text === 'В МЕНЮ'){
+      const userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
       ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1)
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
         }
       })
 
@@ -2898,11 +2923,12 @@ async function main() {
       await set('state')('RespondUserToActionAndGetRole');
     }
     else if (data.text === 'В МЕНЮ'){
+      const userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
       ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1)
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
         }
       })
 
@@ -3169,10 +3195,20 @@ async function main() {
   bot.action(/^acceptPayment:(\d+),(.+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]);
     const idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2]));
+    const users = await dbProcess.ShowAllUsers();
 
     await dbProcess.WriteNewClubToUser(idUser, idClub!._id)
     await dbProcess.ChangeKeyData(idClub!, 'count', idClub!.count - 1);
     await dbProcess.SwitchToCompletTrialLesson(idUser, 'true');
+
+    let recordedUsers = '';
+
+    for(let i = 0; i < users.length; i++){
+      recordedUsers != `${users[i].name} (@${users[i].username})\n${users[i].number}`;
+    }
+
+    await ctx.telegram.sendMessage(idClub!.teacher_id, script.speakingClub.report.showClubTypeAdmin(1, idClub!.title, idClub!.teacher_name, 
+      idClub!.date, idClub!.time, idClub!.count > 0 ? idClub!.count : "Немає місць", recordedUsers));
 
     await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedTrialLesson((await db.get(idUser)('name'))!.toString(), idClub!.date, idClub!.time, idClub!.link));
 
@@ -3272,13 +3308,22 @@ async function main() {
   bot.action(/^acceptPaymentCP:(\d+),(.+),(.+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]);
     const idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2]));
-    const packetName = ctx.match[3] === 'standart' ? 'Шпрах-Клуб' : 'Шпрах-Клуб+PLUS';
+    const packetName = ctx.match[3] === 'standart' ? 'Шпрах-Клуб' : 'Шпрах-Клуб+PLUS',
+      users = await dbProcess.ShowAllUsers();
+    let recordedUsers = '';
 
     const currentUser = await dbProcess.ShowOneUser(idUser);
     await dbProcess.ChangeCountUser(currentUser!._id, currentUser!.count + 4);
     await dbProcess.WriteNewClubToUser(idUser, idClub!._id)
     await dbProcess.ChangeKeyData(idClub!, 'count', idClub!.count - 1);
     await dbProcess.SwitchToCompletTrialLesson(idUser, 'true');
+
+    for(let i = 0; i < users.length; i++){
+      recordedUsers != `${users[i].name} (@${users[i].username})\n${users[i].number}`;
+    }
+
+    await ctx.telegram.sendMessage(idClub!.teacher_id, script.speakingClub.report.showClubTypeAdmin(1, idClub!.title, idClub!.teacher_name, 
+      idClub!.date, idClub!.time, (idClub!.count > 0 ? idClub!.count : "Немає місць"), recordedUsers));
 
     await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedTrialLesson((await db.get(idUser)('name'))!.toString(), idClub!.date, idClub!.time, idClub!.link));
 
@@ -3318,6 +3363,21 @@ async function main() {
 
     return ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}, Пакет: ${packetName}`);
   })
+
+  bot.action('/menu', async (ctx) => {
+    const set = db.set(ctx?.chat?.id ?? -1),
+      userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+
+    ctx.reply(script.entire.chooseFunction, {
+      parse_mode: "Markdown",
+      reply_markup: {
+        one_time_keyboard: true,
+        keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
+      }
+    })
+
+    await set('state')('FunctionRoot');
+  });
 
   bot.launch();
 }
