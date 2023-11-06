@@ -73,8 +73,25 @@ async function main() {
     const username = ctx.chat.type === "private" ? ctx.chat.username ?? null : null;
     db.set(ctx.chat.id)('username')(username ?? 'unknown')
     db.set(ctx.chat.id)('state')('WaitingForName')
+
   });
   
+  bot.command('menu', async (ctx) => {
+    console.log('menu tapped');
+    const set = db.set(ctx?.chat?.id ?? -1),
+      userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+
+    ctx.reply(script.entire.chooseFunction, {
+      parse_mode: "Markdown",
+      reply_markup: {
+        one_time_keyboard: true,
+        keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
+      }
+    })
+
+    await set('state')('FunctionRoot');
+  });
+
   schedule.scheduleJob('0 */2 * * *', async () => {
     await dbProcess.DeleteExpiredClubs();
   });
@@ -3364,20 +3381,21 @@ async function main() {
     return ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}, Пакет: ${packetName}`);
   })
 
-  bot.action('/menu', async (ctx) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+  // bot.command('menu', (ctx) => {
+  //   console.log('menu tapped');
+  //   // const set = db.set(ctx?.chat?.id ?? -1),
+  //   //   userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
-    ctx.reply(script.entire.chooseFunction, {
-      parse_mode: "Markdown",
-      reply_markup: {
-        one_time_keyboard: true,
-        keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
-      }
-    })
+  //   // ctx.reply(script.entire.chooseFunction, {
+  //   //   parse_mode: "Markdown",
+  //   //   reply_markup: {
+  //   //     one_time_keyboard: true,
+  //   //     keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
+  //   //   }
+  //   // })
 
-    await set('state')('FunctionRoot');
-  });
+  //   // await set('state')('FunctionRoot');
+  // });
 
   bot.launch();
 }
