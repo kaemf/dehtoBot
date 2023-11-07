@@ -447,6 +447,20 @@ export default async function arch() {
     private isTimeExpired(deleteAt: Date): boolean {
       return deleteAt < new Date();
     }
+
+    getDateClub(date: Date): string {
+      const daysOfWeek = ["нд", "пн", "вт", "ср", "чт", "пт", "сб"],
+       months = [
+        "січня", "лютого", "березня", "квітня", "травня", "червня",
+        "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"
+      ];
+    
+      const dayOfWeek = daysOfWeek[date.getUTCDay()];
+      const month = months[date.getUTCMonth()];
+      const day = date.getUTCDate();
+    
+      return `${day} ${month} (${dayOfWeek})`;
+    }
   
     async DeleteExpiredClubs() {
       const clubs = await this.ShowAll(),

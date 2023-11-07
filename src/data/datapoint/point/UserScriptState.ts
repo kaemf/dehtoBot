@@ -52,3 +52,4 @@ export type UserScriptState =
   | "RespondRoleAndReturn"
   | "ADD_RespondDocumentationAndGetLink"
   | "ChangeThisDocAndCheckThis"
+  | "IndividualHandler"
