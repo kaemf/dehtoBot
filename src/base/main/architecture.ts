@@ -476,6 +476,17 @@ export default async function arch() {
         }
       }
     }
+
+    isValidInput(inputStr: string, year: boolean): boolean {
+      if (year){
+        const regex = /^\d{4}$/;
+        return regex.test(inputStr);
+      }
+      else{
+        const regex = /^\d{2}$/;
+        return regex.test(inputStr);
+      }
+    }
   }
 
   const dbProcess : DBProcess = new DBProcess();

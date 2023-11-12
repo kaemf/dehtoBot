@@ -53,3 +53,6 @@ export type UserScriptState =
   | "ADD_RespondDocumentationAndGetLink"
   | "ChangeThisDocAndCheckThis"
   | "IndividualHandler"
+  | "ADD_RespondTimeHourAndGetMinute"
+  | "ADD_RespondDateDayAndGetDateMonth"
+  | "ADD_RespondDateMonthAndGetDateYear"

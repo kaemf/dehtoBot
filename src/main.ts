@@ -2498,8 +2498,8 @@ async function main() {
         await set("AP_teacher_name")(teacher[0]);
         await set("AP_teacher_id")(teacher[1]);
   
-        ctx.reply('Коли (дата):');
-        await set('state')('ADD_RespondDateAndGetTime');
+        ctx.reply('Коли (день):');
+        await set('state')('ADD_RespondDateDayAndGetDateMonth');
       }
       else{
         const users = await dbProcess.ShowAllUsers();
@@ -2523,14 +2523,59 @@ async function main() {
     }
   })
 
+  onTextMessage('ADD_RespondDateDayAndGetDateMonth', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+    
+    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && dbProcess.isValidInput(data.text, false)){
+      await set('AP_date_day')(data.text);
+
+      ctx.reply('Коли (місяць):');
+      await set('state')('ADD_RespondDateMonthAndGetDateYear');
+    }
+    else{
+      ctx.reply('Це повинна бути двухзначна цифра');
+    }
+  })
+
+  onTextMessage('ADD_RespondDateMonthAndGetDateYear', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+    
+    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && dbProcess.isValidInput(data.text, false)){
+      await set('AP_date_month')(data.text);
+
+      ctx.reply('Коли (рік):');
+      await set('state')('ADD_RespondDateAndGetTime');
+    }
+    else{
+      ctx.reply('Це повинна бути двухзначна цифра');
+    }
+  })
+
   onTextMessage('ADD_RespondDateAndGetTime', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (CheckException.TextException(data)){
-      await set('AP_date')(data.text);
+    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && dbProcess.isValidInput(data.text, true)){
+      await set('AP_date_year')(data.text);
 
-      ctx.reply('Час:');
+      ctx.reply('Час (години):');
+      await set('state')('ADD_RespondTimeHourAndGetMinute');
+    }
+    else{
+      ctx.reply('Це повинна бути чотрьохзначна цифра');
+    }
+  })
+
+  onTextMessage('ADD_RespondTimeHourAndGetMinute', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && dbProcess.isValidInput(data.text, false)){
+      await set('AP_time_hour')(data.text);
+
+      ctx.reply('Час (хвилини):');
       await set('state')('ADD_RespondTimeAndGetCount');
+    }
+    else{
+      ctx.reply('Це повинна бути двухзначна цифра');
     }
   })
 
@@ -2538,10 +2583,13 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1);
 
     if (CheckException.TextException(data)){
-      await set('AP_time')(data.text);
+      await set('AP_time_minute')(data.text);
 
       ctx.reply('Кількість місць:');
       await set('state')('ADD_RespondCountAndGetLink');
+    }
+    else{
+      ctx.reply('Це повинна бути двухзначна цифра');
     }
   })
 
@@ -2576,12 +2624,14 @@ async function main() {
   })
 
   onTextMessage('ADD_RespondLinkAndCheckRight', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
+    const set = db.set(ctx?.chat?.id ?? -1),
+      datePart = `${user['AP_date_day']}-${user['AP_date_month']}-${user['AP_date_year']} (${dbProcess.getDateClub(new Date(`
+        ${user['AP_date_year']}-${user['AP_date_month']}-${user['AP_date_day']}`))})`;
 
     if (CheckException.TextException(data)){
       await set('AP_link')(data.text);
 
-      await ctx.reply(script.speakingClub.report.checkClub(user['AP_title'], user['AP_teacher_name'], user['AP_date'], user['AP_time'], data.text, parseInt(user['AP_count'])))
+      await ctx.reply(script.speakingClub.report.checkClub(user['AP_title'], user['AP_teacher_name'], datePart, `${user['AP_time_hour']}:${user['AP_time_minute']}`, data.text, parseInt(user['AP_count'])))
       await ctx.reply("Все вірно?", {
         parse_mode: "HTML",
         reply_markup: {
@@ -2611,8 +2661,8 @@ async function main() {
         title: user['AP_title'],
         teacher: user['AP_teacher_name'],
         teacher_id: user['AP_teacher_id'],
-        date: user['AP_date'],
-        time: user['AP_time'],
+        date: `${user['AP_date_year']}-${user['AP_date_month']}-${user['AP_date_day']}`,
+        time: `${user['AP_time_hour']}:${user['AP_time_minute']}`,
         count: parseInt(user['AP_count']),
         link: user['AP_link'],
         documentation: user['AP_documentation']
@@ -2759,6 +2809,8 @@ async function main() {
     }
   })
 
+
+  // Change Process
   onTextMessage('GetChangesAndChangeThis', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
@@ -2768,6 +2820,12 @@ async function main() {
       if (data.text === 'Документація'){
         ctx.reply("Завантажте файл");
         await set('state')('ChangeThisDocAndCheckThis');
+      }
+      else if (data.text === 'Дата'){
+
+      }
+      else if (data.text === 'Час'){
+        
       }
       else{
         ctx.reply("Введіть нові дані");
