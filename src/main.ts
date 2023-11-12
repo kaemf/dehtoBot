@@ -21,6 +21,7 @@ import { Markup } from "telegraf";
 import axios from "axios";
 import { Request, Response } from 'express';
 import { ObjectId } from 'mongodb';
+import { userInfo } from "os";
 
 async function main() {
   const [ onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, db, app, token, dbProcess ] = await arch();
@@ -2822,10 +2823,31 @@ async function main() {
         await set('state')('ChangeThisDocAndCheckThis');
       }
       else if (data.text === 'Дата'){
-
+        ctx.reply("Введіть день:");
+        await set('state')('ChangeDateDayAndGetChangeMonth');
       }
       else if (data.text === 'Час'){
-        
+        ctx.reply('Введіть години');
+        await set('state')('ChangeTimeHourAndGetChangeMinute');
+      }
+      else if (data.text === 'Викладач'){
+        const users = await dbProcess.ShowAllUsers();
+        let teachers = [];
+
+        for(let i = 0; i < users.length; i++){
+          if (users[i].role === 'teacher'){
+            teachers.push([{text: users[i].name}])
+          }
+        }
+
+        ctx.reply('Виберіть викладача', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: teachers
+          }
+        })
+
+        await set('state')('ChangeTeacherAndSubmit');
       }
       else{
         ctx.reply("Введіть нові дані");
@@ -2911,14 +2933,7 @@ async function main() {
       results = await dbProcess.ShowAll();
 
     if (CheckException.FileException(data)){
-      // const getCurrentClub: (MongoDBReturnType | Object | null)[] = [
-      //   await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]),
-      //   dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
-      // ], 
       const keyForChange = user['AP_keyforchange'];
-
-      // await set('AP_prev_keyvalue(backup)')(Array(getCurrentClub[0]).filter((club): club is MongoDBReturnType => typeof club === 'object')
-      // .map((club) => club[keyForChange as keyof MongoDBReturnType].toString()).join(''));
 
       await set('AP_keydatatochange')(data.text);
 
@@ -2936,7 +2951,160 @@ async function main() {
       await set('state')('RespondAdminActionAndRootChoose');
     }
     else{
-      ctx.reply('мона тіко пдфки');
+      ctx.reply('Формат файлу не є PDF');
+    }
+  })
+
+  onTextMessage('ChangeDateDayAndGetChangeMonth', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (CheckException.TextException(data) && dbProcess.isValidInput(data.text, false)){
+      await set('change_date_day')(data.text);
+
+      ctx.reply("А тепер введіть місяць");
+      await set('state')('ChangeDateMonthAndGetChangeYear');
+    }
+    else{
+      ctx.reply('Це не схоже на день');
+    }
+  })
+
+  onTextMessage('ChangeDateMonthAndGetChangeYear', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (CheckException.TextException(data) && dbProcess.isValidInput(data.text, false)){
+      await set('change_date_month')(data.text);
+
+      ctx.reply('І звісно рік:');
+      await set('state')('ChangeDateYearAndSubmit');
+    }
+    else{
+      ctx.reply('Це не схоже на місяць');
+    }
+  })
+
+  onTextMessage('ChangeDateYearAndSubmit', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (CheckException.TextException(data) && dbProcess.isValidInput(data.text, true)){
+      await set('change_date_year')(data.text);
+      const currentItem = (await dbProcess.ShowAll()).map(result => result._id),
+        object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
+
+      await dbProcess.ChangeKeyData(object!, 'date', `${data.text}-${user['change_date_month']}-${user['change_date_day']}`)
+      ctx.reply('Операція успішна!', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.spekingClubAdminPanel()
+        }
+      });
+
+      await set('state')('RespondAdminActionAndRootChoose');
+    }
+    else{
+      ctx.reply('Це не схоже на рік');
+    }
+  })
+
+  onTextMessage('ChangeTimeHourAndGetChangeMinute', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+    
+    if (CheckException.TextException(data) && dbProcess.isValidInput(data.text, false) && parseInt(data.text) < 24){
+      await set('change_time_hour')(data.text);
+
+      ctx.reply('А тепер, будь ласка, хвилини');
+      await set('state')('ChangeTimeMinuteAndSubmit');
+    }
+    else{
+      ctx.reply('Це не схоже на час');
+    }
+  })
+
+  onTextMessage('ChangeTimeMinuteAndSubmit', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (CheckException.TextException(data) && dbProcess.isValidInput(data.text, false) && parseInt(data.text) < 60){
+      await set('change_time_minute')(data.text);
+      const currentItem = (await dbProcess.ShowAll()).map(result => result._id),
+        object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
+
+      await dbProcess.ChangeKeyData(object!, 'time', `${user['change_time_hour']}:${data.text}`);
+      ctx.reply('Операція успішна!', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.spekingClubAdminPanel()
+        }
+      });
+
+      await set('state')('RespondAdminActionAndRootChoose');
+    }
+    else{
+      ctx.reply('не схоже на хвилини');
+    }
+  })
+
+  onTextMessage('ChangeTeacherAndSubmit', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (CheckException.TextException(data)){
+      const users = await dbProcess.ShowAllUsers();
+      let allTeachers = [];
+
+      for(let i = 0; i < users.length; i++){
+        if (users[i].role === 'teacher'){
+          allTeachers.push(users[i].name);
+        }
+      }
+
+      if (allTeachers.includes(data.text)){
+        const currentItem = (await dbProcess.ShowAll()).map(result => result._id),
+          object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]),
+          teacher = await dbProcess.GetTeacherNameAndID(data.text, true);
+
+        await dbProcess.ChangeKeyData(object!, 'teacher_name', teacher[0]);
+        await dbProcess.ChangeKeyData(object!, 'teacher_id', teacher[1]);
+
+        ctx.reply('Успішно виконана операція!', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.spekingClubAdminPanel()
+          }
+        })
+
+        await set('state')('ActionClubRespondAndRootAction');
+      }
+      else{
+        const users = await dbProcess.ShowAllUsers();
+        let teachers = [];
+
+        for(let i = 0; i < users.length; i++){
+          if (users[i].role === 'teacher'){
+            teachers.push([{text: users[i].name}])
+          }
+        }
+        ctx.reply('Такого викладача не існує', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: teachers
+          }
+        })
+      }
+    }
+    else{
+      const users = await dbProcess.ShowAllUsers();
+        let teachers = [];
+
+        for(let i = 0; i < users.length; i++){
+          if (users[i].role === 'teacher'){
+            teachers.push([{text: users[i].name}])
+          }
+        }
+        ctx.reply('Такого викладача не існує', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: teachers
+          }
+        })
     }
   })
 
