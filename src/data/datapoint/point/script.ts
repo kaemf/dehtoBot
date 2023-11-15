@@ -406,23 +406,14 @@ Telegram: @${username}
 Користувач є: ${role}
 Кількість доступних занять: ${count > 0 ? count : '❌'}`,
 
-      checkClub: (title: string, teacher: string, date: string, time: string, link: string, count: number) => {
-        let addString: string = '';
-        if (count > 0) {
-          addString = `кількість доступних місць: ${count}`;
-        } 
-        else {
-          addString = `❌ немає вільних місць ❌`;
-        }
-        return `🗣 ШРАХ-КЛУБ
+      checkClub: (title: string, teacher: string, date: string, time: string, link: string, count: number) => `🗣 ШРАХ-КЛУБ
 👉🏼 Тема: ${title}
 👉🏼 Викладач: ${teacher}\n
 👉🏼 Коли: ${date}
 👉🏼 На котру: ${time} 🇺🇦\n
-${addString}\n
+${count > 0 ? `кількість доступних місць: ${count}` : `❌ немає вільних місць ❌`}\n
 Посилання:
-${link}`
-      },
+${link}`,
 
       acceptedTrialLesson: (name: string, date: string, time: string, link: string) => `✅ ${name}, Вашу реєстрацію підтвержено!\n
 😁 Чекатимемо Вас
@@ -444,15 +435,15 @@ ${phone}\n
 Останній пакет: ${club_packet}`,
 
       reportToTeacherNewOrder: (title: string, teacher: string, date: string, time: string, count: number, recordedUsers: string) => 
-      `${count === 0 ? '✅❌ Вільних місць немає' : '✅ Нова реєстрація'}
+      `${count - 1 === 0 ? '✅❌ Вільних місць немає' : '✅ Нова реєстрація'}
 🗣 ШРАХ-КЛУБ
 👉🏼 Тема: ${title}
 👉🏼 Викладач: ${teacher}\n
 👉🏼 Коли: ${date}
 👉🏼 На котру: ${time} 🇺🇦\n
 Список учасників:
-${recordedUsers === '' ? 'поки ще немає(' : recordedUsers}
-${count === 0 ? '' : `кількість доступних місць: ${count}`}`
+${recordedUsers === '' ? 'поки ще немає(\n' : recordedUsers}
+${count - 1 === 0 ? '' : `кількість доступних місць: ${count}`}`
     },
 
 

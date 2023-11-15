@@ -21,7 +21,6 @@ import { Markup } from "telegraf";
 import axios from "axios";
 import { Request, Response } from 'express';
 import { ObjectId } from 'mongodb';
-import { userInfo } from "os";
 
 async function main() {
   const [ onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, db, app, token, dbProcess ] = await arch();
@@ -2117,7 +2116,7 @@ async function main() {
             await dbProcess.WriteNewClubToUser(ctx?.chat?.id ?? -1, currentClub!._id);
 
             for(let i = 0; i < users.length; i++){
-              recordedUsers != `${users[i].name} (@${users[i].username})\n${users[i].number}`;
+              recordedUsers += `- ${users[i].name} (@${users[i].username})\n📲${users[i].number}\n\n`;
             }
         
             //Send Message To Teacher
@@ -2664,6 +2663,7 @@ async function main() {
         documentation: user['AP_documentation']
       }
       await dbProcess.AddData(toWrite);
+      ctx.telegram.sendMessage(user['AP_teacher_id'], `Ви були додані на клуб ${user['AP_title']}`);
       await ctx.reply('Успішно додано!', {
         parse_mode: "HTML",
         reply_markup: {
@@ -3056,7 +3056,13 @@ async function main() {
           object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]),
           teacher = await dbProcess.GetTeacherNameAndID(data.text, true);
 
-        await dbProcess.ChangeKeyData(object!, 'teacher_name', teacher[0]);
+        if (object!.teacher_id !== '' && object!.teacher_id !== undefined){
+          ctx.telegram.sendMessage(object!.teacher_id, `Ви були видалені з клуба ${object!.title}`);
+        }
+
+        ctx.telegram.sendMessage(teacher[1], `Ви були встановлені викладачем на клубі ${object!.title}`);
+
+        await dbProcess.ChangeKeyData(object!, 'teacher', teacher[0]);
         await dbProcess.ChangeKeyData(object!, 'teacher_id', teacher[1]);
 
         ctx.reply('Успішно виконана операція!', {
@@ -3477,7 +3483,7 @@ async function main() {
     let recordedUsers = '';
 
     for(let i = 0; i < users.length; i++){
-      recordedUsers != `${users[i].name} (@${users[i].username})\n${users[i].number}`;
+      recordedUsers += `- ${users[i].name} (@${users[i].username})\n📲${users[i].number}\n\n`;
     }
 
     //Send Message To Teacher
@@ -3593,7 +3599,7 @@ async function main() {
     await dbProcess.SwitchToCompletTrialLesson(idUser, 'true');
 
     for(let i = 0; i < users.length; i++){
-      recordedUsers += `${users[i].name} (@${users[i].username})\n${users[i].number}`;
+      recordedUsers += `- ${users[i].name} (@${users[i].username})\n📲${users[i].number}\n\n`;
     }
 
     //Send Message To Teacher
