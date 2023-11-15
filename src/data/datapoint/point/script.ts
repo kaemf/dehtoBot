@@ -441,7 +441,18 @@ ${date} о ${time} 🇺🇦 за ось цим посиланням:\n\n${link}\
 👉🏽 ${name} (@${username})
 ${phone}\n
 📩 ${mail}
-Останній пакет: ${club_packet}`
+Останній пакет: ${club_packet}`,
+
+      reportToTeacherNewOrder: (title: string, teacher: string, date: string, time: string, count: number, recordedUsers: string) => 
+      `${count === 0 ? '✅❌ Вільних місць немає' : '✅ Нова реєстрація'}
+🗣 ШРАХ-КЛУБ
+👉🏼 Тема: ${title}
+👉🏼 Викладач: ${teacher}\n
+👉🏼 Коли: ${date}
+👉🏼 На котру: ${time} 🇺🇦\n
+Список учасників:
+${recordedUsers === '' ? 'поки ще немає(' : recordedUsers}
+${count === 0 ? '' : `кількість доступних місць: ${count}`}`
     },
 
 

@@ -1727,12 +1727,6 @@ async function main() {
             caption: 'ClubAndPacket',
             ...Markup.inlineKeyboard(inline)
           })
-          
-          //process for buttons ClubAndPacket
-          // const currentClub = await dbProcess.ShowData(new ObjectId(user['sc_request_torecord_usertoclub']));
-          // await dbProcess.WriteNewClubToUser(ctx?.chat?.id ?? -1, new ObjectId(user['sc_request_torecord_usertoclub']));
-          // await dbProcess.ChangeKeyData(currentClub!, 'count', currentClub!.count - 1);
-          // await set('sc_request_torecord_usertoclub')('');
         }
         else{
           const inline = inlineAcceptPacketPayment(id, paymentStatus, 'standart');
@@ -2126,8 +2120,9 @@ async function main() {
               recordedUsers != `${users[i].name} (@${users[i].username})\n${users[i].number}`;
             }
         
-            await ctx.telegram.sendMessage(currentClub!.teacher_id, script.speakingClub.report.showClubTypeAdmin(1, currentClub!.title, currentClub!.teacher_name, 
-              dbProcess.getDateClub(new Date(currentClub!.date)), currentClub!.time, currentClub!.count > 0 ? currentClub!.count : "Немає місць", recordedUsers));
+            //Send Message To Teacher
+            await ctx.telegram.sendMessage(currentClub!.teacher_id, script.speakingClub.report.reportToTeacherNewOrder(currentClub!.title, currentClub!.teacher, 
+              dbProcess.getDateClub(new Date(currentClub!.date)), currentClub!.time, currentClub!.count, recordedUsers));
 
             if (currentUser!.count === 1){
               await ctx.telegram.sendMessage(devChat, script.speakingClub.report.notEnoughLessons(
@@ -2336,7 +2331,7 @@ async function main() {
             addString = `❌ немає вільних місць ❌`;
           }
 
-        await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher_name, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved), {
+        await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved), {
           parse_mode: "HTML"
         });
       }
@@ -3485,8 +3480,9 @@ async function main() {
       recordedUsers != `${users[i].name} (@${users[i].username})\n${users[i].number}`;
     }
 
-    await ctx.telegram.sendMessage(idClub!.teacher_id, script.speakingClub.report.showClubTypeAdmin(1, idClub!.title, idClub!.teacher_name, 
-      dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.count > 0 ? idClub!.count : "Немає місць", recordedUsers));
+    //Send Message To Teacher
+    await ctx.telegram.sendMessage(idClub!.teacher_id, script.speakingClub.report.reportToTeacherNewOrder(idClub!.title, idClub!.teacher, 
+      dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.count, recordedUsers));
 
     await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedTrialLesson((await db.get(idUser)('name'))!.toString(), dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.link));
 
@@ -3597,11 +3593,12 @@ async function main() {
     await dbProcess.SwitchToCompletTrialLesson(idUser, 'true');
 
     for(let i = 0; i < users.length; i++){
-      recordedUsers != `${users[i].name} (@${users[i].username})\n${users[i].number}`;
+      recordedUsers += `${users[i].name} (@${users[i].username})\n${users[i].number}`;
     }
 
-    await ctx.telegram.sendMessage(idClub!.teacher_id, script.speakingClub.report.showClubTypeAdmin(1, idClub!.title, idClub!.teacher_name, 
-      idClub!.date, idClub!.time, (idClub!.count > 0 ? idClub!.count : "Немає місць"), recordedUsers));
+    //Send Message To Teacher
+    await ctx.telegram.sendMessage(idClub!.teacher_id, script.speakingClub.report.reportToTeacherNewOrder(idClub!.title, idClub!.teacher, 
+      dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.count, recordedUsers));
 
     await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedTrialLesson((await db.get(idUser)('name'))!.toString(), idClub!.date, idClub!.time, idClub!.link));
 

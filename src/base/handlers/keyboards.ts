@@ -12,6 +12,13 @@ function checkChats(currentChatId: number){
   else return false;
 }
 
+function CheckDeveloper(currentChatId: number){
+  if (currentChatId === devChatInt){
+    return true;
+  }
+  else return false;
+}
+
 class Keyboard{
   mainMenu(currentChatId: number, role: string){
       if (checkChats(currentChatId)){
@@ -34,6 +41,31 @@ class Keyboard{
                 }
               ]
           ]
+      }
+      else if (CheckDeveloper(currentChatId)){
+        return [
+          [
+            {
+              text: "Індивідуальні заняття"
+            }
+          ],[
+            {
+              text: "Шпрах-Клуби"
+            }
+          ],[
+            {
+              text: "Вчитель на годину",
+            },
+          ],[
+              {
+                text: "Для Викладача"
+              }  
+          ],[
+            {
+              text: "Адмін Панель"
+            }
+          ]
+      ]
       }
       else if (role === 'teacher'){
         return [
