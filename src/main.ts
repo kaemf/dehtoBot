@@ -1496,6 +1496,7 @@ async function main() {
             ],
           },
         });
+        await set('temp-prev-state')('menu-state');
         await set('state')('RespondTypePacketAndGetPayment');
       }
       else{
@@ -1534,34 +1535,15 @@ async function main() {
 
   // Club Trial Lesson Handler (start)
   onTextMessage('RespondChooseAndRespondGetLesson', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
+    const set = db.set(ctx?.chat?.id ?? -1),
+      currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
     if (CheckException.BackRoot(data)){
       ctx.reply("Виберіть одну із запропонованих кнопок", {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Пробне заняття"
-              },
-              {
-                text: "Реєстрація на клуб"
-              }
-            ],[
-              {
-                text: "Залишок моїх занять"
-              },
-              {
-                text: "Оплатити пакет занять"
-              }
-            ],[
-              {
-                text: "Про шпрах-клаб"
-              }
-            ]
-          ],
+          keyboard: await keyboards.speakingClubMenu(currentUser!.haveTrialLessonClub)
         },
       });
 
@@ -1616,6 +1598,7 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1);
 
     if (data.text === 'так'){
+      await set('temp-prev-state')('countCheck-state');
       ctx.reply(script.speakingClub.payPacketLesson, {
         parse_mode: "HTML",
         reply_markup: {
@@ -1655,20 +1638,84 @@ async function main() {
 
   // Pay Club Type
   onTextMessage('RespondTypePacketAndGetPayment', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
+    const set = db.set(ctx?.chat?.id ?? -1),
+      prevState = user['temp-prev-state'],
+      currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
-    if (CheckException.BackRoot(data)){
-      const user = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
-        line = user!.haveTrialLessonClub;
+    if (CheckException.BackRoot(data) && prevState === 'clubList-state'){
+      const results = await dbProcess.ShowAll();
+      let addString : string = '';
+    
+      for (let i = 0; i < results.length; i++) {
+          if (results[i].count > 0) {
+            addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
+          } else {
+            addString = `❌ немає вільних місць ❌`;
+          }
+
+        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString), {
+          parse_mode: "HTML"
+        });
+      }
+
+      await ctx.reply('виберіть номер шпраха для запису:', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+            return [{ text: `${index + 1}` }];
+          })
+        }
+      })
+
+      await set('state')('GetClubToRegistrationAndCheckPayment');
+    }
+    else if (CheckException.BackRoot(data) && prevState === 'menu-state'){
       ctx.reply("Виберіть одну із запропонованих кнопок", {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: await keyboards.speakingClubMenu(line)
+          keyboard: await keyboards.speakingClubMenu(currentUser!.haveTrialLessonClub)
         },
       });
 
       await set('state')('ActionClubRespondAndRootAction');
+    }
+    else if (CheckException.BackRoot(data) && prevState === 'countCheck-state'){
+      if (currentUser!.count > 0){
+        ctx.reply(script.speakingClub.lessLessons(currentUser!.count), {
+          parse_mode: "HTML",
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: [
+              [
+                {
+                  text: "В МЕНЮ"
+                },
+              ]
+            ],
+          },
+        });
+        await set('state')('EndRootManager');
+      }
+      else{
+        ctx.reply(script.speakingClub.lessLessons(currentUser!.count), {
+          parse_mode: "HTML",
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: [
+              [
+                {
+                  text: "так"
+                },
+                {
+                  text: "ні"
+                }
+              ]
+            ],
+          },
+        });
+        await set('state')('RespondCheckLessonsAndGetLessons');
+      }
     }
     else if (data.text === 'Шпрах-Клуб'){
       ctx.reply(script.speakingClub.standartClub);
@@ -1711,7 +1758,26 @@ async function main() {
       formattedDateRecord = `${dateFormat}.${monthFormat}.${date.getFullYear()}`,
       clubIndex = user['sc_request_torecord_usertoclub'];
 
-    if (CheckException.PhotoException(data)){
+    if (CheckException.BackRoot(data)){
+      ctx.reply(script.speakingClub.payPacketLesson, {
+        parse_mode: "HTML",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Шпрах-Клуб"
+              },
+              {
+                text: "Шпрах-Клуб+PLUS"
+              }
+            ]
+          ],
+        },
+      });
+      await set('state')('RespondTypePacketAndGetPayment');
+    }
+    else if (CheckException.PhotoException(data)){
       await set('paymentStatusClubOrPacket')('unknown');
       const paymentStatus = await get('paymentStatusClubOrPacket') ?? 'unknown';
   
@@ -1864,7 +1930,11 @@ async function main() {
   onTextMessage('RespondCourseAndGetMail', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (data.text === 'A1.1' || data.text === 'A1.2' || data.text === 'A2.1' || data.text === 'A2.2'){
+    if (CheckException.BackRoot(data)){
+      ctx.reply(script.speakingClub.plusClub, {reply_markup: {remove_keyboard: true}});
+      await set('state')('RespondPaymentAndGetCourseOrFinal');
+    }
+    else if (data.text === 'A1.1' || data.text === 'A1.2' || data.text === 'A2.1' || data.text === 'A2.2'){
       await set('club-coursename')(data.text);
 
       ctx.reply(script.speakingClub.getMail, {reply_markup: {remove_keyboard: true}});
@@ -1886,7 +1956,17 @@ async function main() {
       get = db.get(ctx?.chat?.id ?? -1);
     //set mail
 
-    if (CheckException.TextException(data)){
+    if (CheckException.BackRoot(data)){
+      ctx.reply(script.speakingClub.thanksType.typePlus, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.coursesTeacherOnHour()
+        },
+      });
+      await set('state')('RespondCourseAndGetMail')
+    }
+    else if (CheckException.TextException(data)){
       await set('paymentStatusClubOrPacket')('unknown');
       const paymentStatus = await get('paymentStatusClubOrPacket') ?? 'unknown';
       const typeOfProof = user['sc_clubplus_typeproof'];
@@ -2043,7 +2123,29 @@ async function main() {
       get = db.get(ctx?.chat?.id ?? -1);
 
     if (CheckException.BackRoot(data)){
+      await ctx.reply(script.speakingClub.trialLesson.ifYes)
+      const results = await dbProcess.ShowAll(),
+        keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
+          return [{ text: `${index + 1}` }];
+        });
+      let addString : string = '';
+    
+      for (let i = 0; i < results.length; i++) {
+          if (results[i].count > 0) {
+            addString = `кількість доступних місць: ${results[i].count}`;
+          } else {
+            addString = `❌ немає вільних місць ❌`;
+          }
 
+        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString), {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboard
+          }
+        });
+      }
+
+      await set('state')('RespondTrialClubAndCheckPayment');
     }
     else if (CheckException.PhotoException(data)){
       await set('paymentStatusTrialLesson')('unknown');
@@ -2105,6 +2207,7 @@ async function main() {
       if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length + 1){
         const currentItemIndex = results.map(item => item._id)[parseInt(data.text) - 1],
           currentClub = await dbProcess.ShowData(currentItemIndex),
+          currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
           users = await dbProcess.ShowAllUsers();
 
         let recordedUsers = '';
@@ -2134,7 +2237,12 @@ async function main() {
             }
 
             ctx.reply(script.speakingClub.registrationLesson.acceptedRegistration(user['name'], currentClub!.date, 
-            currentClub!.time, currentClub!.link));
+            currentClub!.time, currentClub!.link), {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: await keyboards.speakingClubMenu(currentUser!.haveTrialLessonClub)
+              }
+            });
           }
           else{
             ctx.reply('ви вже зареєстровані на цей шпрах! виберіть інший');
@@ -2219,7 +2327,34 @@ async function main() {
   onTextMessage('RegistrationChooseHandlerPayment', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (data.text === 'так'){
+    if (CheckException.BackRoot(data)){
+      const results = await dbProcess.ShowAll();
+      let addString : string = '';
+    
+      for (let i = 0; i < results.length; i++) {
+          if (results[i].count > 0) {
+            addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
+          } else {
+            addString = `❌ немає вільних місць ❌`;
+          }
+
+        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString), {
+          parse_mode: "HTML"
+        });
+      }
+
+      await ctx.reply('виберіть номер шпраха для запису:', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+            return [{ text: `${index + 1}` }];
+          })
+        }
+      })
+
+      await set('state')('GetClubToRegistrationAndCheckPayment');
+    }
+    else if (data.text === 'так'){
       ctx.reply(script.speakingClub.payPacketLesson, {
         parse_mode: "HTML",
         reply_markup: {
@@ -2236,6 +2371,7 @@ async function main() {
           ],
         },
       });
+      await set('temp-prev-state')('clubList-state');
       await set('state')('RespondTypePacketAndGetPayment');
     }
     else if (data.text === 'ні'){
