@@ -2397,9 +2397,21 @@ async function main() {
 
   // Admin Root Handler
   onTextMessage('AdminRootHandler', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
+    const set = db.set(ctx?.chat?.id ?? -1),
+      userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
-    if (data.text === 'Шпрах-Клуби'){
+    if (CheckException.BackRoot(data)){
+      ctx.reply(script.entire.chooseFunction, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject!.role)
+        }
+      })
+
+      await set('state')('FunctionRoot');
+    }
+    else if (data.text === 'Шпрах-Клуби'){
       ctx.reply("З поверненням, Меркель! :)", {
         parse_mode: "Markdown",
         reply_markup: {
@@ -2441,7 +2453,31 @@ async function main() {
   onTextMessage('RespondAdminActionAndRootChoose', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (data.text === 'Додати'){
+    if (CheckException.BackRoot(data)){
+      ctx.reply("З поверненням, Меркель! :)", {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Шпрах-Клуби"
+              },
+              {
+                text: "Особові справи студентів"
+              }
+            ],[
+              {
+                text: "В МЕНЮ"
+              }
+            ]
+          ],
+        },
+      })
+
+      await set('state')('AdminRootHandler');
+    }
+    else if (data.text === 'Додати'){
       ctx.reply("Тема:");
       await set('state')('ADD_RespondTitleAndGetTeacher');
     }
@@ -2882,17 +2918,20 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1),
       results = await dbProcess.ShowAll(),
       users = await dbProcess.ShowAllUsers(),
-      deleteItem = results.map(result => result._id),
-      indexToDelete = user['AP_DeleteHandler_indextodelete'];
+      indexToDelete = user['AP_DeleteHandler_indextodelete'],
+      deleteItem = results.map(result => result._id)[parseInt(indexToDelete) - 1],
+      dataItem = await dbProcess.ShowData(deleteItem);
 
     if (data.text === 'так'){
-      dbProcess.DeleteData(deleteItem[parseInt(indexToDelete) - 1]);
+      dbProcess.DeleteData(deleteItem);
 
+      await ctx.telegram.sendMessage(dataItem!.teacher_id, `${dataItem!.teacher}, клуб ${dataItem!.title} був видалений адміністратором і його більше не існує.`);
       for (let i = 0; i < users.length; i++){
-        await dbProcess.DeleteClubFromUser(users[i].id, deleteItem[parseInt(indexToDelete) - 1]);
+        await ctx.telegram.sendMessage(users[i].id, `${users[i].name}, Ви були видалені з клуба (${dataItem!.title}), оскільки клуб був видалений.`);
+        await dbProcess.DeleteClubFromUser(users[i].id, deleteItem);
       }
 
-      await ctx.reply(`Шпрах клаб №${data.text} успішно видалений.`, {
+      await ctx.reply(`Шпрах клаб №${indexToDelete} успішно видалений.`, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -3249,11 +3288,40 @@ async function main() {
   onTextMessage('PeronalStudentHandler', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (data.text === 'Показати всіх користувачів'){
+    if (CheckException.BackRoot(data)){
+      ctx.reply("З поверненням, Меркель! :)", {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Шпрах-Клуби"
+              },
+              {
+                text: "Особові справи студентів"
+              }
+            ],[
+              {
+                text: "В МЕНЮ"
+              }
+            ]
+          ],
+        },
+      })
+
+      await set('state')('AdminRootHandler');
+    }
+    else if (data.text === 'Показати всіх користувачів'){
       const results = await dbProcess.ShowAllUsers();
     
       for (let i = 0; i < results.length; i++) {
-        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
+        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()), {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.personalStudentAdminPanel()
+          }
+        });
       }
     }
     else if (data.text === 'Показати студентів'){
@@ -3261,7 +3329,12 @@ async function main() {
     
       for (let i = 0; i < results.length; i++) {
         if (results[i].role === 'student'){
-          await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
+          await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()), {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.personalStudentAdminPanel()
+            }
+          });
         }
       }
     }
@@ -3270,7 +3343,12 @@ async function main() {
     
       for (let i = 0; i < results.length; i++) {
         if (results[i].role === 'teacher'){
-          await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
+          await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()), {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.personalStudentAdminPanel()
+            }
+          });
         }
       }
     }
@@ -3279,7 +3357,12 @@ async function main() {
     
       for (let i = 0; i < results.length; i++) {
         if (results[i].role === 'admin' || results[i].role === 'developer'){
-          await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
+          await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()), {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.personalStudentAdminPanel()
+            }
+          });
         }
       }
     }
@@ -3326,7 +3409,7 @@ async function main() {
         await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
       }
 
-      await ctx.reply('Виберіть номер студента, якого потрібно видалити', {
+      await ctx.reply('Виберіть номер студента, якому потрібно змінити роль', {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
@@ -3364,11 +3447,24 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1),
       results = (await dbProcess.ShowAllUsers()).map(result => result._id);
 
-    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length){
+    if (CheckException.BackRoot(data)){
+      ctx.reply('Виберіть, будь ласка, що вам потрібно', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.personalStudentAdminPanel()
+        }
+      })
+
+      await set('state')('PeronalStudentHandler');
+    }
+    else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length){
       await set('AP_student_id')(data.text);
 
       await ctx.reply('Скільки додамо?');
       await set('state')('ChangeCountLessonHandlerAndReturn');
+    }
+    else{
+      ctx.reply(script.errorException.textGettingError.defaultException);
     }
   })
 
@@ -3378,8 +3474,26 @@ async function main() {
       userIDWithoutProcessing = parseInt(user['AP_student_id']),
       getCurrentUserCount = (await dbProcess.ShowAllUsers()).map(item => item.count)[userIDWithoutProcessing - 1],
       getUserActualName = (await dbProcess.ShowAllUsers()).map(item => item.name)[userIDWithoutProcessing - 1];
-      
-    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1){
+    
+    if (CheckException.BackRoot(data)){
+      const results = await dbProcess.ShowAllUsers();
+    
+      for (let i = 0; i < results.length; i++) {
+        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
+      }
+
+      await ctx.reply('Виберіть номер студента, якому потрібно додати заняття', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+            return [{ text: `${index + 1}` }];
+          })
+        }
+      })
+
+      await set('state')('AddLessonForStudent');
+    }
+    else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1){
       const toWrite: number = getCurrentUserCount + parseInt(data.text);
       await dbProcess.ChangeCountUser(userID, toWrite);
 
@@ -3393,6 +3507,9 @@ async function main() {
 
       await set('state')('RespondAdminActionAndRootChoose');
     }
+    else{
+      ctx.reply('Вам потрібно ввести число більше або рівне одиниці.');
+    }
   })
 
   // Delete Student Handler
@@ -3400,7 +3517,17 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1),
       results = await dbProcess.ShowAllUsers();
 
-    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length){
+    if (CheckException.BackRoot(data)){
+      ctx.reply('Виберіть, будь ласка, що вам потрібно', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.personalStudentAdminPanel()
+        }
+      })
+
+      await set('state')('PeronalStudentHandler');
+    }
+    else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length){
       await set('AP_DeleteStudentHandler_deleteindex')(data.text)
 
       ctx.reply(`Ви впевнені, що хочете видалити користувача №${data.text}`, {
@@ -3438,7 +3565,25 @@ async function main() {
       results = await dbProcess.ShowAllUsers(),
       indexToDelete = user['AP_DeleteStudentHandler_deleteindex'];
 
-    if (data.text === 'так'){
+    if (CheckException.BackRoot(data)){
+      const results = await dbProcess.ShowAllUsers();
+  
+      for (let i = 0; i < results.length; i++) {
+        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
+      }
+
+      await ctx.reply('Виберіть номер студента, якого потрібно видалити', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+            return [{ text: `${index + 1}` }];
+          })
+        }
+      })
+
+      await set('state')('DeleteStudentAndCheckAction');
+    }
+    else if (data.text === 'так'){
       await dbProcess.DeleteUser(results.map(item => item.id)[parseInt(indexToDelete) - 1]);
 
       ctx.reply(`Успішно видалено студента №${indexToDelete}`, {
@@ -3470,7 +3615,17 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1),
       results = await dbProcess.ShowAllUsers();
 
-    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length){
+    if (CheckException.BackRoot(data)){
+      ctx.reply('Виберіть, будь ласка, що вам потрібно', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.personalStudentAdminPanel()
+        }
+      })
+
+      await set('state')('PeronalStudentHandler');
+    }
+    else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length){
       const getUserActualName = (await dbProcess.ShowAllUsers()).map(item => item.name)[parseInt(data.text) - 1];
       await set('AP_StudentHandler_idToChange')(data.text);
 
@@ -3493,7 +3648,25 @@ async function main() {
       results = await dbProcess.ShowAllUsers(),
       currentUserObjectID = results.map(item => item.id)[parseInt(user['AP_StudentHandler_idToChange']) - 1];
 
-    if (CheckException.TextException(data) && Role(data.text)){
+    if (CheckException.BackRoot(data)){
+      const results = await dbProcess.ShowAllUsers();
+  
+      for (let i = 0; i < results.length; i++) {
+        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
+      }
+
+      await ctx.reply('Виберіть номер студента, якому потрібно змінити роль', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+            return [{ text: `${index + 1}` }];
+          })
+        }
+      })
+
+      await set('state')('RespondUserToActionAndGetRole');
+    }
+    else if (CheckException.TextException(data) && Role(data.text)){
       await dbProcess.ChangeUserRole(currentUserObjectID, Role(data.text).toString());
 
       ctx.reply(`Успішно виконана операція!`, {

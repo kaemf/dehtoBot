@@ -21,7 +21,32 @@ function CheckDeveloper(currentChatId: number){
 
 class Keyboard{
   mainMenu(currentChatId: number, role: string){
-      if (checkChats(currentChatId)){
+    if (CheckDeveloper(currentChatId)){
+      return [
+        [
+          {
+            text: "Індивідуальні заняття"
+          }
+        ],[
+          {
+            text: "Шпрах-Клуби"
+          }
+        ],[
+          {
+            text: "Вчитель на годину",
+          },
+        ],[
+            {
+              text: "Для Викладача"
+            }  
+        ],[
+          {
+            text: "Адмін Панель"
+          }
+        ]
+    ]
+    }
+      else if (checkChats(currentChatId)){
           return [
               [
                 {
@@ -41,31 +66,6 @@ class Keyboard{
                 }
               ]
           ]
-      }
-      else if (CheckDeveloper(currentChatId)){
-        return [
-          [
-            {
-              text: "Індивідуальні заняття"
-            }
-          ],[
-            {
-              text: "Шпрах-Клуби"
-            }
-          ],[
-            {
-              text: "Вчитель на годину",
-            },
-          ],[
-              {
-                text: "Для Викладача"
-              }  
-          ],[
-            {
-              text: "Адмін Панель"
-            }
-          ]
-      ]
       }
       else if (role === 'teacher'){
         return [
