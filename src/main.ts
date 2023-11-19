@@ -2412,7 +2412,7 @@ async function main() {
       await set('state')('FunctionRoot');
     }
     else if (data.text === 'Шпрах-Клуби'){
-      ctx.reply("З поверненням, Меркель! :)", {
+      ctx.reply("Добренько, і що на цей раз?)", {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -2423,7 +2423,7 @@ async function main() {
       await set('state')('RespondAdminActionAndRootChoose');
     }
     else if (data.text === 'Особові справи студентів'){
-      ctx.reply('Виберіть, будь ласка, що вам потрібно', {
+      ctx.reply('Прекрасно, над ким сьогодні будемо знущатись?)', {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.personalStudentAdminPanel()
@@ -2445,7 +2445,26 @@ async function main() {
       await set('state')('FunctionRoot');
     }
     else{
-      ctx.reply(script.errorException.chooseButtonError);
+      ctx.reply(script.errorException.chooseButtonError, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "Шпрах-Клуби"
+              },
+              {
+                text: "Особові справи студентів"
+              }
+            ],[
+              {
+                text: "В МЕНЮ"
+              }
+            ]
+          ],
+        }}
+      );
     }
   })
 
@@ -2601,30 +2620,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Додати"
-              },
-              {
-                text: "Редагувати"
-              }
-            ],[
-              {
-                text: "Видалити"
-              },
-              {
-                text: "Показати всі"
-              }
-            ],[
-              {
-                text: "Особові справи студентів"
-              },
-              {
-                text: "В МЕНЮ"
-              }
-            ]
-          ],
+          keyboard: keyboards.spekingClubAdminPanel()
         },
       })
     }
@@ -2634,7 +2630,18 @@ async function main() {
   onTextMessage('ADD_RespondTitleAndGetTeacher', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (CheckException.TextException(data)){
+    if (CheckException.BackRoot(data)){
+      ctx.reply("Добренько, і що на цей раз?)", {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.spekingClubAdminPanel()
+        },
+      })
+
+      await set('state')('RespondAdminActionAndRootChoose');
+    }
+    else if (CheckException.TextException(data)){
       await set('AP_title')(data.text);
 
       const users = await dbProcess.ShowAllUsers();
@@ -2654,12 +2661,19 @@ async function main() {
       });
       await set('state')('ADD_RespondTeacherAndGetDate');
     }
+    else{
+      ctx.reply(script.errorException.textGettingError.defaultException, {reply_markup: {remove_keyboard: true}});
+    }
   })
 
   onTextMessage('ADD_RespondTeacherAndGetDate', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (CheckException.TextException(data)){
+    if (CheckException.BackRoot(data)){
+      ctx.reply("Тема:", {reply_markup: {remove_keyboard: true}});
+      await set('state')('ADD_RespondTitleAndGetTeacher');
+    }
+    else if (CheckException.TextException(data)){
       if (await dbProcess.GetTeacherBool(data.text)){
         const teacher = await dbProcess.GetTeacherNameAndID(data.text, true);
         await set("AP_teacher_name")(teacher[0]);
@@ -2693,11 +2707,35 @@ async function main() {
   onTextMessage('ADD_RespondDateDayAndGetDateMonth', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
     
-    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && dbProcess.isValidInput(data.text, false)){
-      await set('AP_date_day')(data.text);
+    if (CheckException.BackRoot(data)){
+      const users = await dbProcess.ShowAllUsers();
+      let keyboard = [];
 
-      ctx.reply('Коли (місяць):');
-      await set('state')('ADD_RespondDateMonthAndGetDateYear');
+      for (let i = 0; i < users.length; i++){
+        if (users[i].role === 'teacher'){
+          keyboard.push([{ text: users[i].name }]);
+        }
+      }
+
+      ctx.reply('Вчитель:', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboard
+        }
+      });
+
+      await set('state')('ADD_RespondTeacherAndGetDate');
+    }
+    else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && dbProcess.isValidInput(data.text, false)){
+      if (parseInt(data.text) <= 31 && parseInt(data.text) >= 1){
+        await set('AP_date_day')(data.text);
+  
+        ctx.reply('Коли (місяць):');
+        await set('state')('ADD_RespondDateMonthAndGetDateYear');
+      }
+      else{
+        ctx.reply(`А є такий день, як ${data.text}?\n\nПовторіть, будь ласка, ще раз.`);
+      }
     }
     else{
       ctx.reply('Це повинна бути двухзначна цифра');
@@ -2707,11 +2745,20 @@ async function main() {
   onTextMessage('ADD_RespondDateMonthAndGetDateYear', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
     
-    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && dbProcess.isValidInput(data.text, false)){
-      await set('AP_date_month')(data.text);
-
-      ctx.reply('Коли (рік):');
-      await set('state')('ADD_RespondDateAndGetTime');
+    if (CheckException.BackRoot(data)){
+      ctx.reply('Коли (день):', {reply_markup: {remove_keyboard: true}});
+      await set('state')('ADD_RespondDateDayAndGetDateMonth');
+    }
+    else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && dbProcess.isValidInput(data.text, false)){
+      if (parseInt(data.text) <= 12 && parseInt(data.text) >=1){
+        await set('AP_date_month')(data.text);
+  
+        ctx.reply('Коли (рік):');
+        await set('state')('ADD_RespondDateAndGetTime');
+      }
+      else{
+        ctx.reply(`Серйозно? Місяць ${data.text}?\n\nПовторіть, будь ласка, ще раз.`);
+      }
     }
     else{
       ctx.reply('Це повинна бути двухзначна цифра');
@@ -2721,11 +2768,26 @@ async function main() {
   onTextMessage('ADD_RespondDateAndGetTime', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && dbProcess.isValidInput(data.text, true)){
-      await set('AP_date_year')(data.text);
-
-      ctx.reply('Час (години):');
-      await set('state')('ADD_RespondTimeHourAndGetMinute');
+    if (CheckException.BackRoot(data)){
+      ctx.reply('Коли (місяць):');
+      await set('state')('ADD_RespondDateMonthAndGetDateYear');
+    }
+    else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && dbProcess.isValidInput(data.text, true)){
+      const year = new Date();
+      if (new Date(`${parseInt(data.text)}-${user['AP_date_month']}-${user['AP_date_day']}`) >= new Date()){
+        if (year.getFullYear() + 1 >= parseInt(data.text)){
+          await set('AP_date_year')(data.text);
+    
+          ctx.reply('Час (години):');
+          await set('state')('ADD_RespondTimeHourAndGetMinute');
+        }
+        else{
+          ctx.reply(`Ого, то це такі будуть клаби в ${data.text}! Дуже цікаво!)\n\nПовторіть, будь ласка, ще раз`);
+        }
+      }
+      else{
+        ctx.reply('О то це клаб з минулого! Приємні спогади)\n\nПовторіть, будь ласка, ще раз');
+      }
     }
     else{
       ctx.reply('Це повинна бути чотрьохзначна цифра');
@@ -2735,11 +2797,20 @@ async function main() {
   onTextMessage('ADD_RespondTimeHourAndGetMinute', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && dbProcess.isValidInput(data.text, false)){
-      await set('AP_time_hour')(data.text);
-
-      ctx.reply('Час (хвилини):');
-      await set('state')('ADD_RespondTimeAndGetCount');
+    if (CheckException.BackRoot(data)){
+      ctx.reply('Коли (рік):');
+      await set('state')('ADD_RespondDateAndGetTime');
+    }
+    else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && dbProcess.isValidInput(data.text, false)){
+      if (parseInt(data.text) <= 23 && parseInt(data.text) >= 4){
+        await set('AP_time_hour')(data.text);
+  
+        ctx.reply('Час (хвилини):');
+        await set('state')('ADD_RespondTimeAndGetCount');
+      }
+      else{
+        ctx.reply(`Скіко? Баба не чує! Як це ${data.text}\n\nПовторіть, будь ласка, ще раз`);
+      }
     }
     else{
       ctx.reply('Це повинна бути двухзначна цифра');
@@ -2749,11 +2820,20 @@ async function main() {
   onTextMessage('ADD_RespondTimeAndGetCount', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (CheckException.TextException(data)){
-      await set('AP_time_minute')(data.text);
-
-      ctx.reply('Кількість місць:');
-      await set('state')('ADD_RespondCountAndGetLink');
+    if (CheckException.BackRoot(data)){
+      ctx.reply('Час (години):');
+      await set('state')('ADD_RespondTimeHourAndGetMinute'); 
+    }
+    else if (CheckException.TextException(data)){
+      if (parseInt(data.text) >= 0 && parseInt(data.text) <= 59){
+        await set('AP_time_minute')(data.text);
+  
+        ctx.reply('Кількість місць:');
+        await set('state')('ADD_RespondCountAndGetLink');
+      }
+      else{
+        ctx.reply('Я стільки хвилин ще не бачив...\n\nПовіторіть, будь ласка, ще раз')
+      }
     }
     else{
       ctx.reply('Це повинна бути двухзначна цифра');
@@ -2763,7 +2843,11 @@ async function main() {
   onTextMessage('ADD_RespondCountAndGetLink', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (CheckException.TextException(data)){
+    if (CheckException.BackRoot(data)){
+      ctx.reply('Час (хвилини):');
+      await set('state')('ADD_RespondTimeAndGetCount');
+    }
+    else if (CheckException.TextException(data)){
       if (parseInt(data.text) <= 5 && parseInt(data.text) > 0){
         await set('AP_count')(data.text);
   
@@ -2774,12 +2858,19 @@ async function main() {
         ctx.reply('Кількість місць не може бути більше 5-ти і менше або 0');
       }
     }
+    else{
+      ctx.reply(script.errorException.textGettingError.defaultException);
+    }
   })
 
   onDocumentationMessage('ADD_RespondDocumentationAndGetLink', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (CheckException.FileException(data)){
+    if (CheckException.BackRoot(data)){
+      ctx.reply('Кількість місць:');
+      await set('state')('ADD_RespondCountAndGetLink');
+    }
+    else if (CheckException.FileException(data)){
       await set('AP_documentation')(data.file);
 
       ctx.reply('Посилання:');
@@ -2795,7 +2886,11 @@ async function main() {
       datePart = `${user['AP_date_day']}-${user['AP_date_month']}-${user['AP_date_year']} (${dbProcess.getDateClub(new Date(`
         ${user['AP_date_year']}-${user['AP_date_month']}-${user['AP_date_day']}`))})`;
 
-    if (CheckException.TextException(data)){
+    if (CheckException.BackRoot(data)){
+      ctx.reply('Документація:');
+      await set('state')('ADD_RespondDocumentationAndGetLink');
+    }
+    else if (CheckException.TextException(data)){
       await set('AP_link')(data.text);
 
       await ctx.reply(script.speakingClub.report.checkClub(user['AP_title'], user['AP_teacher_name'], datePart, `${user['AP_time_hour']}:${user['AP_time_minute']}`, data.text, parseInt(user['AP_count'])))
@@ -2818,12 +2913,19 @@ async function main() {
 
       await set('state')('ADD_CheckHandlerAndRoot');
     }
+    else{
+      ctx.reply(script.errorException.textGettingError.defaultException);
+    }
   })
 
   onTextMessage('ADD_CheckHandlerAndRoot', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (data.text === 'так'){
+    if (CheckException.BackRoot(data)){
+      ctx.reply('Посилання:');
+      await set('state')('ADD_RespondLinkAndCheckRight');
+    }
+    else if (data.text === 'так'){
       const toWrite = {
         title: user['AP_title'],
         teacher: user['AP_teacher_name'],
