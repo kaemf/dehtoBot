@@ -2588,18 +2588,22 @@ async function main() {
             userHaved += `- ${users[j].name} (@${users[j].username})\n📲${users[j].number}\n\n`;
           }
         }
-          if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
-            userHaved = '';
-          }
-          if (results[i].count > 0) {
-            addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
-          } else {
-            addString = `❌ немає вільних місць ❌`;
-          }
+        if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
+          userHaved = '';
+        }
+        if (results[i].count > 0) {
+          addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
+        } else {
+          addString = `❌ немає вільних місць ❌`;
+        }
 
         await ctx.telegram.sendDocument(ctx?.chat?.id ?? -1, results[i].documentation, {
           parse_mode: "HTML",
-          caption: script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved)
+          caption: script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved),
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.spekingClubAdminPanel()
+          }
         });
       }
     }
@@ -2983,7 +2987,18 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1),
       results = await dbProcess.ShowAll();
 
-    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length) {
+    if (CheckException.BackRoot(data)){
+      ctx.reply("Добренько, і що на цей раз?)", {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.spekingClubAdminPanel()
+        },
+      })
+
+      await set('state')('RespondAdminActionAndRootChoose');
+    }
+    else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length) {
       await set('AP_DeleteHandler_indextodelete')(data.text);
 
       await ctx.reply(`Ви впевнені, що хочете видалити клаб №${data.text}?`, {
@@ -3024,12 +3039,51 @@ async function main() {
       deleteItem = results.map(result => result._id)[parseInt(indexToDelete) - 1],
       dataItem = await dbProcess.ShowData(deleteItem);
 
-    if (data.text === 'так'){
+    if (CheckException.BackRoot(data)){
+      const results = await dbProcess.ShowAll(),
+        users = await dbProcess.ShowAllUsers();
+      let addString : string = '';
+    
+      for (let i = 0; i < results.length; i++) {
+        let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
+        for (let j = 0; j < users.length; j++) {
+          if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
+            userHaved += `- ${users[j].name} (@${users[j].username})\n📲${users[j].number}\n\n`;
+          }
+        }
+          if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
+            userHaved = '';
+          }
+          if (results[i].count > 0) {
+            addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
+          } else {
+            addString = `❌ немає вільних місць ❌`;
+          }
+
+        await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved), {
+          parse_mode: "HTML"
+        });
+      }
+
+      const keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
+        return [{ text: `${index + 1}` }];
+      });
+
+      await ctx.reply('Виберіть номер шпраха для видалення:', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboard
+        }
+      })
+
+      await set('state')('DeleteClubAndCheckAction');
+    }
+    else if (data.text === 'так'){
       dbProcess.DeleteData(deleteItem);
 
-      await ctx.telegram.sendMessage(dataItem!.teacher_id, `${dataItem!.teacher}, клуб ${dataItem!.title} був видалений адміністратором і його більше не існує.`);
+      await ctx.telegram.sendMessage(dataItem!.teacher_id, `❌ ${dataItem!.teacher}, клуб ${dataItem!.title} (${dbProcess.getDateClub(new Date(dataItem!.date))} о ${dataItem!.time} 🇺🇦) був видалений адміністратором і його більше не існує.`);
       for (let i = 0; i < users.length; i++){
-        await ctx.telegram.sendMessage(users[i].id, `${users[i].name}, Ви були видалені з клуба (${dataItem!.title}), оскільки клуб був видалений.`);
+        await ctx.telegram.sendMessage(users[i].id, `❌ ${users[i].name}, Ви були видалені з клуба ${dataItem!.title} (${dbProcess.getDateClub(new Date(dataItem!.date))} о ${dataItem!.time} 🇺🇦), оскільки клуб був видалений.`);
         await dbProcess.DeleteClubFromUser(users[i].id, deleteItem);
       }
 
@@ -3064,7 +3118,18 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1),
       results = await dbProcess.ShowAll();
 
-    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length){
+    if (CheckException.BackRoot(data)){
+      ctx.reply("Добренько, і що на цей раз?)", {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.spekingClubAdminPanel()
+        },
+      })
+
+      await set('state')('RespondAdminActionAndRootChoose');
+    }
+    else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length){
       await set('AP_respondkeydata_clubid')(data.text);
       console.log(results[parseInt(data.text) - 1].title);
 
@@ -3087,7 +3152,44 @@ async function main() {
   onTextMessage('GetChangesAndChangeThis', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (Key(data.text) !== null){
+    if (CheckException.BackRoot(data)){
+      const results = await dbProcess.ShowAll(),
+        users = await dbProcess.ShowAllUsers();
+      let addString : string = '';
+    
+      for (let i = 0; i < results.length; i++) {
+        let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
+        for (let j = 0; j < users.length; j++) {
+          if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
+            userHaved += `- ${users[j].name} (@${users[j].username})\n📲${users[j].number}\n\n`;
+          }
+        }
+          if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
+            userHaved = '';
+          }
+          if (results[i].count > 0) {
+            addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
+          } else {
+            addString = `❌ немає вільних місць ❌`;
+          }
+
+        await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString, userHaved), {
+          parse_mode: "HTML"
+        });
+      }
+
+      await ctx.reply('Виберіть номер шпраха для редагування:', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+            return [{ text: `${index + 1}` }];
+          })
+        }
+      })
+
+      await set('state')('RespondKeyDataAndGetChanges');
+    }
+    else if (Key(data.text) !== null){
       await set('AP_keyforchange')(Key(data.text)!);
 
       if (data.text === 'Документація'){
@@ -3141,7 +3243,17 @@ async function main() {
       results = await dbProcess.ShowAll(),
       currentItem = results.map(result => result._id);
 
-    if (CheckException.TextException(data)){
+    if (CheckException.BackRoot(data)){
+      ctx.reply("Який саме пункт тре змінити?", {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.adminPanelChangeClub()
+        }
+      });
+
+      await set('state')('GetChangesAndChangeThis');
+    }
+    else if (CheckException.TextException(data)){
       if (user['AP_keyforchange'] === 'count'){
         if (parseInt(data.text) > 5){
           ctx.reply('Кількість можливих місць не може бути більше 5-ти');
@@ -3204,7 +3316,17 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1),
       results = await dbProcess.ShowAll();
 
-    if (CheckException.FileException(data)){
+    if (CheckException.BackRoot(data)){
+      ctx.reply("Який саме пункт тре змінити?", {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.adminPanelChangeClub()
+        }
+      });
+
+      await set('state')('GetChangesAndChangeThis');
+    }
+    else if (CheckException.FileException(data)){
       const keyForChange = user['AP_keyforchange'];
 
       await set('AP_keydatatochange')(data.text);
@@ -3230,11 +3352,26 @@ async function main() {
   onTextMessage('ChangeDateDayAndGetChangeMonth', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (CheckException.TextException(data) && dbProcess.isValidInput(data.text, false)){
-      await set('change_date_day')(data.text);
+    if (CheckException.BackRoot(data)){
+      ctx.reply("Який саме пункт тре змінити?", {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.adminPanelChangeClub()
+        }
+      });
 
-      ctx.reply("А тепер введіть місяць");
-      await set('state')('ChangeDateMonthAndGetChangeYear');
+      await set('state')('GetChangesAndChangeThis');
+    }
+    else if (CheckException.TextException(data) && dbProcess.isValidInput(data.text, false)){
+      if (parseInt(data.text) <= 31 && parseInt(data.text) >= 1){
+        await set('change_date_day')(data.text);
+
+        ctx.reply("А тепер введіть місяць");
+        await set('state')('ChangeDateMonthAndGetChangeYear');
+      }
+      else{
+        ctx.reply(`Перепрошую, це коли ${data.text} число?\n\nПовторіть, будь ласка, ще раз.`);
+      }
     }
     else{
       ctx.reply('Це не схоже на день');
@@ -3244,11 +3381,20 @@ async function main() {
   onTextMessage('ChangeDateMonthAndGetChangeYear', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (CheckException.TextException(data) && dbProcess.isValidInput(data.text, false)){
-      await set('change_date_month')(data.text);
+    if (CheckException.BackRoot(data)){
+      ctx.reply("Введіть день:");
+      await set('state')('ChangeDateDayAndGetChangeMonth');
+    }
+    else if (CheckException.TextException(data) && dbProcess.isValidInput(data.text, false)){
+      if (parseInt(data.text) <= 12 && parseInt(data.text) >=1){
+        await set('change_date_month')(data.text);
 
-      ctx.reply('І звісно рік:');
-      await set('state')('ChangeDateYearAndSubmit');
+        ctx.reply('І звісно рік:');
+        await set('state')('ChangeDateYearAndSubmit');
+      }
+      else{
+        ctx.reply(`Впевнені, що є такий місяць, як ${data.text}?\n\nПовторіть, будь ласка, ще раз.`);
+      }
     }
     else{
       ctx.reply('Це не схоже на місяць');
@@ -3258,20 +3404,35 @@ async function main() {
   onTextMessage('ChangeDateYearAndSubmit', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (CheckException.TextException(data) && dbProcess.isValidInput(data.text, true)){
-      await set('change_date_year')(data.text);
-      const currentItem = (await dbProcess.ShowAll()).map(result => result._id),
-        object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
+    if (CheckException.BackRoot(data)){
+      ctx.reply("А тепер введіть місяць");
+      await set('state')('ChangeDateMonthAndGetChangeYear');
+    }
+    else if (CheckException.TextException(data) && dbProcess.isValidInput(data.text, true)){
+      const year = new Date();
+      if (new Date(`${parseInt(data.text)}-${user['AP_date_month']}-${user['AP_date_day']}`) >= new Date()){
+        if (year.getFullYear() + 1 >= parseInt(data.text)){
+          await set('change_date_year')(data.text);
+          const currentItem = (await dbProcess.ShowAll()).map(result => result._id),
+            object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
 
-      await dbProcess.ChangeKeyData(object!, 'date', `${data.text}-${user['change_date_month']}-${user['change_date_day']}`)
-      ctx.reply('Операція успішна!', {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: keyboards.spekingClubAdminPanel()
+          await dbProcess.ChangeKeyData(object!, 'date', `${data.text}-${user['change_date_month']}-${user['change_date_day']}`)
+          ctx.reply('Операція успішна!', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.spekingClubAdminPanel()
+            }
+          });
+
+          await set('state')('RespondAdminActionAndRootChoose');
         }
-      });
-
-      await set('state')('RespondAdminActionAndRootChoose');
+        else{
+          ctx.reply(`Ого, то це аж на такий рік переноситься клаб? В ${data.text}! Дуже цікаво!)\n\nПовторіть, будь ласка, ще раз`);
+        }
+      }
+      else{
+        ctx.reply('Мені здається вже ліпше видалити його, а не викидувати в спогади\n\nПовторіть, будь ласка, ще раз');
+      }
     }
     else{
       ctx.reply('Це не схоже на рік');
@@ -3281,11 +3442,26 @@ async function main() {
   onTextMessage('ChangeTimeHourAndGetChangeMinute', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
     
-    if (CheckException.TextException(data) && dbProcess.isValidInput(data.text, false) && parseInt(data.text) < 24){
-      await set('change_time_hour')(data.text);
+    if (CheckException.BackRoot(data)){
+      ctx.reply("Який саме пункт тре змінити?", {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.adminPanelChangeClub()
+        }
+      });
 
-      ctx.reply('А тепер, будь ласка, хвилини');
-      await set('state')('ChangeTimeMinuteAndSubmit');
+      await set('state')('GetChangesAndChangeThis');
+    }
+    else if (CheckException.TextException(data) && dbProcess.isValidInput(data.text, false)){
+      if (parseInt(data.text) < 24 && parseInt(data.text) > 0){
+        await set('change_time_hour')(data.text);
+  
+        ctx.reply('А тепер, будь ласка, хвилини');
+        await set('state')('ChangeTimeMinuteAndSubmit');
+      }
+      else{
+        ctx.reply(`Скіки скіки? Ой... бабця не чує...\n\nПовторіть, будь ласка, ще раз`);
+      }
     }
     else{
       ctx.reply('Це не схоже на час');
@@ -3295,20 +3471,29 @@ async function main() {
   onTextMessage('ChangeTimeMinuteAndSubmit', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (CheckException.TextException(data) && dbProcess.isValidInput(data.text, false) && parseInt(data.text) < 60){
-      await set('change_time_minute')(data.text);
-      const currentItem = (await dbProcess.ShowAll()).map(result => result._id),
-        object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
+    if (CheckException.BackRoot(data)){
+      ctx.reply('Введіть години', {reply_markup: {remove_keyboard: true}});
+      await set('state')('ChangeTimeHourAndGetChangeMinute');
+    }
+    else if (CheckException.TextException(data) && dbProcess.isValidInput(data.text, false)){
+      if (parseInt(data.text) < 60 && parseInt(data.text) >= 0){
+        await set('change_time_minute')(data.text);
+        const currentItem = (await dbProcess.ShowAll()).map(result => result._id),
+          object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
+  
+        await dbProcess.ChangeKeyData(object!, 'time', `${user['change_time_hour']}:${data.text}`);
+        ctx.reply('Операція успішна!', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.spekingClubAdminPanel()
+          }
+        });
 
-      await dbProcess.ChangeKeyData(object!, 'time', `${user['change_time_hour']}:${data.text}`);
-      ctx.reply('Операція успішна!', {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: keyboards.spekingClubAdminPanel()
-        }
-      });
-
-      await set('state')('RespondAdminActionAndRootChoose');
+        await set('state')('RespondAdminActionAndRootChoose');
+      }
+      else{
+        ctx.reply(`Та хай йому грець! Де це ви бачили ${data.text} хвилин?\n\nПовторіть, будь ласка, ще раз`);
+      }
     }
     else{
       ctx.reply('не схоже на хвилини');
@@ -3318,7 +3503,17 @@ async function main() {
   onTextMessage('ChangeTeacherAndSubmit', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (CheckException.TextException(data)){
+    if (CheckException.BackRoot(data)){
+      ctx.reply("Який саме пункт тре змінити?", {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.adminPanelChangeClub()
+        }
+      });
+
+      await set('state')('GetChangesAndChangeThis');
+    }
+    else if (CheckException.TextException(data)){
       const users = await dbProcess.ShowAllUsers();
       let allTeachers = [];
 
@@ -4055,22 +4250,6 @@ async function main() {
 
     return ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}, Пакет: ${packetName}`);
   })
-
-  // bot.command('menu', (ctx) => {
-  //   console.log('menu tapped');
-  //   // const set = db.set(ctx?.chat?.id ?? -1),
-  //   //   userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
-
-  //   // ctx.reply(script.entire.chooseFunction, {
-  //   //   parse_mode: "Markdown",
-  //   //   reply_markup: {
-  //   //     one_time_keyboard: true,
-  //   //     keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
-  //   //   }
-  //   // })
-
-  //   // await set('state')('FunctionRoot');
-  // });
 
   bot.launch();
 }
