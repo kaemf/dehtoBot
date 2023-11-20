@@ -170,7 +170,6 @@ async function main() {
         }
       })
 
-
       await set('state')('FunctionRoot');
     }
   });
@@ -278,7 +277,7 @@ async function main() {
               addString = `❌ немає вільних місць ❌`;
             }
   
-          await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString, userHaved), {
+          await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved), {
             parse_mode: "HTML"
           });
         }
@@ -296,9 +295,21 @@ async function main() {
   })
 
   onTextMessage('IndividualHandler', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
+    const set = db.set(ctx?.chat?.id ?? -1),
+      userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
-    if (data.text === "Пробний урок"){
+    if (CheckException.BackRoot(data)){
+      ctx.reply(script.entire.chooseFunction, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject!.role)
+        }
+      })
+
+      await set('state')('FunctionRoot');
+    }
+    else if (data.text === "Пробний урок"){
       ctx.reply(script.trialLesson.niceWhatATime, {reply_markup: {remove_keyboard: true}});
       await set('state')('GraphicRespondAndLevelRequest');
     }
@@ -586,7 +597,7 @@ async function main() {
             addString = `❌ немає вільних місць ❌`;
           }
 
-        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString), {
+        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString), {
           parse_mode: "HTML"
         });
       }
@@ -1415,7 +1426,7 @@ async function main() {
               addString = `❌ немає вільних місць ❌`;
             }
   
-          await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString), {
+          await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString), {
             parse_mode: "HTML"
           });
         }
@@ -1564,7 +1575,7 @@ async function main() {
             addString = `❌ немає вільних місць ❌`;
           }
 
-        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString), {
+        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString), {
           reply_markup: {
             one_time_keyboard: true,
             keyboard: keyboard
@@ -1653,7 +1664,7 @@ async function main() {
             addString = `❌ немає вільних місць ❌`;
           }
 
-        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString), {
+        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, dbProcess.getDateClub(new Date(results[i].teacher)), results[i].date, results[i].time, addString), {
           parse_mode: "HTML"
         });
       }
@@ -1822,27 +1833,6 @@ async function main() {
           },
         })
 
-        // ctx.reply(script.speakingClub.thanksType.typeStandart(user['name']), {
-        //   parse_mode: "Markdown",
-        //   reply_markup: {
-        //     one_time_keyboard: true,
-        //     keyboard: [
-        //       [
-        //         {
-        //           text: 'В МЕНЮ',
-        //         },
-        //         {
-        //           text: "Назад до реєстрації"
-        //         }
-        //         // {
-        //         //   text: '？Про Бота'
-        //         // }
-        //       ],
-        //     ],
-        //   },
-        // });
-
-        // await set('SC_TrialLessonComplet_active')('true');
         await set('state')('EndRootManager');
       }
       else if (user['club-typeclub'] === 'Шпрах-Клуб+PLUS'){
@@ -2084,7 +2074,7 @@ async function main() {
           await set('sc_triallesson_clubindex')(currentItemIndex.toString());
     
           await ctx.reply(script.speakingClub.report.showClubToUser(currentClub!.title, currentClub!.teacher, 
-            currentClub!.date, currentClub!.time));
+            dbProcess.getDateClub(new Date(currentClub!.date)), currentClub!.time));
   
           await ctx.reply(script.speakingClub.trialLesson.getPayment, {reply_markup: {remove_keyboard: true}});
   
@@ -2137,7 +2127,7 @@ async function main() {
             addString = `❌ немає вільних місць ❌`;
           }
 
-        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString), {
+        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString), {
           reply_markup: {
             one_time_keyboard: true,
             keyboard: keyboard
@@ -2219,8 +2209,12 @@ async function main() {
             await dbProcess.WriteNewClubToUser(ctx?.chat?.id ?? -1, currentClub!._id);
 
             for(let i = 0; i < users.length; i++){
-              recordedUsers += `- ${users[i].name} (@${users[i].username})\n📲${users[i].number}\n\n`;
+              if (await dbProcess.HasThisClubUser(users[i].id, currentClub!._id)){
+                recordedUsers += `- ${users[i].name} (@${users[i].username})\n📲${users[i].number}\n\n`;
+              }
             }
+
+            recordedUsers += `- ${currentUser!.name} (@${currentUser!.username})\n📲${currentUser!.number}\n\n`;
         
             //Send Message To Teacher
             await ctx.telegram.sendMessage(currentClub!.teacher_id, script.speakingClub.report.reportToTeacherNewOrder(currentClub!.title, currentClub!.teacher, 
@@ -2243,6 +2237,8 @@ async function main() {
                 keyboard: await keyboards.speakingClubMenu(currentUser!.haveTrialLessonClub)
               }
             });
+
+            await set('state')('ActionClubRespondAndRootAction');
           }
           else{
             ctx.reply('ви вже зареєстровані на цей шпрах! виберіть інший');
@@ -2338,7 +2334,7 @@ async function main() {
             addString = `❌ немає вільних місць ❌`;
           }
 
-        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString), {
+        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString), {
           parse_mode: "HTML"
         });
       }
@@ -2560,7 +2556,7 @@ async function main() {
             addString = `❌ немає вільних місць ❌`;
           }
 
-        await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString, userHaved), {
+        await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved), {
           parse_mode: "HTML"
         });
       }
@@ -3173,7 +3169,7 @@ async function main() {
             addString = `❌ немає вільних місць ❌`;
           }
 
-        await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, results[i].date, results[i].time, addString, userHaved), {
+        await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved), {
           parse_mode: "HTML"
         });
       }
@@ -3802,7 +3798,7 @@ async function main() {
         },
       })
 
-      await set('state')('RespondAdminActionAndRootChoose');
+      await set('state')('PeronalStudentHandler');
     }
     else{
       ctx.reply('Вам потрібно ввести число більше або рівне одиниці.');
@@ -4078,9 +4074,10 @@ async function main() {
 
   // Club trial lesson payment action
   bot.action(/^acceptPayment:(\d+),(.+)$/, async (ctx) => {
-    const idUser = Number.parseInt(ctx.match[1]);
-    const idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2]));
-    const users = await dbProcess.ShowAllUsers();
+    const idUser = Number.parseInt(ctx.match[1]),
+      idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2])),
+      users = await dbProcess.ShowAllUsers(),
+      currentUser = await dbProcess.ShowOneUser(idUser);
 
     await dbProcess.WriteNewClubToUser(idUser, idClub!._id)
     await dbProcess.ChangeKeyData(idClub!, 'count', idClub!.count - 1);
@@ -4089,8 +4086,12 @@ async function main() {
     let recordedUsers = '';
 
     for(let i = 0; i < users.length; i++){
-      recordedUsers += `- ${users[i].name} (@${users[i].username})\n📲${users[i].number}\n\n`;
+      if (await dbProcess.HasThisClubUser(idUser, idClub!._id)){
+        recordedUsers += `- ${users[i].name} (@${users[i].username})\n📲${users[i].number}\n\n`;
+      }
     }
+
+    recordedUsers += `- ${currentUser!.name} (@${currentUser!.username})\n📲${currentUser!.number}\n\n`;
 
     //Send Message To Teacher
     await ctx.telegram.sendMessage(idClub!.teacher_id, script.speakingClub.report.reportToTeacherNewOrder(idClub!.title, idClub!.teacher, 
@@ -4192,21 +4193,25 @@ async function main() {
 
   // Club PacketAndClub Payment
   bot.action(/^acceptPaymentCP:(\d+),(.+),(.+)$/, async (ctx) => {
-    const idUser = Number.parseInt(ctx.match[1]);
-    const idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2]));
-    const packetName = ctx.match[3] === 'standart' ? 'Шпрах-Клуб' : 'Шпрах-Клуб+PLUS',
-      users = await dbProcess.ShowAllUsers();
+    const idUser = Number.parseInt(ctx.match[1]),
+      idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2])),
+      packetName = ctx.match[3] === 'standart' ? 'Шпрах-Клуб' : 'Шпрах-Клуб+PLUS',
+      users = await dbProcess.ShowAllUsers(),
+      currentUser = await dbProcess.ShowOneUser(idUser);
     let recordedUsers = '';
 
-    const currentUser = await dbProcess.ShowOneUser(idUser);
     await dbProcess.ChangeCountUser(currentUser!._id, currentUser!.count + 4);
     await dbProcess.WriteNewClubToUser(idUser, idClub!._id)
     await dbProcess.ChangeKeyData(idClub!, 'count', idClub!.count - 1);
     await dbProcess.SwitchToCompletTrialLesson(idUser, 'true');
 
     for(let i = 0; i < users.length; i++){
-      recordedUsers += `- ${users[i].name} (@${users[i].username})\n📲${users[i].number}\n\n`;
+      if (await dbProcess.HasThisClubUser(users[i].dirname, new ObjectId(ctx.match[2]))){
+        recordedUsers += `- ${users[i].name} (@${users[i].username})\n📲${users[i].number}\n\n`;
+      }
     }
+
+    recordedUsers += `- ${currentUser!.name} (@${currentUser!.username})\n📲${currentUser!.number}\n\n`;
 
     //Send Message To Teacher
     await ctx.telegram.sendMessage(idClub!.teacher_id, script.speakingClub.report.reportToTeacherNewOrder(idClub!.title, idClub!.teacher, 
