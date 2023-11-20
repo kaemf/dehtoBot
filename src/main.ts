@@ -199,7 +199,7 @@ async function main() {
       await set('state')('AskingForPhoneNumber');
     }
     else if (data.text === 'Індивідуальні заняття'){
-      ctx.reply('text', {
+      ctx.reply('оберіть, що вас цікавить :)', {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.indiviualMenu()
