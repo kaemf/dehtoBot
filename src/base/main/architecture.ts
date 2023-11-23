@@ -6,7 +6,7 @@ import { ObjectId } from 'mongodb';
 type ActionType<T> = (ctx: Context<Update>, user: {[x: string]: string}, additionalData: T) => void;
 
 export default async function arch() {
-  const [ bot, db, app, token, clubdb ] = await init();
+  const [ bot, db, app, token, clubdb, sheets ] = await init();
 
   const onContactMessage = (startState: UserScriptState, action: ActionType<{ phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number, polls: string, voice: string, audio: string, video_circle: string }>) => 
   bot.on('message', async (ctx, next) => {
@@ -491,5 +491,5 @@ export default async function arch() {
 
   const dbProcess : DBProcess = new DBProcess();
 
-  return [onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, db, app, token, dbProcess] as const;
+  return [onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, db, app, token, dbProcess, sheets] as const;
 }

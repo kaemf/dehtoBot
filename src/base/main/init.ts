@@ -9,6 +9,7 @@ import { Telegraf } from "telegraf";
 import { createClient } from "redis";
 import { MongoClient } from "mongodb";
 import express from 'express';
+import { google } from "googleapis";
 
 async function connectToClubDB() {
   try {
@@ -54,22 +55,21 @@ export default async function init() {
   const bot = new Telegraf(token);
   console.log("Done\n");
 
+  console.log("Creating new google auth instanse")
+  const auth = new google.auth.GoogleAuth({
+    keyFile: "credentials.json",
+    scopes: "https://www.googleapis.com/auth/spreadsheets",
+  });
+  console.log("Done");
+
+  console.log("Creating google apis client...");
+  const client = await auth.getClient();
+  const sheets = google.sheets({ version: "v4", auth: client });
+  console.log("Done");
+
   app.listen(port, () => {
     console.log(`Server started at ${port}\n\n\n BOT READY TO WORK!\n\n`);
   });
-
-
-  // console.log("Creating new google auth instanse")
-  // const auth = new google.auth.GoogleAuth({
-  //   keyFile: "credentials.json",
-  //   scopes: "https://www.googleapis.com/auth/spreadsheets",
-  // });
-  // console.log("Done");
-
-  // console.log("Creating google apis client...");
-  // const client = await auth.getClient();
-  // const sheets = google.sheets({ version: "v4", auth: client });
-  // console.log("Done");
 
   //const wRedis = wrapRedis(redis);
 
@@ -80,37 +80,37 @@ export default async function init() {
     set: (id: number) => (property: string) => async (new_value: string) => await redis.hSet(`${id}`, property, new_value)
   })
 
-  // const values = sheets.spreadsheets.values;
-  // const spreadsheetId = "1GTx8JBrJ-RdX-Fpd6wBKNfXwRDifOKOkjVH8uyEaZx8";
-  // const wSheets = ({
-  //   get: (range: string) => values.get({
-  //     auth,
-  //     spreadsheetId,
-  //     range
-  //   }),
+  const values = sheets.spreadsheets.values;
+  const spreadsheetId = "1nWR2A0cnyuCI5zMjMjdIJlHcm0SeHcUqE4kfpYK42P8";
+  const wSheets = ({
+    get: (range: string) => values.get({
+      auth,
+      spreadsheetId,
+      range
+    }),
 
-  //   updateRow: (range: string, row: (string | number)[]) => values.update({
-  //     auth,
-  //     spreadsheetId,
-  //     range,
-  //     valueInputOption: "USER_ENTERED",
-  //     requestBody: {
-  //       values: [row],
-  //     },
-  //   }),
+    updateRow: (range: string, row: (string | number)[]) => values.update({
+      auth,
+      spreadsheetId,
+      range,
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [row],
+      },
+    }),
 
-  //   appendRow: (row: (string | number)[]) => values.append({
-  //     auth,
-  //     spreadsheetId,
-  //     range: "Sheet1",
-  //     valueInputOption: "USER_ENTERED",
-  //     requestBody: {
-  //       values: [row],
-  //     },
-  //   })
-  // })
+    appendRow: (row: (string | number)[]) => values.append({
+      auth,
+      spreadsheetId,
+      range: "Sheet1",
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [row],
+      },
+    })
+  })
 
-  return [bot, wRedis, app, token, dbclub] as const;
+  return [bot, wRedis, app, token, dbclub, wSheets] as const;
 }
 
 

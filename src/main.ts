@@ -23,7 +23,7 @@ import { Request, Response } from 'express';
 import { ObjectId } from 'mongodb';
 
 async function main() {
-  const [ onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, db, app, token, dbProcess ] = await arch();
+  const [ onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, db, app, token, dbProcess, sheets ] = await arch();
 
   app.post('/api/sendToTelegram', async (req: Request, res: Response) => {
     try {
@@ -74,6 +74,8 @@ async function main() {
     db.set(ctx.chat.id)('username')(username ?? 'unknown')
     db.set(ctx.chat.id)('state')('WaitingForName')
 
+    sheets.updateRow("💁🏽‍♀️ Студенти", ['Success Work!']);
+    console.log('Writed to sheet')
   });
   
   bot.command('menu', async (ctx) => {
