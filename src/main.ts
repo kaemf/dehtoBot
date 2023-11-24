@@ -74,8 +74,7 @@ async function main() {
     db.set(ctx.chat.id)('username')(username ?? 'unknown')
     db.set(ctx.chat.id)('state')('WaitingForName')
 
-    sheets.updateRow("💁🏽‍♀️ Студенти", ['Success Work!']);
-    console.log('Writed to sheet')
+    sheets.deleteRow(3, 0);
   });
   
   bot.command('menu', async (ctx) => {

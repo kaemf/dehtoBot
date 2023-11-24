@@ -1,7 +1,7 @@
 // DehtoBot for dehto German Course
 // Developed by Yaroslav Volkivskyi (TheLaidSon)
 
-// Actual v4.8.3
+// Actual v4.9.3
 
 // Initialization File
 
@@ -9,7 +9,7 @@ import { Telegraf } from "telegraf";
 import { createClient } from "redis";
 import { MongoClient } from "mongodb";
 import express from 'express';
-import { google } from "googleapis";
+import { google, sheets_v4 } from "googleapis";
 
 async function connectToClubDB() {
   try {
@@ -71,8 +71,6 @@ export default async function init() {
     console.log(`Server started at ${port}\n\n\n BOT READY TO WORK!\n\n`);
   });
 
-  //const wRedis = wrapRedis(redis);
-
   // wrap redis with helper functions
   const wRedis = ({
     getAll: (id: number) => async () => redis.hGetAll(`${id}`),
@@ -80,8 +78,9 @@ export default async function init() {
     set: (id: number) => (property: string) => async (new_value: string) => await redis.hSet(`${id}`, property, new_value)
   })
 
-  const values = sheets.spreadsheets.values;
-  const spreadsheetId = "1nWR2A0cnyuCI5zMjMjdIJlHcm0SeHcUqE4kfpYK42P8";
+  const values = sheets.spreadsheets.values,
+    spreadsheetId = "1nWR2A0cnyuCI5zMjMjdIJlHcm0SeHcUqE4kfpYK42P8";
+
   const wSheets = ({
     get: (range: string) => values.get({
       auth,
@@ -107,22 +106,36 @@ export default async function init() {
       requestBody: {
         values: [row],
       },
-    })
+    }),
+
+    deleteRow: async (rowIndex: number, sheetId: number) => {
+      // const range = `Sheet1!A${rowIndex}:D${rowIndex}`;
+
+      const deleteOperation: sheets_v4.Schema$Request = {
+        deleteDimension: {
+          range: {
+            sheetId,
+            dimension: 'ROWS',
+            startIndex: rowIndex - 1,
+            endIndex: rowIndex,
+          },
+        },
+      };
+
+      try {
+        const response = await sheets.spreadsheets.batchUpdate({
+          spreadsheetId,
+          resource: {
+            requests: [deleteOperation],
+          },
+        } as sheets_v4.Params$Resource$Spreadsheets$Batchupdate);
+
+        console.log('Строка успешно удалена', response.data);
+      } catch (error) {
+        console.error('Ошибка при удалении строки', error);
+      }
+    }
   })
 
   return [bot, wRedis, app, token, dbclub, wSheets] as const;
 }
-
-
-// const initialState: UserScriptState = "Greeting";
-// const changeState = async (id: number, newState: UserScriptState) => {
-//   await redis.hSet(`${id}`, "state", `${newState}`);
-// };
-// const getState = async (id: number): Promise<UserScriptState> =>
-//   ((await redis.hGet(`${id}`, "state")) as UserScriptState) ?? initialState;
-
-// const inlineApprovePayment = (id: number) =>
-//   Markup.inlineKeyboard([
-//     Markup.button.callback("👌", `approvePayment:${id}`),
-//     Markup.button.callback("❌", `rejectPayment:${id}`),
-//   ]);
