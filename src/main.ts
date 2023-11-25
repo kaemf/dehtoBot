@@ -161,6 +161,8 @@ async function main() {
       }
       else dbProcess.AddUser({ id: ctx?.chat?.id ?? -1, name: user['name'], number: data.phone_number, username: user['username'], role: 'student', count: 0 });
 
+      await sheets.appendLessonToUser(6525, user['name'], data.phone_number, user['username'], 'magwman0417@gmail.com', '25.12.2024', 'Random', 'Lesya');
+
       ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
         reply_markup: {

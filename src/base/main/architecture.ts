@@ -504,6 +504,40 @@ export default async function arch() {
       const numberOfTrial = await sheets.getCell(`${this.trials}!A${number - 1}`) === '№' ? '1' : parseInt(await sheets.getCell(`${this.trials}!A${number - 1}`)) + 1;
       await sheets.updateRow(`${this.trials}!A${number}:I${number}`, [numberOfTrial, date, name, phone, nickname, title_club, teacher]);
     }
+
+    async appendClubRecord(sheetId: number, rowToAdd: number){
+      await sheets.addRowAndShiftDown(sheetId, `A${rowToAdd}`);
+    }
+
+    async appendLessonToUser(idUser: number, name: string, phone: string, nickname: string, mail: string, date: string, title: string, teacher: string){
+      const index = await sheets.findDataInCell(idUser.toString(), this.students),
+        row = index?.row === undefined ? '' : index!.row;
+
+      if (row !== ''){
+        let currentData = await sheets.getCell(`${this.students}!A${parseInt(row!.toString()) + 2}`),
+          position = parseInt(row!.toString()) + 2;
+
+        while (currentData !== ''){
+          position++;
+          currentData = await sheets.getCell(`${this.students}!A${position}`);
+        }
+
+        const toProcessPosition = await sheets.getCell(`${this.students}!A${position - 1}`),
+          newIndexPosition = toProcessPosition.charAt(0);
+
+        await sheets.addRowAndShiftDown(0, `A${position}`);
+        console.log(currentData.charAt(0));
+        await sheets.updateRow(`${this.students}!A${position}:E${position}`, [`${parseInt(newIndexPosition) + 1}`, date, title, teacher, 'так']);
+      }
+      else{
+        const newIndex = await sheets.getLastValueInColumn();
+        let newRow = newIndex?.row === null ? 1 : newIndex!.row;
+
+        await sheets.updateRow(`${this.students}!A${newRow + 2}:E${newRow + 2}`, [idUser, name, phone, nickname, mail]);
+        await sheets.updateRow(`${this.students}!A${newRow + 3}:E${newRow + 3}`, ['№:',	'Дата:', 'Тема:', 'Викладач:', 'Оплата:']);
+        await sheets.updateRow(`${this.students}!A${newRow + 4}:D${newRow + 4}`, [1, date, title, teacher]);
+      }
+    }
   }
 
   const dbProcess : DBProcess = new DBProcess();

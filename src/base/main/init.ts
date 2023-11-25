@@ -109,8 +109,6 @@ export default async function init() {
     }),
 
     deleteRow: async (rowIndex: number, sheetId: number) => {
-      // const range = `Sheet1!A${rowIndex}:D${rowIndex}`;
-
       const deleteOperation: sheets_v4.Schema$Request = {
         deleteDimension: {
           range: {
@@ -156,7 +154,97 @@ export default async function init() {
       } catch (error) {
         console.error('Ошибка при получении значения из ячейки', error);
       }
-    }    
+    },
+
+    addRowAndShiftDown: async (sheetId: number, targetCell: string) => {
+      const targetRowIndex = Number(targetCell.match(/\d+/)![0]);
+    
+      const insertOperation: sheets_v4.Schema$Request = {
+        insertDimension: {
+          range: {
+            sheetId,
+            dimension: 'ROWS',
+            startIndex: targetRowIndex - 1, // Вставить перед целевой строкой
+            endIndex: targetRowIndex,
+          },
+          inheritFromBefore: false,
+        },
+      };
+    
+      try {
+        // Выполняем batchUpdate
+        const response = await sheets.spreadsheets.batchUpdate({
+          spreadsheetId,
+          resource: {
+            requests: [insertOperation],
+          },
+        } as sheets_v4.Params$Resource$Spreadsheets$Batchupdate);
+    
+        console.log('New Data successfully added', response.data);
+      } catch (error) {
+        console.error('Fail to add data to google sheets', error);
+      }
+    },
+
+    findDataInCell: async (targetData: string, sheetId: string) => {
+      try {
+        const response = await sheets.spreadsheets.values.get({
+          auth,
+          spreadsheetId,
+          range: sheetId,
+        });
+    
+        const values = response.data.values;
+    
+        for (let row = 0; row < values!.length; row++) {
+          for (let col = 0; col < values![row].length; col++) {
+            const cellValue = values![row][col];
+            if (cellValue === targetData) {
+              console.log(`Data found in "${targetData}" in row "${String.fromCharCode('A'.charCodeAt(0) + col)}${row + 1}"`);
+              return { row, col };
+            }
+          }
+        }
+
+        console.log(`Data '${targetData}' not found`);
+      } catch (error) {
+        console.error('Error to find: ', error);
+        const row = '', col = '';
+        return {row, col};
+      }
+    },
+
+    getLastValueInColumn: async () => {
+      try {
+        const range = `💁🏽‍♀️ Студенти!A:A`;
+        const response = await sheets.spreadsheets.values.get({
+          auth,
+          spreadsheetId,
+          range,
+        });
+    
+        const values = response.data.values;
+    
+        if (!values || values.length === 0) {
+          return { value: null, row: null };
+        }
+    
+        const reversedValues = values.reverse();
+        const lastValueIndex = reversedValues.findIndex((cell) => cell[0] !== '');
+    
+        if (lastValueIndex === -1) {
+          return { value: null, row: null };
+        }
+    
+        const lastValue = reversedValues[lastValueIndex][0];
+        const lastRowIndex = values.length - lastValueIndex;
+    
+        return { value: lastValue, row: lastRowIndex };
+      } catch (error) {
+        console.error('Error to get Data: ', error);
+        return null;
+      }
+    }
   })
 
   return [bot, wRedis, app, token, dbclub, wSheets] as const;
