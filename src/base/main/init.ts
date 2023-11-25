@@ -148,11 +148,11 @@ export default async function init() {
           console.log(`Значение ячейки ${cell}: ${values[0][0]}`);
           return values[0][0];
         } else {
-          console.log(`Ячейка ${cell} пуста.`);
+          console.log(`Cell: "${cell}" empty!.`);
           return '';
         }
       } catch (error) {
-        console.error('Ошибка при получении значения из ячейки', error);
+        console.error(`Fail to get data from cell "${cell}"`, error);
       }
     },
 
