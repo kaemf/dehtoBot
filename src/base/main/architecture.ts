@@ -489,7 +489,25 @@ export default async function arch() {
     }
   }
 
-  const dbProcess : DBProcess = new DBProcess();
+  class GoogleSheets{
+    private students = '💁🏽‍♀️ Студенти';
+    private trials = '✅ Пробні';
 
-  return [onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, db, app, token, dbProcess, sheets] as const;
+    async appendTrial(date: string, name: string, phone: string, nickname: string, title_club: string, teacher: string){
+      let data = await sheets.getCell(`${this.trials}!A2`),
+        number = 2;
+      while (data !== ''){
+        number++;
+        data = await sheets.getCell(`${this.trials}!A${number}`);
+      }
+
+      const numberOfTrial = await sheets.getCell(`${this.trials}!A${number - 1}`) === '№' ? '1' : parseInt(await sheets.getCell(`${this.trials}!A${number - 1}`)) + 1;
+      await sheets.updateRow(`${this.trials}!A${number}:I${number}`, [numberOfTrial, date, name, phone, nickname, title_club, teacher]);
+    }
+  }
+
+  const dbProcess : DBProcess = new DBProcess();
+  const googleSheets : GoogleSheets = new GoogleSheets()
+
+  return [onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, db, app, token, dbProcess, googleSheets] as const;
 }

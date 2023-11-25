@@ -130,11 +130,33 @@ export default async function init() {
           },
         } as sheets_v4.Params$Resource$Spreadsheets$Batchupdate);
 
-        console.log('Строка успешно удалена', response.data);
+        console.log('\nRow successfully deleted: ', response.data);
       } catch (error) {
-        console.error('Ошибка при удалении строки', error);
+        console.error('\nError to delete row, details: ', error);
       }
-    }
+    },
+
+    getCell: async (cell: string) => {
+      const getOperation: sheets_v4.Params$Resource$Spreadsheets$Values$Get = {
+        spreadsheetId,
+        range: cell,
+      };
+    
+      try {
+        const response = await sheets.spreadsheets.values.get(getOperation);
+    
+        const values = response.data.values;
+        if (values && values.length > 0) {
+          console.log(`Значение ячейки ${cell}: ${values[0][0]}`);
+          return values[0][0];
+        } else {
+          console.log(`Ячейка ${cell} пуста.`);
+          return '';
+        }
+      } catch (error) {
+        console.error('Ошибка при получении значения из ячейки', error);
+      }
+    }    
   })
 
   return [bot, wRedis, app, token, dbclub, wSheets] as const;

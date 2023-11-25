@@ -73,8 +73,6 @@ async function main() {
     const username = ctx.chat.type === "private" ? ctx.chat.username ?? null : null;
     db.set(ctx.chat.id)('username')(username ?? 'unknown')
     db.set(ctx.chat.id)('state')('WaitingForName')
-
-    sheets.deleteRow(3, 0);
   });
   
   bot.command('menu', async (ctx) => {
@@ -2141,7 +2139,11 @@ async function main() {
     else if (CheckException.PhotoException(data)){
       await set('paymentStatusTrialLesson')('unknown');
       const paymentStatus: string = await get('paymentStatusTrialLesson') ?? 'unknown',
-        inline = inlineAcceptTrialPayment(ctx?.chat?.id ?? -1, user['sc_triallesson_clubindex'], paymentStatus);
+      date : Date = new Date(),
+      monthFormat = (date.getMonth() + 1 < 10 ? '0' : '') + (date.getMonth() + 1),
+      dateFormat = (date.getDate() < 10 ? '0' : '') + (date.getDate()),
+      formattedDateRecord = `${dateFormat}.${monthFormat}.${date.getFullYear()}`,
+        inline = inlineAcceptTrialPayment(ctx?.chat?.id ?? -1, user['sc_triallesson_clubindex'], paymentStatus, formattedDateRecord);
       
       ctx.telegram.sendPhoto(devChat, data.photo, {
         parse_mode: "HTML",
@@ -4074,9 +4076,10 @@ async function main() {
   });
 
   // Club trial lesson payment action
-  bot.action(/^acceptPayment:(\d+),(.+)$/, async (ctx) => {
+  bot.action(/^acceptPayment:(\d+),(.+),(.+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]),
       idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2])),
+      dateRecord = ctx.match[3],
       users = await dbProcess.ShowAllUsers(),
       currentUser = await dbProcess.ShowOneUser(idUser);
 
@@ -4100,12 +4103,14 @@ async function main() {
 
     await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedTrialLesson((await db.get(idUser)('name'))!.toString(), dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.link));
 
+    await sheets.appendTrial(dateRecord, currentUser!.name, currentUser!.number, `@${currentUser!.username}`, idClub!.title, idClub!.teacher);
+
     await db.set(idUser)('SC_TrialLessonComplet_active')('true');
 
     try {
       // set up payment status "paid"
       await db.set(idUser)('paymentStatusTrialLesson')('paid');
-      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'paid'),
+      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'paid', 'date_in_db'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
 
@@ -4116,7 +4121,7 @@ async function main() {
     return ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}`);
   })
 
-  bot.action(/^declinePayment:(\d+),(.+)$/, async (ctx) => {
+  bot.action(/^declinePayment:(\d+),(.+),(.+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]);
     const idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2]));
 
@@ -4125,7 +4130,7 @@ async function main() {
     try {
       // set up payment status "nopaid"
       await db.set(idUser)('paymentStatusTrialLesson')('nopaid');
-      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'nopaid'),
+      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'nopaid', 'date_in_db'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
 
@@ -4161,7 +4166,7 @@ async function main() {
     try {
       // set up payment status "paid"
       await db.set(idUser)('paymentStatusTrialLesson')('paid');
-      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'paid'),
+      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'paid', 'date_in_db'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
 
@@ -4181,7 +4186,7 @@ async function main() {
     try {
       // set up payment status "nopaid"
       await db.set(idUser)('paymentStatusTrialLesson')('nopaid');
-      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'nopaid'),
+      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'nopaid', 'date_in_db'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
 
@@ -4225,7 +4230,7 @@ async function main() {
     try {
       // set up payment status "paid"
       await db.set(idUser)('paymentStatusTrialLesson')('paid');
-      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'paid'),
+      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'paid', 'date_in_db'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
 
@@ -4246,7 +4251,7 @@ async function main() {
     try {
       // set up payment status "nopaid"
       await db.set(idUser)('paymentStatusTrialLesson')('nopaid');
-      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'nopaid'),
+      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'nopaid', 'date_in_db'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
 

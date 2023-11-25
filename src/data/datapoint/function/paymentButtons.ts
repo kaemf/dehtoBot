@@ -31,12 +31,12 @@ export const inlineApprovePayment = (id: number, paymentStatus: string): Hideabl
 };
 
 //Generate button for payment status in Club Trial Lesson
-export const inlineAcceptTrialPayment = (id: number, ObjectIDClub: string, paymentStatus: string): HideableIKBtn[][] => {
+export const inlineAcceptTrialPayment = (id: number, ObjectIDClub: string, paymentStatus: string, date: string): HideableIKBtn[][] => {
     if (paymentStatus === 'unknown') {
         return [
             [
-                Markup.button.callback("👌", `acceptPayment:${id},${ObjectIDClub}`),
-                Markup.button.callback("❌", `declinePayment:${id},${ObjectIDClub}`),
+                Markup.button.callback("👌", `acceptPayment:${id},${ObjectIDClub},${date}`),
+                Markup.button.callback("❌", `declinePayment:${id},${ObjectIDClub},${date}`),
             ]
         ];
         } 
