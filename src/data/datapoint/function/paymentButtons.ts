@@ -85,12 +85,12 @@ export const inlineAcceptPacketPayment = (id: number, paymentStatus: string, pac
 }
 
 //Generate button for payment status in Club Packet
-export const inlineAcceptClubWithPacketPayment = (id: number, ObjectIDClub: string, paymentStatus: string, packet: string): HideableIKBtn[][] => {
+export const inlineAcceptClubWithPacketPayment = (id: number, ObjectIDClub: string, paymentStatus: string, packet: string, date: string): HideableIKBtn[][] => {
     if (paymentStatus === 'unknown') {
         return [
             [
-                Markup.button.callback("👌", `acceptPaymentCP:${id},${ObjectIDClub},${packet}`),
-                Markup.button.callback("❌", `declinePaymentCP:${id},${ObjectIDClub},${packet}`),
+                Markup.button.callback("👌", `acceptPaymentCP:${id},${ObjectIDClub},${packet},${date}`),
+                Markup.button.callback("❌", `declinePaymentCP:${id},${ObjectIDClub},${packet},${date}`),
             ]
         ];
         } 

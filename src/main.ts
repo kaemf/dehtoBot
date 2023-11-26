@@ -16,6 +16,7 @@ import Role, { ConvertRole } from "./base/handlersdb/changeRoleValue";
 import keyboards from "./base/handlers/keyboards";
 import { inlineApprovePayment, inlineAcceptTrialPayment, inlineAcceptPacketPayment, inlineAcceptClubWithPacketPayment } from "./data/datapoint/function/paymentButtons";
 import formattedName from "./data/datapoint/function/nameFormatt";
+import DateRecord from "./base/handlers/getTime";
 import MongoDBReturnType from "./data/datapoint/point/mongoDBType";
 import { Markup } from "telegraf";
 import axios from "axios";
@@ -422,29 +423,25 @@ async function main() {
     }
     else if (data.text === 'ні, немає'){
       const id = ctx?.chat?.id ?? -1,
-        set = db.set(id),
-        date : Date = new Date(),
-        monthFormat = (date.getMonth() + 1 < 10 ? '0' : '') + (date.getMonth() + 1),
-        dateFormat = (date.getDate() < 10 ? '0' : '') + (date.getDate()),
-        formattedDateRecord = `${dateFormat}.${monthFormat}.${date.getFullYear()}`;
+        set = db.set(id);
 
       await set('addquesttrial')(data.text);
 
       // For Developer
       // ctx.telegram.sendMessage(devChat,
-      //   script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, formattedDateRecord),
+      //   script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()),
       //   {parse_mode: 'HTML'})
 
       ctx.telegram.sendMessage(confirmationChat,
-        script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, formattedDateRecord),
+        script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()),
         {parse_mode: 'HTML'})
 
       ctx.telegram.sendMessage(supportChat,
-        script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, formattedDateRecord),
+        script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()),
         {parse_mode: 'HTML'})
 
       ctx.telegram.sendMessage(eugeneChat,
-        script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, formattedDateRecord),
+        script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()),
         {parse_mode: 'HTML'})
 
       ctx.reply(script.trialLesson.thanksPartTwo(user['graphic']), {
@@ -487,11 +484,7 @@ async function main() {
 
   onTextMessage('GetQuestionsAndSendData', async(ctx, user, data) => {
     const id = ctx?.chat?.id ?? -1,
-      set = db.set(id),
-      date : Date = new Date(),
-      monthFormat = (date.getMonth() + 1 < 10 ? '0' : '') + (date.getMonth() + 1),
-      dateFormat = (date.getDate() < 10 ? '0' : '') + (date.getDate()),
-      formattedDateRecord = `${dateFormat}.${monthFormat}.${date.getFullYear()}`;
+      set = db.set(id);
 
     if (CheckException.BackRoot(data)){
       ctx.reply(script.trialLesson.thanksAndGetQuestion(user['name']), {
@@ -517,22 +510,22 @@ async function main() {
   
       // For Developer
       // ctx.telegram.sendMessage(devChat, 
-      //   script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, formattedDateRecord),
+      //   script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()),
       //   {parse_mode: 'HTML'}
       // )
   
       ctx.telegram.sendMessage(confirmationChat, 
-        script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, formattedDateRecord),
+        script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()),
         {parse_mode: 'HTML'}
       )
   
       ctx.telegram.sendMessage(supportChat,
-        script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, formattedDateRecord),
+        script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()),
         {parse_mode: 'HTML'}
       )
 
       ctx.telegram.sendMessage(eugeneChat,
-        script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, formattedDateRecord),
+        script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()),
         {parse_mode: 'HTML'}
       )
   
@@ -800,37 +793,33 @@ async function main() {
     else if (CheckException.PhotoException(data)){
       const paymentStatus: string = await get('paymentStatus') ?? 'unknown',
         name = get("name") ?? "учень",
-        date : Date = new Date(),
-        monthFormat = (date.getMonth() + 1 < 10 ? '0' : '') + (date.getMonth() + 1),
-        dateFormat = (date.getDate() < 10 ? '0' : '') + (date.getDate()),
-        formattedDateRecord = `${dateFormat}.${monthFormat}.${date.getFullYear()}`,
         inline = inlineApprovePayment(id, paymentStatus),
         unique_file_id = data.photo;
   
       // For Developer
       // ctx.telegram.sendPhoto(devChat, unique_file_id, {
-      //   caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], formattedDateRecord), 
+      //   caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()), 
       //   parse_mode: 'HTML',
       //   ...Markup.inlineKeyboard(inline)
       //   }
       // )
       
       ctx.telegram.sendPhoto(confirmationChat, unique_file_id, {
-        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], formattedDateRecord), 
+        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()), 
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard(inline)
         }
       )
   
       ctx.telegram.sendPhoto(supportChat, unique_file_id, {
-        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], formattedDateRecord),
+        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()),
         parse_mode: 'HTML', 
         ...Markup.inlineKeyboard(inline)
         }
       )
 
       ctx.telegram.sendPhoto(eugeneChat, unique_file_id, {
-        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], formattedDateRecord),
+        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()),
         parse_mode: 'HTML', 
         ...Markup.inlineKeyboard(inline)
         }
@@ -858,37 +847,33 @@ async function main() {
     else if (CheckException.FileException(data)){
       const paymentStatus: string = await get('paymentStatus') ?? 'unknown',
         name = get("name") ?? "учень",
-        date : Date = new Date(),
-        monthFormat = (date.getMonth() + 1 < 10 ? '0' : '') + (date.getMonth() + 1),
-        dateFormat = (date.getDate() < 10 ? '0' : '') + (date.getDate()),
-        formattedDateRecord = `${dateFormat}.${monthFormat}.${date.getFullYear()}`,
         inline = inlineApprovePayment(id, paymentStatus),
         unique_file_id = data.file;
   
       // For Developer
       // ctx.telegram.sendDocument(devChat, unique_file_id, {
-      //   caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], formattedDateRecord), 
+      //   caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()), 
       //   parse_mode: 'HTML',
       //   ...Markup.inlineKeyboard(inline)
       //   }
       // )
       
       ctx.telegram.sendDocument(confirmationChat, unique_file_id, {
-        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], formattedDateRecord), 
+        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()), 
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard(inline)
         }
       )
   
       ctx.telegram.sendDocument(supportChat, unique_file_id, {
-        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], formattedDateRecord),
+        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()),
         parse_mode: 'HTML', 
         ...Markup.inlineKeyboard(inline)
         }
       )
 
       ctx.telegram.sendDocument(eugeneChat, unique_file_id, {
-        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], formattedDateRecord),
+        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()),
         parse_mode: 'HTML', 
         ...Markup.inlineKeyboard(inline)
         }
@@ -1144,39 +1129,33 @@ async function main() {
       await set('paymentStatus')('unknown');
       const paymentStatus: string = await get('paymentStatus') ?? 'unknown',
         name = get("name") ?? "учень",
-        date : Date = new Date(),
-        monthFormat = (date.getMonth() + 1 < 10 ? '0' : '') + (date.getMonth() + 1),
-        dateFormat = (date.getDate() < 10 ? '0' : '') + (date.getDate()),
-        formattedDateRecord = `${dateFormat}.${monthFormat}.${date.getFullYear()}`;
-  
-      const inline = inlineApprovePayment(id, paymentStatus);
-  
-      const unique_file_id = data.photo;
+        inline = inlineApprovePayment(id, paymentStatus),
+        unique_file_id = data.photo;
       
       // For Developer
       // ctx.telegram.sendPhoto(devChat, unique_file_id, {
-      //   caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
+      //   caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
       //   parse_mode: 'HTML', 
       //   ...Markup.inlineKeyboard(inline)
       //   }
       // )
       
       ctx.telegram.sendPhoto(confirmationChat, unique_file_id, {
-        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
+        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
         parse_mode: 'HTML', 
         ...Markup.inlineKeyboard(inline)
         }
       )
   
       ctx.telegram.sendPhoto(supportChat, unique_file_id, {
-        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
+        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard(inline)
         }
       )
 
       ctx.telegram.sendPhoto(eugeneChat, unique_file_id, {
-        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
+        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard(inline)
         }
@@ -1210,39 +1189,33 @@ async function main() {
       await set('paymentStatus')('unknown');
       const paymentStatus: string = await get('paymentStatus') ?? 'unknown',
         name = get("name") ?? "учень",
-        date : Date = new Date(),
-        monthFormat = (date.getMonth() + 1 < 10 ? '0' : '') + (date.getMonth() + 1),
-        dateFormat = (date.getDate() < 10 ? '0' : '') + (date.getDate()),
-        formattedDateRecord = `${dateFormat}.${monthFormat}.${date.getFullYear()}`;
-  
-      const inline = inlineApprovePayment(id, paymentStatus);
-  
-      const unique_file_id = data.file;
+        inline = inlineApprovePayment(id, paymentStatus),
+        unique_file_id = data.file;
       
       // For Developer
       // ctx.telegram.sendDocument(devChat, unique_file_id, {
-      //   caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
+      //   caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
       //   parse_mode: 'HTML', 
       //   ...Markup.inlineKeyboard(inline)
       //   }
       // )
       
       ctx.telegram.sendDocument(confirmationChat, unique_file_id, {
-        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
+        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
         parse_mode: 'HTML', 
         ...Markup.inlineKeyboard(inline)
         }
       )
   
       ctx.telegram.sendDocument(supportChat, unique_file_id, {
-        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
+        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard(inline)
         }
       )
 
       ctx.telegram.sendDocument(eugeneChat, unique_file_id, {
-        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], formattedDateRecord),
+        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard(inline)
         }
@@ -1322,11 +1295,7 @@ async function main() {
 
   onTextMessage('_GetQuestionsAndSendData', async(ctx, user, data) => {
     const id = ctx?.chat?.id ?? -1,
-      set = db.set(id),
-      date : Date = new Date(),
-      monthFormat = (date.getMonth() + 1 < 10 ? '0' : '') + (date.getMonth() + 1),
-      dateFormat = (date.getDate() < 10 ? '0' : '') + (date.getDate()),
-      formattedDateRecord = `${dateFormat}.${monthFormat}.${date.getFullYear()}`;
+      set = db.set(id);
 
     if (CheckException.BackRoot(data)){
       ctx.reply(script.registrationLesson.levelLanguageRequest, {reply_markup: {remove_keyboard: true}});
@@ -1337,19 +1306,19 @@ async function main() {
       
       // For Developer
       // ctx.telegram.sendMessage(devChat,
-      //   script.registrationLesson.report(user['name'], user['username'], user['phone_number'], user['_graphic'], user['_languagelevel'], data.text, formattedDateRecord),
+      //   script.registrationLesson.report(user['name'], user['username'], user['phone_number'], user['_graphic'], user['_languagelevel'], data.text, DateRecord()),
       //   { parse_mode: 'HTML' });
   
       ctx.telegram.sendMessage(confirmationChat,
-        script.registrationLesson.report(user['name'], user['username'], user['phone_number'], user['_graphic'], user['_languagelevel'], data.text, formattedDateRecord),
+        script.registrationLesson.report(user['name'], user['username'], user['phone_number'], user['_graphic'], user['_languagelevel'], data.text, DateRecord()),
         { parse_mode: 'HTML' });
   
       ctx.telegram.sendMessage(supportChat,
-        script.registrationLesson.report(user['name'], user['username'], user['phone_number'], user['_graphic'], user['_languagelevel'], data.text, formattedDateRecord),
+        script.registrationLesson.report(user['name'], user['username'], user['phone_number'], user['_graphic'], user['_languagelevel'], data.text, DateRecord()),
         { parse_mode: 'HTML' });
 
       ctx.telegram.sendMessage(eugeneChat,
-        script.registrationLesson.report(user['name'], user['username'], user['phone_number'], user['_graphic'], user['_languagelevel'], data.text, formattedDateRecord),
+        script.registrationLesson.report(user['name'], user['username'], user['phone_number'], user['_graphic'], user['_languagelevel'], data.text, DateRecord()),
         { parse_mode: 'HTML' });
   
       ctx.reply(script.registrationLesson.end, {
@@ -1763,11 +1732,6 @@ async function main() {
     const id = ctx?.chat?.id ?? -1,
       set = db.set(id),
       get = db.get(id),
-      date : Date = new Date(),
-      name = get("name") ?? "учень",
-      monthFormat = (date.getMonth() + 1 < 10 ? '0' : '') + (date.getMonth() + 1),
-      dateFormat = (date.getDate() < 10 ? '0' : '') + (date.getDate()),
-      formattedDateRecord = `${dateFormat}.${monthFormat}.${date.getFullYear()}`,
       clubIndex = user['sc_request_torecord_usertoclub'];
 
     if (CheckException.BackRoot(data)){
@@ -1797,7 +1761,7 @@ async function main() {
   
       if (user['club-typeclub'] === 'Шпрах-Клуб'){
         if (clubIndex !== ''){
-          const inline = inlineAcceptClubWithPacketPayment(id, clubIndex, paymentStatus, 'standart');
+          const inline = inlineAcceptClubWithPacketPayment(id, clubIndex, paymentStatus, 's', DateRecord());
 
           ctx.telegram.sendPhoto(devChat, unique_file_id, {
             parse_mode: "HTML",
@@ -1806,7 +1770,7 @@ async function main() {
           })
         }
         else{
-          const inline = inlineAcceptPacketPayment(id, paymentStatus, 'standart');
+          const inline = inlineAcceptPacketPayment(id, paymentStatus, 's');
           ctx.telegram.sendPhoto(devChat, unique_file_id, {
             parse_mode: "HTML",
             caption: 'Packet',
@@ -1858,7 +1822,7 @@ async function main() {
 
       if (user['club-typeclub'] === 'Шпрах-Клуб'){
         if (clubIndex !== ''){
-          const inline = inlineAcceptClubWithPacketPayment(id, clubIndex, paymentStatus, "standart");
+          const inline = inlineAcceptClubWithPacketPayment(id, clubIndex, paymentStatus, "s", DateRecord());
 
           ctx.telegram.sendDocument(devChat, data.file, {
             parse_mode: "HTML",
@@ -1867,7 +1831,7 @@ async function main() {
           })
         }
         else{
-          const inline = inlineAcceptPacketPayment(id, paymentStatus, 'standart');
+          const inline = inlineAcceptPacketPayment(id, paymentStatus, 's');
           ctx.telegram.sendPhoto(devChat, data.file, {
             parse_mode: "HTML",
             caption: 'Packet',
@@ -1959,14 +1923,14 @@ async function main() {
     }
     else if (CheckException.TextException(data)){
       await set('paymentStatusClubOrPacket')('unknown');
-      const paymentStatus = await get('paymentStatusClubOrPacket') ?? 'unknown';
-      const typeOfProof = user['sc_clubplus_typeproof'];
+      const paymentStatus = await get('paymentStatusClubOrPacket') ?? 'unknown',
+        typeOfProof = user['sc_clubplus_typeproof'];
 
       if (await dbProcess.SetMailForUser(ctx?.chat?.id ?? -1, data.text)){
         await set('sc_local_user_mail')(data.text);
         if (user['sc_request_torecord_usertoclub'] !== ''){
           if (typeOfProof === 'photo'){
-            const inline = inlineAcceptClubWithPacketPayment(ctx?.chat?.id ?? -1, user['sc_request_torecord_usertoclub'], paymentStatus, 'plus');
+            const inline = inlineAcceptClubWithPacketPayment(ctx?.chat?.id ?? -1, user['sc_request_torecord_usertoclub'], paymentStatus, 'plus', DateRecord());
   
             ctx.telegram.sendPhoto(devChat, user['sc_clubplus_proof'], {
               parse_mode: "HTML",
@@ -1975,7 +1939,7 @@ async function main() {
             })
           }
           else{
-            const inline = inlineAcceptClubWithPacketPayment(ctx?.chat?.id ?? -1, user['sc_request_torecord_usertoclub'], paymentStatus, 'plus');
+            const inline = inlineAcceptClubWithPacketPayment(ctx?.chat?.id ?? -1, user['sc_request_torecord_usertoclub'], paymentStatus, 'plus', DateRecord());
   
             ctx.telegram.sendDocument(devChat, user['sc_clubplus_proof'], {
               parse_mode: "HTML",
@@ -1983,12 +1947,6 @@ async function main() {
               ...Markup.inlineKeyboard(inline)
             })
           }
-
-          // const index = new ObjectId(user['sc_request_torecord_usertoclub']),
-          //  currentClub = await dbProcess.ShowData(index);
-          // await dbProcess.WriteNewClubToUser(ctx?.chat?.id ?? -1, new ObjectId(user['sc_request_torecord_usertoclub']));
-          // await dbProcess.ChangeKeyData(currentClub!, 'count', currentClub!.count - 1);
-          // await set('sc_request_torecord_usertoclub')('');
         }
         else{
           if (typeOfProof === 'photo'){
@@ -2007,9 +1965,6 @@ async function main() {
               ...Markup.inlineKeyboard(inline)
             })
           }
-
-          // const currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
-          // await dbProcess.ChangeCountUser(currentUser!._id, currentUser!.count + 5);
         }
   
         ctx.reply(script.speakingClub.thanksAfterMail(user['name'], user['club-coursename']), {
@@ -2141,11 +2096,7 @@ async function main() {
     else if (CheckException.PhotoException(data)){
       await set('paymentStatusTrialLesson')('unknown');
       const paymentStatus: string = await get('paymentStatusTrialLesson') ?? 'unknown',
-      date : Date = new Date(),
-      monthFormat = (date.getMonth() + 1 < 10 ? '0' : '') + (date.getMonth() + 1),
-      dateFormat = (date.getDate() < 10 ? '0' : '') + (date.getDate()),
-      formattedDateRecord = `${dateFormat}.${monthFormat}.${date.getFullYear()}`,
-        inline = inlineAcceptTrialPayment(ctx?.chat?.id ?? -1, user['sc_triallesson_clubindex'], paymentStatus, formattedDateRecord);
+        inline = inlineAcceptTrialPayment(ctx?.chat?.id ?? -1, user['sc_triallesson_clubindex'], paymentStatus, DateRecord());
       
       ctx.telegram.sendPhoto(devChat, data.photo, {
         parse_mode: "HTML",
@@ -2224,6 +2175,9 @@ async function main() {
             //Send Message To Teacher
             await ctx.telegram.sendMessage(currentClub!.teacher_id, script.speakingClub.report.reportToTeacherNewOrder(currentClub!.title, currentClub!.teacher, 
               dbProcess.getDateClub(new Date(currentClub!.date)), currentClub!.time, currentClub!.count, recordedUsers));
+            
+            await sheets.appendLessonToUser(currentUser!.id, currentUser!.name, currentUser!.number, currentUser!.username, currentUser!.email !== undefined ? currentUser!.email : 'пошта відсутня',
+              DateRecord(), currentClub!.title, currentClub!.teacher);
 
             if (currentUser!.count === 1){
               await ctx.telegram.sendMessage(devChat, script.speakingClub.report.notEnoughLessons(
@@ -4155,14 +4109,12 @@ async function main() {
 
   // Club Packet Payment
   bot.action(/^acceptPaymentP:(\d+),(.+)$/, async (ctx) => {
-    const idUser = Number.parseInt(ctx.match[1]);
-    const packetName = ctx.match[2] === 'standart' ? 'Шпрах-Клуб' : 'Шпрах-Клуб+PLUS';
+    const idUser = Number.parseInt(ctx.match[1]),
+      packetName = ctx.match[2] === 's' ? 'Шпрах-Клуб' : 'Шпрах-Клуб+PLUS',
+      currentUser = await dbProcess.ShowOneUser(idUser);
 
-    const currentUser = await dbProcess.ShowOneUser(idUser);
     await dbProcess.ChangeCountUser(currentUser!._id, currentUser!.count + 5);
-
     await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedPacketPayment((await db.get(idUser)('name'))!.toString(), packetName));
-
     await db.set(idUser)('SC_TrialLessonComplet_active')('true');
 
     try {
@@ -4181,7 +4133,7 @@ async function main() {
 
   bot.action(/^declinePaymentP:(\d+),(.+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]);
-    const packetName = ctx.match[2] === 'standart' ? 'Шпрах-Клуб' : 'Шпрах-Клуб+PLUS';
+    const packetName = ctx.match[2] === 's' ? 'Шпрах-Клуб' : 'Шпрах-Клуб+PLUS';
 
     await ctx.telegram.sendMessage(idUser, `вибачте, ${await db.get(idUser)('name')}, але нажаль ваша оплата не успішна.\nповторіть будь ласка змовлення`);
 
@@ -4200,10 +4152,11 @@ async function main() {
   })
 
   // Club PacketAndClub Payment
-  bot.action(/^acceptPaymentCP:(\d+),(.+),(.+)$/, async (ctx) => {
+  bot.action(/^acceptPaymentCP:(\d+),(.+),(.+),(.+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]),
       idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2])),
-      packetName = ctx.match[3] === 'standart' ? 'Шпрах-Клуб' : 'Шпрах-Клуб+PLUS',
+      packetName = ctx.match[3] === 's' ? 'Шпрах-Клуб' : 'Шпрах-Клуб+PLUS',
+      dateRecord = ctx.match[4],
       users = await dbProcess.ShowAllUsers(),
       currentUser = await dbProcess.ShowOneUser(idUser);
     let recordedUsers = '';
@@ -4227,6 +4180,8 @@ async function main() {
 
     await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedTrialLesson((await db.get(idUser)('name'))!.toString(), idClub!.date, idClub!.time, idClub!.link));
 
+    await sheets.appendLessonToUser(idUser, currentUser!.name, currentUser!.number, currentUser!.username, currentUser!.email !== undefined ? currentUser!.email : 'пошта відсутня', dateRecord, idClub!.title, idClub!.teacher);
+
     await db.set(idUser)('SC_TrialLessonComplet_active')('true');
 
     try {
@@ -4246,7 +4201,7 @@ async function main() {
   bot.action(/^declinePaymentCP:(\d+),(.+),(.+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]);
     const idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2]));
-    const packetName = ctx.match[3] === 'standart' ? 'Шпрах-Клуб' : 'Шпрах-Клуб+PLUS';
+    const packetName = ctx.match[3] === 's' ? 'Шпрах-Клуб' : 'Шпрах-Клуб+PLUS';
 
     await ctx.telegram.sendMessage(idUser, `вибачте, ${await db.get(idUser)('name')}, але нажаль ваша оплата не успішна.\nповторіть будь ласка змовлення`);
 

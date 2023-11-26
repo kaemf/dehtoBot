@@ -335,7 +335,7 @@ export default async function arch() {
 
     async HasThisClubUser(idUser: number, idClub: ObjectId){
       const user = await this.ShowOneUser(idUser),
-        data = user!.recordClubs !== undefined ? user!.recordClubs.toString() : false;
+        data = user!.recordClubs !== undefined ||  user!.recordClubs !== null ? user!.recordClubs.toString() : false;
 
         if (data){
           if (data.indexOf(idClub.toString()) === -1){
@@ -505,9 +505,9 @@ export default async function arch() {
       await sheets.updateRow(`${this.trials}!A${number}:I${number}`, [numberOfTrial, date, name, phone, nickname, title_club, teacher]);
     }
 
-    async appendClubRecord(sheetId: number, rowToAdd: number){
-      await sheets.addRowAndShiftDown(sheetId, `A${rowToAdd}`);
-    }
+    // async appendClubRecord(sheetId: number, rowToAdd: number){
+    //   await sheets.addRowAndShiftDown(sheetId, `A${rowToAdd}`);
+    // }
 
     async appendLessonToUser(idUser: number, name: string, phone: string, nickname: string, mail: string, date: string, title: string, teacher: string){
       const index = await sheets.findDataInCell(idUser.toString(), this.students),
