@@ -162,8 +162,6 @@ async function main() {
       }
       else dbProcess.AddUser({ id: ctx?.chat?.id ?? -1, name: user['name'], number: data.phone_number, username: user['username'], role: 'student', count: 0 });
 
-      await sheets.appendLessonToUser(6525, user['name'], data.phone_number, user['username'], 'magwman0417@gmail.com', '25.12.2024', 'Random', 'Lesya');
-
       ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
         reply_markup: {
@@ -4167,7 +4165,7 @@ async function main() {
     await dbProcess.SwitchToCompletTrialLesson(idUser, 'true');
 
     for(let i = 0; i < users.length; i++){
-      if (await dbProcess.HasThisClubUser(users[i].dirname, new ObjectId(ctx.match[2]))){
+      if (await dbProcess.HasThisClubUser(users[i].id, new ObjectId(ctx.match[2]))){
         recordedUsers += `- ${users[i].name} (@${users[i].username})\n📲${users[i].number}\n\n`;
       }
     }

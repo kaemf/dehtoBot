@@ -244,6 +244,112 @@ export default async function init() {
         console.error('Error to get Data: ', error);
         return null;
       }
+    },
+
+    updateCellSize: async (sheetID: string, range: string) => {
+      const parseRange = (range: string) => {
+        const regex = /([A-Z]+)(\d+):([A-Z]+)(\d+)/;
+        const match = range.match(regex);
+      
+        const startColumn = match![1];
+        const startRow = parseInt(match![2], 10);
+        const endColumn = match![3];
+        const endRow = parseInt(match![4], 10);
+      
+        return [startColumn, startRow, endColumn, endRow];
+      },
+      parseA1Notation = (a1Notation: string) => {
+        const regex = /([A-Z]+)(\d+)/;
+        const match = a1Notation.match(regex);
+      
+        const startColumn = match![1];
+        const startRow = parseInt(match![2], 10);
+      
+        return [startColumn, startRow];
+      },
+      getSheetId = async (sheetName: string) => {
+        const { data } = await sheets.spreadsheets.get({
+          spreadsheetId,
+        });
+      
+        const sheet = data.sheets!.find((s) => s.properties!.title === sheetName);
+        return sheet!.properties!.sheetId;
+      }, isRange = range.includes(':');
+    
+      let startColumn, startRow, endColumn, endRow;
+    
+      if (isRange) {
+        [startColumn, startRow, endColumn, endRow] = parseRange(range);
+      } else {
+        [startColumn, startRow] = parseA1Notation(range);
+        endColumn = startColumn;
+        endRow = startRow;
+      }
+    
+      const requests = [
+        {
+          updateDimensionProperties: {
+            range: {
+              sheetId: await getSheetId(sheetID),
+              startRowIndex: parseInt(startRow.toString()) - 1,
+              endRowIndex: endRow,
+              startColumnIndex: startColumn.toString().charCodeAt(0) - 'A'.charCodeAt(0),
+              endColumnIndex: endColumn.toString().charCodeAt(0) - 'A'.charCodeAt(0) + 1,
+            },
+            // properties: {
+            //   pixelSize: 100, // Пример размера высоты в пикселях
+            //   //pixelSize: 150, // Пример размера ширины в пикселях
+            // },
+            // fields: 'pixelSize',
+          },
+        },
+      ];
+    
+      const request = {
+        spreadsheetId,
+        resource: {
+          requests,
+        },
+        auth,
+      };
+    
+      try {
+        const response = await sheets.spreadsheets.batchUpdate(request);
+        console.log(response.data);
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    
+    parseRange: async(range: string) => {
+      const regex = /([A-Z]+)(\d+):([A-Z]+)(\d+)/;
+      const match = range.match(regex);
+    
+      const startColumn = match![1];
+      const startRow = parseInt(match![2], 10);
+      const endColumn = match![3];
+      const endRow = parseInt(match![4], 10);
+    
+      return [startColumn, startRow, endColumn, endRow];
+    },
+    
+    parseA1Notation: (a1Notation: string) => {
+      const regex = /([A-Z]+)(\d+)/;
+      const match = a1Notation.match(regex);
+    
+      const startColumn = match![1];
+      const startRow = parseInt(match![2], 10);
+    
+      return [startColumn, startRow];
+    },
+    
+    getSheetId: async (sheetName: string) => {
+      const { data } = await sheets.spreadsheets.get({
+        spreadsheetId,
+      });
+    
+      const sheet = data.sheets!.find((s) => s.properties!.title === sheetName);
+      return sheet!.properties!.sheetId;
     }
   })
 

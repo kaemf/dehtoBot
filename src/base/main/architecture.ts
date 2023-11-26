@@ -335,7 +335,7 @@ export default async function arch() {
 
     async HasThisClubUser(idUser: number, idClub: ObjectId){
       const user = await this.ShowOneUser(idUser),
-        data = user!.recordClubs !== undefined ||  user!.recordClubs !== null ? user!.recordClubs.toString() : false;
+        data = user && user!.recordClubs !== undefined &&  user!.recordClubs !== null ? user!.recordClubs.toString() : false;
 
         if (data){
           if (data.indexOf(idClub.toString()) === -1){
@@ -527,7 +527,7 @@ export default async function arch() {
 
         await sheets.addRowAndShiftDown(0, `A${position}`);
         console.log(currentData.charAt(0));
-        await sheets.updateRow(`${this.students}!A${position}:E${position}`, [`${parseInt(newIndexPosition) + 1}`, date, title, teacher, 'так']);
+        await sheets.updateRow(`${this.students}!A${position}:D${position}`, [`${parseInt(newIndexPosition) + 1}`, date, title, teacher]);
       }
       else{
         const newIndex = await sheets.getLastValueInColumn();
