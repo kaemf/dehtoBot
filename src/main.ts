@@ -67,13 +67,15 @@ async function main() {
   });
 
   //Begin bot work, collecting user data (his telegram name) set up state_1
-  bot.start( (ctx) => {
+  bot.start( async (ctx) => {
     console.log('STARTED');
     ctx.reply(script.entire.greeting, {reply_markup: { remove_keyboard: true }});
 
     const username = ctx.chat.type === "private" ? ctx.chat.username ?? null : null;
     db.set(ctx.chat.id)('username')(username ?? 'unknown')
     db.set(ctx.chat.id)('state')('WaitingForName')
+
+    await sheets.changeStyleCell('B9:C9', 16, true, 'CENTER', 'CENTER', null, 'BOLD', 'DASHED', null, 'red');
   });
   
   bot.command('menu', async (ctx) => {
@@ -166,7 +168,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject!.role)
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject && userObject!.role !== undefined && userObject!.role !== null ? userObject!.role : 'student')
         }
       })
 
@@ -1761,7 +1763,7 @@ async function main() {
         if (clubIndex !== ''){
           const inline = inlineAcceptClubWithPacketPayment(id, clubIndex, paymentStatus, 's', DateRecord());
 
-          ctx.telegram.sendPhoto(devChat, unique_file_id, {
+          await ctx.telegram.sendPhoto(devChat, unique_file_id, {
             parse_mode: "HTML",
             caption: 'ClubAndPacket',
             ...Markup.inlineKeyboard(inline)
@@ -1769,14 +1771,15 @@ async function main() {
         }
         else{
           const inline = inlineAcceptPacketPayment(id, paymentStatus, 's');
-          ctx.telegram.sendPhoto(devChat, unique_file_id, {
+
+          await ctx.telegram.sendPhoto(devChat, unique_file_id, {
             parse_mode: "HTML",
             caption: 'Packet',
             ...Markup.inlineKeyboard(inline)
           })
         }
         
-        ctx.reply('Ваше замовлення прийнято, очікуйте на підтвердження', {
+        await ctx.reply('Ваше замовлення прийнято, очікуйте на підтвердження', {
           parse_mode: "Markdown",
           reply_markup: {
             one_time_keyboard: true,

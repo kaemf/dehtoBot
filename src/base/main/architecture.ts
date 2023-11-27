@@ -538,6 +538,11 @@ export default async function arch() {
         await sheets.updateRow(`${this.students}!A${newRow + 4}:D${newRow + 4}`, [1, date, title, teacher]);
       }
     }
+
+    async changeStyleCell(range: string, fontSize: number, bold: boolean, horizontal: string, vertical: string, top: string | null, 
+      bottom: string | null, left: string | null, right: string | null, color: string){
+      await sheets.setCellStyle(this.students, range, fontSize, bold, horizontal, vertical, top!, bottom!, left!, right!, color);
+    }
   }
 
   const dbProcess : DBProcess = new DBProcess();

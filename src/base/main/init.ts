@@ -10,6 +10,7 @@ import { createClient } from "redis";
 import { MongoClient } from "mongodb";
 import express from 'express';
 import { google, sheets_v4 } from "googleapis";
+import { getColorCell, getBordersCell } from "../handlers/sheetStyleHandler";
 
 async function connectToClubDB() {
   try {
@@ -145,10 +146,10 @@ export default async function init() {
     
         const values = response.data.values;
         if (values && values.length > 0) {
-          console.log(`Значение ячейки ${cell}: ${values[0][0]}`);
+          console.log(`Data from cell "${cell}": "${values[0][0]}"`);
           return values[0][0];
         } else {
-          console.log(`Cell: "${cell}" empty!.`);
+          console.log(`Cell: "${cell}" empty!`);
           return '';
         }
       } catch (error) {
@@ -246,7 +247,8 @@ export default async function init() {
       }
     },
 
-    updateCellSize: async (sheetID: string, range: string) => {
+    setCellStyle: async (sheetID: string, range: string, fontSize: number, bold: boolean, horizontalAlignment: string,
+      verticalAlignment: string, topBorder: string, bottomBorder: string, leftBorder: string, rightBorder: string, color: string) => {
       const parseRange = (range: string) => {
         const regex = /([A-Z]+)(\d+):([A-Z]+)(\d+)/;
         const match = range.match(regex);
@@ -296,11 +298,21 @@ export default async function init() {
               startColumnIndex: startColumn.toString().charCodeAt(0) - 'A'.charCodeAt(0),
               endColumnIndex: endColumn.toString().charCodeAt(0) - 'A'.charCodeAt(0) + 1,
             },
-            // properties: {
-            //   pixelSize: 100, // Пример размера высоты в пикселях
-            //   //pixelSize: 150, // Пример размера ширины в пикселях
-            // },
-            // fields: 'pixelSize',
+            cell: {
+              userEnteredFormat: {
+                textFormat: {
+                  fontSize: fontSize,
+                  bold: bold, 
+                  italic: false, 
+                  underline: false, 
+                },
+                horizontalAlignment: horizontalAlignment, // (CENTER, LEFT, RIGHT)
+                verticalAlignment: verticalAlignment,
+                borders: getBordersCell(topBorder, bottomBorder, leftBorder, rightBorder),
+                backgroundColor: getColorCell(color)
+              },
+            },
+            fields: 'userEnteredFormat',
           },
         },
       ];
@@ -319,37 +331,6 @@ export default async function init() {
       } catch (err) {
         console.error(err);
       }
-    },
-    
-    parseRange: async(range: string) => {
-      const regex = /([A-Z]+)(\d+):([A-Z]+)(\d+)/;
-      const match = range.match(regex);
-    
-      const startColumn = match![1];
-      const startRow = parseInt(match![2], 10);
-      const endColumn = match![3];
-      const endRow = parseInt(match![4], 10);
-    
-      return [startColumn, startRow, endColumn, endRow];
-    },
-    
-    parseA1Notation: (a1Notation: string) => {
-      const regex = /([A-Z]+)(\d+)/;
-      const match = a1Notation.match(regex);
-    
-      const startColumn = match![1];
-      const startRow = parseInt(match![2], 10);
-    
-      return [startColumn, startRow];
-    },
-    
-    getSheetId: async (sheetName: string) => {
-      const { data } = await sheets.spreadsheets.get({
-        spreadsheetId,
-      });
-    
-      const sheet = data.sheets!.find((s) => s.properties!.title === sheetName);
-      return sheet!.properties!.sheetId;
     }
   })
 
