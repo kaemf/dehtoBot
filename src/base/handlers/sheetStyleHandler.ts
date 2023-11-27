@@ -19,11 +19,14 @@ export function getColorCell(color: string){
     return {red: red, green: green, blue: blue}
 }
 
-export function getBordersCell(topBorder: string | null, bottomBorder: string | null, leftBorder: string | null, rightBorder: string | null){
+export function getBordersCell(topBorder: string | null,
+    bottomBorder: string | null,
+    leftBorder: string | null, 
+    rightBorder: string | null,){
     return {
-        top: topBorder !== null ? { style: topBorder } : {}, // (SOLID, DOTTED, DASHED)
-        bottom: bottomBorder !== null ? { style: bottomBorder } : {},
-        left: leftBorder !== null ? { style: leftBorder } : {},
-        right: rightBorder !== null ? { style: rightBorder } : {},
+        ...(topBorder !== null ? { top: { style: topBorder } } : {}), // ( "DOTTED", "DASHED", "SOLID", "NONE", "DOUBLE")
+        ...(bottomBorder !== null ? { bottom: { style: bottomBorder } } : {}),
+        ...(leftBorder !== null ? { left: { style: leftBorder } } : {}),
+        ...(rightBorder !== null ? { right: { style: rightBorder } } : {}),
     }
 }

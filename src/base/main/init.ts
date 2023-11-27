@@ -278,44 +278,47 @@ export default async function init() {
         return sheet!.properties!.sheetId;
       }, isRange = range.includes(':');
     
-      let startColumn, startRow, endColumn, endRow;
+      let startRow, endRow, startColumn, endColumn;
     
       if (isRange) {
         [startColumn, startRow, endColumn, endRow] = parseRange(range);
       } else {
-        [startColumn, startRow] = parseA1Notation(range);
-        endColumn = startColumn;
-        endRow = startRow;
+        [startRow, endRow] = parseA1Notation(range);
       }
     
+      const values = {
+        userEnteredFormat: {
+          textFormat: {
+            fontSize: fontSize,
+            bold: bold,
+            italic: false,
+            underline: false,
+          },
+          horizontalAlignment: horizontalAlignment,
+          verticalAlignment: verticalAlignment,
+          borders: getBordersCell(topBorder, bottomBorder, leftBorder, rightBorder),
+          backgroundColor: getColorCell(color),
+        },
+      };
+      
       const requests = [
         {
-          updateDimensionProperties: {
+          updateCells: {
+            rows: Array.from({ length: parseInt(endRow.toString()) - parseInt(startRow.toString()) + 1 }, () => ({ values: values })),
             range: {
               sheetId: await getSheetId(sheetID),
               startRowIndex: parseInt(startRow.toString()) - 1,
-              endRowIndex: endRow,
-              startColumnIndex: startColumn.toString().charCodeAt(0) - 'A'.charCodeAt(0),
-              endColumnIndex: endColumn.toString().charCodeAt(0) - 'A'.charCodeAt(0) + 1,
+              endRowIndex: parseInt(endRow.toString()),
+              startColumnIndex: startColumn!.toString().charCodeAt(0) - 'A'.charCodeAt(0),
+              endColumnIndex: endColumn!.toString().charCodeAt(0) - 'A'.charCodeAt(0) + Object.keys(values).length,
             },
-            cell: {
-              userEnteredFormat: {
-                textFormat: {
-                  fontSize: fontSize,
-                  bold: bold, 
-                  italic: false, 
-                  underline: false, 
-                },
-                horizontalAlignment: horizontalAlignment, // (CENTER, LEFT, RIGHT)
-                verticalAlignment: verticalAlignment,
-                borders: getBordersCell(topBorder, bottomBorder, leftBorder, rightBorder),
-                backgroundColor: getColorCell(color)
-              },
-            },
-            fields: 'userEnteredFormat',
+            fields: 'userEnteredFormat.textFormat,userEnteredFormat.horizontalAlignment,userEnteredFormat.verticalAlignment,userEnteredFormat.borders,userEnteredFormat.backgroundColor',
           },
         },
       ];
+      
+
+      console.log(`startRowIndex - ${parseInt(startRow.toString()) - 1}\nendRowIndex - ${parseInt(endRow.toString())}\nstartColumnIndex - ${startColumn!.toString().charCodeAt(0) - 'A'.charCodeAt(0)}\nendColumnIndex - ${endColumn!.toString().charCodeAt(0) - 'A'.charCodeAt(0) + 1}`)
     
       const request = {
         spreadsheetId,

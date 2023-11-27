@@ -75,7 +75,7 @@ async function main() {
     db.set(ctx.chat.id)('username')(username ?? 'unknown')
     db.set(ctx.chat.id)('state')('WaitingForName')
 
-    await sheets.changeStyleCell('B9:C9', 16, true, 'CENTER', 'CENTER', null, 'BOLD', 'DASHED', null, 'red');
+    await sheets.changeStyleCell('B10:B10', 10, false, 'CENTER', 'MIDDLE', 'SOLID', null, null, null, 'white');
   });
   
   bot.command('menu', async (ctx) => {
