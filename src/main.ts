@@ -2203,7 +2203,14 @@ async function main() {
             await set('state')('ActionClubRespondAndRootAction');
           }
           else{
-            ctx.reply('ви вже зареєстровані на цей шпрах! виберіть інший');
+            ctx.reply('ви вже зареєстровані на цей шпрах! виберіть інший', {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+                  return [{ text: `${index + 1}` }];
+                })
+              }
+            });
           }
         }
         else{
@@ -2255,7 +2262,14 @@ async function main() {
             await set('state')('RegistrationChooseHandlerPayment');
           }
           else{
-            ctx.reply('ви вже зареєстровані на цей шпрах! виберіть інший');
+            ctx.reply('ви вже зареєстровані на цей шпрах! виберіть інший', {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+                  return [{ text: `${index + 1}` }];
+                })
+              }
+            });
           }
         }
         else{
@@ -2484,14 +2498,12 @@ async function main() {
         });
       }
 
-      const keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
-        return [{ text: `${index + 1}` }];
-      });
-
       await ctx.reply('Виберіть номер шпраха для видалення:', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboard
+          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+            return [{ text: `${index + 1}` }];
+          })
         }
       })
 
