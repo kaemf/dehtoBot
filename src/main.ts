@@ -67,15 +67,13 @@ async function main() {
   });
 
   //Begin bot work, collecting user data (his telegram name) set up state_1
-  bot.start( async (ctx) => {
+  bot.start( (ctx) => {
     console.log('STARTED');
     ctx.reply(script.entire.greeting, {reply_markup: { remove_keyboard: true }});
 
     const username = ctx.chat.type === "private" ? ctx.chat.username ?? null : null;
     db.set(ctx.chat.id)('username')(username ?? 'unknown')
     db.set(ctx.chat.id)('state')('WaitingForName')
-
-    await sheets.changeStyleCell('B10:B10', 10, false, 'CENTER', 'MIDDLE', 'SOLID', null, null, null, 'white');
   });
   
   bot.command('menu', async (ctx) => {

@@ -248,26 +248,26 @@ export default async function init() {
     },
 
     setCellStyle: async (sheetID: string, range: string, fontSize: number, bold: boolean, horizontalAlignment: string,
-      verticalAlignment: string, topBorder: string, bottomBorder: string, leftBorder: string, rightBorder: string, color: string) => {
+      verticalAlignment: string, topBorder: string | null, bottomBorder: string | null, leftBorder: string | null, rightBorder: string | null, color: string) => {
       const parseRange = (range: string) => {
         const regex = /([A-Z]+)(\d+):([A-Z]+)(\d+)/;
         const match = range.match(regex);
       
-        const startColumn = match![1];
-        const startRow = parseInt(match![2], 10);
-        const endColumn = match![3];
-        const endRow = parseInt(match![4], 10);
+        const _startColumn = match![1];
+        const _startRow = parseInt(match![2], 10);
+        const _endColumn = match![3];
+        const _endRow = parseInt(match![4], 10);
       
-        return [startColumn, startRow, endColumn, endRow];
+        return [_startColumn, _startRow, _endColumn, _endRow];
       },
       parseA1Notation = (a1Notation: string) => {
         const regex = /([A-Z]+)(\d+)/;
         const match = a1Notation.match(regex);
       
-        const startColumn = match![1];
-        const startRow = parseInt(match![2], 10);
+        const _startColumn = match![1];
+        const _startRow = parseInt(match![2], 10);
       
-        return [startColumn, startRow];
+        return [_startColumn, _startRow];
       },
       getSheetId = async (sheetName: string) => {
         const { data } = await sheets.spreadsheets.get({
@@ -278,13 +278,19 @@ export default async function init() {
         return sheet!.properties!.sheetId;
       }, isRange = range.includes(':');
     
-      let startRow, endRow, startColumn, endColumn;
+      let _startRow, _endRow, _startColumn, _endColumn,
+        startRow, endRow, startColumn: string, endColumn: string;
     
       if (isRange) {
-        [startColumn, startRow, endColumn, endRow] = parseRange(range);
+        [_startColumn, _startRow, _endColumn, _endRow] = parseRange(range);
       } else {
-        [startRow, endRow] = parseA1Notation(range);
+        [_startRow, _endRow] = parseA1Notation(range);
       }
+
+      startRow = parseInt(_startRow.toString());
+      endRow = parseInt(_endRow.toString());
+      startColumn = _startColumn!.toString();
+      endColumn = _endColumn!.toString();
     
       const values = {
         userEnteredFormat: {
@@ -300,26 +306,25 @@ export default async function init() {
           backgroundColor: getColorCell(color),
         },
       };
-      
+    
       const requests = [
         {
           updateCells: {
-            rows: Array.from({ length: parseInt(endRow.toString()) - parseInt(startRow.toString()) + 1 }, () => ({ values: values })),
+            rows: Array.from({ length: endRow - startRow + 1 }, () => ({
+              values: Array.from({ length: endColumn.charCodeAt(0) - startColumn.charCodeAt(0) + 1 }, () => ({ userEnteredFormat: values.userEnteredFormat }))
+            })),
             range: {
               sheetId: await getSheetId(sheetID),
-              startRowIndex: parseInt(startRow.toString()) - 1,
-              endRowIndex: parseInt(endRow.toString()),
-              startColumnIndex: startColumn!.toString().charCodeAt(0) - 'A'.charCodeAt(0),
-              endColumnIndex: endColumn!.toString().charCodeAt(0) - 'A'.charCodeAt(0) + Object.keys(values).length,
+              startRowIndex: startRow - 1,
+              endRowIndex: endRow,
+              startColumnIndex: startColumn.charCodeAt(0) - 'A'.charCodeAt(0),
+              endColumnIndex: endColumn.charCodeAt(0) - 'A'.charCodeAt(0) + 1,
             },
             fields: 'userEnteredFormat.textFormat,userEnteredFormat.horizontalAlignment,userEnteredFormat.verticalAlignment,userEnteredFormat.borders,userEnteredFormat.backgroundColor',
           },
         },
       ];
       
-
-      console.log(`startRowIndex - ${parseInt(startRow.toString()) - 1}\nendRowIndex - ${parseInt(endRow.toString())}\nstartColumnIndex - ${startColumn!.toString().charCodeAt(0) - 'A'.charCodeAt(0)}\nendColumnIndex - ${endColumn!.toString().charCodeAt(0) - 'A'.charCodeAt(0) + 1}`)
-    
       const request = {
         spreadsheetId,
         resource: {
@@ -330,9 +335,9 @@ export default async function init() {
     
       try {
         const response = await sheets.spreadsheets.batchUpdate(request);
-        console.log(response.data);
+        console.log(`New Style Applied for: ${response.data}`);
       } catch (err) {
-        console.error(err);
+        console.error(`Error to Apply Style: ${err}`);
       }
     }
   })

@@ -503,11 +503,11 @@ export default async function arch() {
 
       const numberOfTrial = await sheets.getCell(`${this.trials}!A${number - 1}`) === '№' ? '1' : parseInt(await sheets.getCell(`${this.trials}!A${number - 1}`)) + 1;
       await sheets.updateRow(`${this.trials}!A${number}:I${number}`, [numberOfTrial, date, name, phone, nickname, title_club, teacher]);
-    }
 
-    // async appendClubRecord(sheetId: number, rowToAdd: number){
-    //   await sheets.addRowAndShiftDown(sheetId, `A${rowToAdd}`);
-    // }
+      await sheets.setCellStyle(this.trials, `A${number}:A${number}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
+      await sheets.setCellStyle(this.trials, `B${number}:B${number}`, 10, false, 'RIGHT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
+      await sheets.setCellStyle(this.trials, `C${number}:I${number}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
+    }
 
     async appendLessonToUser(idUser: number, name: string, phone: string, nickname: string, mail: string, date: string, title: string, teacher: string){
       const index = await sheets.findDataInCell(idUser.toString(), this.students),
@@ -528,6 +528,10 @@ export default async function arch() {
         await sheets.addRowAndShiftDown(0, `A${position}`);
         console.log(currentData.charAt(0));
         await sheets.updateRow(`${this.students}!A${position}:D${position}`, [`${parseInt(newIndexPosition) + 1}`, date, title, teacher]);
+
+        await sheets.setCellStyle(this.students, `A${position}:A${position}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
+        await sheets.setCellStyle(this.students, `B${position}:B${position}`, 10, false, 'RIGHT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
+        await sheets.setCellStyle(this.students, `C${position}:E${position}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
       }
       else{
         const newIndex = await sheets.getLastValueInColumn();
@@ -536,12 +540,38 @@ export default async function arch() {
         await sheets.updateRow(`${this.students}!A${newRow + 2}:E${newRow + 2}`, [idUser, name, phone, nickname, mail]);
         await sheets.updateRow(`${this.students}!A${newRow + 3}:E${newRow + 3}`, ['№:',	'Дата:', 'Тема:', 'Викладач:', 'Оплата:']);
         await sheets.updateRow(`${this.students}!A${newRow + 4}:D${newRow + 4}`, [1, date, title, teacher]);
+
+        await sheets.setCellStyle(this.students, `A${newRow + 2}:A${newRow + 2}`, 13, true, 'RIGHT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
+        await sheets.setCellStyle(this.students, `B${newRow + 2}:B${newRow + 2}`, 13, true, 'LEFT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
+        await sheets.setCellStyle(this.students, `C${newRow + 2}:D${newRow + 2}`, 10, false, 'LEFT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
+        await sheets.setCellStyle(this.students, `E${newRow + 2}:E${newRow + 2}`, 9, false, 'LEFT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
+
+        await sheets.setCellStyle(this.students, `A${newRow + 3}:E${newRow + 3}`, 10, true, 'LEFT', 'MIDDLE', null, 'SOLID', 'SOLID', 'SOLID', 'white');
+
+        await sheets.setCellStyle(this.students, `A${newRow + 4}:A${newRow + 4}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
+        await sheets.setCellStyle(this.students, `B${newRow + 4}:B${newRow + 4}`, 10, false, 'RIGHT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
+        await sheets.setCellStyle(this.students, `C${newRow + 4}:E${newRow + 4}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
       }
     }
 
-    async changeStyleCell(range: string, fontSize: number, bold: boolean, horizontal: string, vertical: string, top: string | null, 
-      bottom: string | null, left: string | null, right: string | null, color: string){
-      await sheets.setCellStyle(this.students, range, fontSize, bold, horizontal, vertical, top!, bottom!, left!, right!, color);
+    async changePayment(idUser: number, payment: boolean){
+      const index = await sheets.findDataInCell(idUser.toString(), this.students),
+        row = index?.row === undefined ? '' : index!.row;
+
+      if (row !== ''){
+        if (payment){
+          await sheets.setCellStyle(this.students, `A${row}:A${row}`, 13, true, 'RIGHT', 'MIDDLE', null, null, null, null, 'green');
+          await sheets.setCellStyle(this.students, `B${row}:B${row}`, 13, true, 'LEFT', 'MIDDLE', null, null, null, null, 'green');
+          await sheets.setCellStyle(this.students, `C${row}:D${row}`, 10, false, 'LEFT', 'MIDDLE', null, null, null, null, 'green');
+          await sheets.setCellStyle(this.students, `E${row}:E${row}`, 9, false, 'LEFT', 'MIDDLE', null, null, null, null, 'green');
+        }
+        else{
+          await sheets.setCellStyle(this.students, `A${row}:A${row}`, 13, true, 'RIGHT', 'MIDDLE', null, null, null, null, 'red');
+          await sheets.setCellStyle(this.students, `B${row}:B${row}`, 13, true, 'LEFT', 'MIDDLE', null, null, null, null, 'red');
+          await sheets.setCellStyle(this.students, `C${row}:D${row}`, 10, false, 'LEFT', 'MIDDLE', null, null, null, null, 'red');
+          await sheets.setCellStyle(this.students, `E${row}:E${row}`, 9, false, 'LEFT', 'MIDDLE', null, null, null, null, 'red');
+        }
+      }
     }
   }
 
