@@ -2175,26 +2175,30 @@ async function main() {
             await ctx.telegram.sendMessage(currentClub!.teacher_id, script.speakingClub.report.reportToTeacherNewOrder(currentClub!.title, currentClub!.teacher, 
               dbProcess.getDateClub(new Date(currentClub!.date)), currentClub!.time, currentClub!.count, recordedUsers));
             
-            await sheets.appendLessonToUser(currentUser!.id, currentUser!.name, currentUser!.number, currentUser!.username, currentUser!.email !== undefined ? currentUser!.email : 'пошта відсутня',
-              DateRecord(), currentClub!.title, currentClub!.teacher);
+            ctx.reply('Обробка, зачекайте, будь ласка...');
 
             if (currentUser!.count === 1){
               await ctx.telegram.sendMessage(devChat, script.speakingClub.report.notEnoughLessons(
                 user['name'], user['username'], user['phone_number'], currentUser!.email !== undefined ? currentUser!.email : "Пошта відсутня", user['club-typeclub']
-              ));
-              
+                ));
+                
               await ctx.telegram.sendMessage(confirmationChat, script.speakingClub.report.notEnoughLessons(
                 user['name'], user['username'], user['phone_number'], currentUser!.email !== undefined ? currentUser!.email : "Пошта відсутня", user['club-typeclub']
-              ));
+                ));
+                
+              await sheets.changeAvaibleLessonStatus(ctx?.chat?.id ?? -1, false);
             }
-
-            ctx.reply(script.speakingClub.registrationLesson.acceptedRegistration(user['name'], currentClub!.date, 
+                  
+            ctx.reply(script.speakingClub.registrationLesson.acceptedRegistration(user['name'], dbProcess.getDateClub(new Date(currentClub!.date)), 
             currentClub!.time, currentClub!.link), {
               reply_markup: {
                 one_time_keyboard: true,
                 keyboard: await keyboards.speakingClubMenu(currentUser!.haveTrialLessonClub)
               }
             });
+
+            await sheets.appendLessonToUser(currentUser!.id, currentUser!.name, currentUser!.number, currentUser!.username, currentUser!.email !== undefined ? currentUser!.email : 'пошта відсутня',
+              DateRecord(), currentClub!.title, currentClub!.teacher);
 
             await set('state')('ActionClubRespondAndRootAction');
           }
@@ -4058,9 +4062,9 @@ async function main() {
 
     await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedTrialLesson((await db.get(idUser)('name'))!.toString(), dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.link));
 
-    await sheets.appendTrial(dateRecord, currentUser!.name, currentUser!.number, `@${currentUser!.username}`, idClub!.title, idClub!.teacher);
-
     await db.set(idUser)('SC_TrialLessonComplet_active')('true');
+    ctx.answerCbQuery(`Запис даних в таблицю`);
+    await sheets.appendTrial(dateRecord, currentUser!.name, currentUser!.number, `@${currentUser!.username}`, idClub!.title, idClub!.teacher);
 
     try {
       // set up payment status "paid"
@@ -4115,6 +4119,8 @@ async function main() {
     await dbProcess.ChangeCountUser(currentUser!._id, currentUser!.count + 5);
     await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedPacketPayment((await db.get(idUser)('name'))!.toString(), packetName));
     await db.set(idUser)('SC_TrialLessonComplet_active')('true');
+    ctx.answerCbQuery(`Запис даних в таблицю.`);
+    await sheets.changeAvaibleLessonStatus(idUser, true);
 
     try {
       // set up payment status "paid"
@@ -4178,10 +4184,11 @@ async function main() {
       dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.count, recordedUsers));
 
     await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedTrialLesson((await db.get(idUser)('name'))!.toString(), idClub!.date, idClub!.time, idClub!.link));
-
-    await sheets.appendLessonToUser(idUser, currentUser!.name, currentUser!.number, currentUser!.username, currentUser!.email !== undefined ? currentUser!.email : 'пошта відсутня', dateRecord, idClub!.title, idClub!.teacher);
-
     await db.set(idUser)('SC_TrialLessonComplet_active')('true');
+
+    ctx.answerCbQuery(`Запис даних в таблицю`);
+    await sheets.changeAvaibleLessonStatus(idUser, true);
+    await sheets.appendLessonToUser(idUser, currentUser!.name, currentUser!.number, currentUser!.username, currentUser!.email !== undefined ? currentUser!.email : 'пошта відсутня', dateRecord, idClub!.title, idClub!.teacher);
 
     try {
       // set up payment status "paid"

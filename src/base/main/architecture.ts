@@ -554,11 +554,13 @@ export default async function arch() {
       }
     }
 
-    async changePayment(idUser: number, payment: boolean){
+    async changeAvaibleLessonStatus(idUser: number, payment: boolean){
       const index = await sheets.findDataInCell(idUser.toString(), this.students),
-        row = index?.row === undefined ? '' : index!.row;
+        rowIndex = index?.row === undefined ? '' : index!.row;
 
-      if (row !== ''){
+      if (rowIndex !== ''){
+        const row = parseInt(rowIndex.toString()) + 1;
+        
         if (payment){
           await sheets.setCellStyle(this.students, `A${row}:A${row}`, 13, true, 'RIGHT', 'MIDDLE', null, null, null, null, 'green');
           await sheets.setCellStyle(this.students, `B${row}:B${row}`, 13, true, 'LEFT', 'MIDDLE', null, null, null, null, 'green');
