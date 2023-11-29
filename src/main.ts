@@ -1758,21 +1758,24 @@ async function main() {
       const unique_file_id = data.photo;
   
       if (user['club-typeclub'] === 'Шпрах-Клуб'){
+        const date = DateRecord();
         if (clubIndex !== ''){
-          const inline = inlineAcceptClubWithPacketPayment(id, clubIndex, paymentStatus, 's', DateRecord());
+          const inline = inlineAcceptClubWithPacketPayment(id, clubIndex, paymentStatus, 's', date);
 
+          // packet and club
           await ctx.telegram.sendPhoto(devChat, unique_file_id, {
             parse_mode: "HTML",
-            caption: 'ClubAndPacket',
+            caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
           })
         }
         else{
           const inline = inlineAcceptPacketPayment(id, paymentStatus, 's');
 
+          //packet
           await ctx.telegram.sendPhoto(devChat, unique_file_id, {
             parse_mode: "HTML",
-            caption: 'Packet',
+            caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
           })
         }
@@ -1820,12 +1823,13 @@ async function main() {
       const paymentStatus = await get('paymentStatusClubOrPacket') ?? 'unknown';
 
       if (user['club-typeclub'] === 'Шпрах-Клуб'){
+        const date = DateRecord();
         if (clubIndex !== ''){
           const inline = inlineAcceptClubWithPacketPayment(id, clubIndex, paymentStatus, "s", DateRecord());
 
           ctx.telegram.sendDocument(devChat, data.file, {
             parse_mode: "HTML",
-            caption: 'ClubAndPacket',
+            caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
           })
         }
@@ -1833,7 +1837,7 @@ async function main() {
           const inline = inlineAcceptPacketPayment(id, paymentStatus, 's');
           ctx.telegram.sendPhoto(devChat, data.file, {
             parse_mode: "HTML",
-            caption: 'Packet',
+            caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
           })
         }
@@ -1923,26 +1927,28 @@ async function main() {
     else if (CheckException.TextException(data)){
       await set('paymentStatusClubOrPacket')('unknown');
       const paymentStatus = await get('paymentStatusClubOrPacket') ?? 'unknown',
-        typeOfProof = user['sc_clubplus_typeproof'];
+        typeOfProof = user['sc_clubplus_typeproof'],
+        course = user['club-coursename'];
 
       if (await dbProcess.SetMailForUser(ctx?.chat?.id ?? -1, data.text)){
         await set('sc_local_user_mail')(data.text);
+        const date = DateRecord();
         if (user['sc_request_torecord_usertoclub'] !== ''){
           if (typeOfProof === 'photo'){
-            const inline = inlineAcceptClubWithPacketPayment(ctx?.chat?.id ?? -1, user['sc_request_torecord_usertoclub'], paymentStatus, 'plus', DateRecord());
+            const inline = inlineAcceptClubWithPacketPayment(ctx?.chat?.id ?? -1, user['sc_request_torecord_usertoclub'], paymentStatus, 'p', DateRecord());
   
             ctx.telegram.sendPhoto(devChat, user['sc_clubplus_proof'], {
               parse_mode: "HTML",
-              caption: 'ClubAndPacket',
+              caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
               ...Markup.inlineKeyboard(inline)
             })
           }
           else{
-            const inline = inlineAcceptClubWithPacketPayment(ctx?.chat?.id ?? -1, user['sc_request_torecord_usertoclub'], paymentStatus, 'plus', DateRecord());
+            const inline = inlineAcceptClubWithPacketPayment(ctx?.chat?.id ?? -1, user['sc_request_torecord_usertoclub'], paymentStatus, 'p', DateRecord());
   
             ctx.telegram.sendDocument(devChat, user['sc_clubplus_proof'], {
               parse_mode: "HTML",
-              caption: 'ClubAndPacket',
+              caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
               ...Markup.inlineKeyboard(inline)
             })
           }
@@ -1952,7 +1958,7 @@ async function main() {
             const inline = inlineAcceptPacketPayment(ctx?.chat?.id ?? -1, paymentStatus, 'plus');
             ctx.telegram.sendPhoto(devChat, user['sc_clubplus_proof'], {
               parse_mode: "HTML",
-              caption: 'Packet',
+              caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
               ...Markup.inlineKeyboard(inline)
             })
           }
@@ -1960,7 +1966,7 @@ async function main() {
             const inline = inlineAcceptPacketPayment(ctx?.chat?.id ?? -1, paymentStatus, 'plus');
             ctx.telegram.sendDocument(devChat, user['sc_clubplus_proof'], {
               parse_mode: "HTML",
-              caption: 'Packet',
+              caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
               ...Markup.inlineKeyboard(inline)
             })
           }
@@ -1983,7 +1989,6 @@ async function main() {
           },
         });
   
-        // await set('SC_TrialLessonComplet_active')('true');
         await set('state')('EndRootManager');
       }
       else{
