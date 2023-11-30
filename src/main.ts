@@ -158,7 +158,7 @@ async function main() {
       const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
       if (userObject){
-        await dbProcess.UpdateUserData(userObject._id, user['name'], data.phone_number, user['username']);
+        await dbProcess.UpdateUserData(userObject._id, data.phone_number, user['username']);
       }
       else dbProcess.AddUser({ id: ctx?.chat?.id ?? -1, name: user['name'], number: data.phone_number, username: user['username'], role: 'student', count: 0 });
 
@@ -2100,11 +2100,12 @@ async function main() {
     else if (CheckException.PhotoException(data)){
       await set('paymentStatusTrialLesson')('unknown');
       const paymentStatus: string = await get('paymentStatusTrialLesson') ?? 'unknown',
-        inline = inlineAcceptTrialPayment(ctx?.chat?.id ?? -1, user['sc_triallesson_clubindex'], paymentStatus, DateRecord());
+        date = DateRecord(),
+        inline = inlineAcceptTrialPayment(ctx?.chat?.id ?? -1, user['sc_triallesson_clubindex'], paymentStatus, date);
       
       ctx.telegram.sendPhoto(devChat, data.photo, {
         parse_mode: "HTML",
-        caption: 'Work',
+        caption: script.speakingClub.report.forAcceptPayment.Trial(user['name'], user['username'], user['phone_number'], date),
         ...Markup.inlineKeyboard(inline)
       });
 
@@ -2124,10 +2125,31 @@ async function main() {
       await set('state')('EndRootManager');
     }
     else if (CheckException.FileException(data)){
+      await set('paymentStatusTrialLesson')('unknown');
+      const paymentStatus: string = await get('paymentStatusTrialLesson') ?? 'unknown',
+        date = DateRecord(),
+        inline = inlineAcceptTrialPayment(ctx?.chat?.id ?? -1, user['sc_triallesson_clubindex'], paymentStatus, date);
+        
       ctx.telegram.sendDocument(devChat, data.file, {
         parse_mode: "HTML",
-        caption: 'Work'
-      })
+        caption: script.speakingClub.report.forAcceptPayment.Trial(user['name'], user['username'], user['phone_number'], date),
+        ...Markup.inlineKeyboard(inline)
+      });
+
+      await ctx.reply('Ваше замовлення прийнято, очікуйте на підтвердження', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: "В МЕНЮ"
+              }
+            ]
+          ]
+        }
+      });
+
+      await set('state')('EndRootManager');
     }
     else{
       ctx.reply(script.errorException.paymentGettingError);
@@ -2185,11 +2207,11 @@ async function main() {
             if (currentUser!.count === 1){
               await ctx.telegram.sendMessage(devChat, script.speakingClub.report.notEnoughLessons(
                 user['name'], user['username'], user['phone_number'], currentUser!.email !== undefined ? currentUser!.email : "Пошта відсутня", user['club-typeclub']
-                ));
+              ));
                 
               await ctx.telegram.sendMessage(confirmationChat, script.speakingClub.report.notEnoughLessons(
                 user['name'], user['username'], user['phone_number'], currentUser!.email !== undefined ? currentUser!.email : "Пошта відсутня", user['club-typeclub']
-                ));
+              ));
                 
               await sheets.changeAvaibleLessonStatus(ctx?.chat?.id ?? -1, false);
             }
@@ -3596,6 +3618,10 @@ async function main() {
         });
       }
     }
+    else if (data.text === 'Змінити імʼя користувачу'){
+      ctx.reply('Введіть id користувача, якому потрібно змінити імʼя', {reply_markup: {remove_keyboard: true}});
+      await set('state')('ChangeUserNameAndProcessChange');
+    }
     else if (data.text === 'Показати студентів'){
       const results = await dbProcess.ShowAllUsers();
     
@@ -3957,6 +3983,62 @@ async function main() {
           keyboard: keyboards.roleChange()
         }
       })
+    }
+  })
+
+  onTextMessage('ChangeUserNameAndProcessChange', async(ctx, user, data) => {
+    const id = ctx?.chat?.id ?? -1,
+      set = db.set(id),
+      userInDB = await dbProcess.ShowOneUser(parseInt(data.text)),
+      userInGoogleSheet = await sheets.CheckHaveUser(parseInt(data.text));
+
+    if (userInDB){
+      await set('user_to_name_change')(data.text);
+      if (userInGoogleSheet){
+        await ctx.reply(`Користувач ${userInDB!.name} знайдений і також знайдений в таблиці Шпрах-клубів`, {reply_markup: {remove_keyboard: true}});
+      }
+      else{
+        await ctx.reply(`Користувач ${userInDB!.name} знайдений, але на жаль, не знайдений в таблиці Шпрах-клубів`, {reply_markup: {remove_keyboard: true}});
+      }
+
+      await set('state')('ProcessChangeAndReturn');
+    }
+    else{
+      ctx.reply('Такого користувача, на жаль, не знайдено, повторіть, будь ласка, ще раз!');
+    }
+  })
+
+  onTextMessage('ProcessChangeAndReturn', async(ctx, user, data) => {
+    const id = ctx?.chat?.id ?? -1,
+      set = db.set(id),
+      userIDToChange = parseInt(user['user_to_name_change']),
+      userInDB = await dbProcess.ShowOneUser(userIDToChange),
+      userInGoogleSheet = await sheets.CheckHaveUser(userIDToChange);
+
+    if (CheckException.TextException(data)){
+      await dbProcess.ChangeUserName(userInDB!._id, data.text);
+      if (userInGoogleSheet){
+        await sheets.ChangeUserNameInSheet(id, data.text);
+        await ctx.reply(`Успішно змінено імʼя для користувача ${userInDB!.name} і в таблияці також, тепер його імʼя ${data.text}`, {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.personalStudentAdminPanel()
+          }
+        })
+      }
+      else{
+        await ctx.reply(`Успішно змінено імʼя для користувача ${userInDB!.name}, але не в табличці, тепер його імʼя ${data.text}`, {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.personalStudentAdminPanel()
+          }
+        })
+      }
+
+      await set('state')('PeronalStudentHandler');
+    }
+    else{
+      ctx.reply(script.errorException.textGettingError.defaultException);
     }
   })
 

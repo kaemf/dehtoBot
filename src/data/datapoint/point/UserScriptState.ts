@@ -62,3 +62,5 @@ export type UserScriptState =
   | "ChangeTimeHourAndGetChangeMinute"
   | "ChangeTimeMinuteAndSubmit"
   | "ChangeTeacherAndSubmit"
+  | "ChangeUserNameAndProcessChange"
+  | "ProcessChangeAndReturn"

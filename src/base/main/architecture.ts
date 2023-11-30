@@ -296,9 +296,16 @@ export default async function arch() {
       await this.clubdbUsers.updateOne({_id: id}, updateObject);
     }
 
-    async UpdateUserData(id: ObjectId, name: string, number: string, username: string){
+    async ChangeUserName(id: ObjectId, name: string){
       const updateObject = {$set : {
-        name: name,
+        name : name
+      }}
+
+      await this.clubdbUsers.updateOne({_id: id}, updateObject);
+    }
+
+    async UpdateUserData(id: ObjectId, number: string, username: string){
+      const updateObject = {$set : {
         number: number,
         username: username
       }}
@@ -573,6 +580,24 @@ export default async function arch() {
           await sheets.setCellStyle(this.students, `C${row}:D${row}`, 10, false, 'LEFT', 'MIDDLE', null, null, null, null, 'red');
           await sheets.setCellStyle(this.students, `E${row}:E${row}`, 9, false, 'LEFT', 'MIDDLE', null, null, null, null, 'red');
         }
+      }
+    }
+
+    async CheckHaveUser(idUser: number){
+      const index = await sheets.findDataInCell(idUser.toString(), this.students),
+        rowIndex = index?.row === undefined ? '' : index!.row;
+
+      if (rowIndex !== ''){
+        return rowIndex;
+      }
+      else return false;
+    }
+
+    async ChangeUserNameInSheet(idUser: number, name: string){
+      const rowAroundChange = await this.CheckHaveUser(idUser);
+
+      if (rowAroundChange){
+        await sheets.updateRow(`${this.students}!B${parseInt(rowAroundChange.toString()) + 1}`, [name]);
       }
     }
   }
