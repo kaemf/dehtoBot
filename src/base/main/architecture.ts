@@ -521,8 +521,8 @@ export default async function arch() {
         row = index?.row === undefined ? '' : index!.row;
 
       if (row !== ''){
-        let currentData = await sheets.getCell(`${this.students}!A${parseInt(row!.toString()) + 2}`),
-          position = parseInt(row!.toString()) + 2;
+        let currentData = await sheets.getCell(`${this.students}!A${parseInt(row!.toString()) + 3}`),
+          position = parseInt(row!.toString()) + 3;
 
         while (currentData !== ''){
           position++;

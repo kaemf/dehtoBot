@@ -1768,12 +1768,24 @@ async function main() {
             caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
           })
+
+          await ctx.telegram.sendPhoto(supportChat, unique_file_id, {
+            parse_mode: "HTML",
+            caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
+            ...Markup.inlineKeyboard(inline)
+          })
         }
         else{
           const inline = inlineAcceptPacketPayment(id, paymentStatus, 's');
 
           //packet
           await ctx.telegram.sendPhoto(devChat, unique_file_id, {
+            parse_mode: "HTML",
+            caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
+            ...Markup.inlineKeyboard(inline)
+          })
+
+          await ctx.telegram.sendPhoto(supportChat, unique_file_id, {
             parse_mode: "HTML",
             caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
@@ -1832,10 +1844,22 @@ async function main() {
             caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
           })
+
+          ctx.telegram.sendDocument(supportChat, data.file, {
+            parse_mode: "HTML",
+            caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
+            ...Markup.inlineKeyboard(inline)
+          })
         }
         else{
           const inline = inlineAcceptPacketPayment(id, paymentStatus, 's');
           ctx.telegram.sendPhoto(devChat, data.file, {
+            parse_mode: "HTML",
+            caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
+            ...Markup.inlineKeyboard(inline)
+          })
+
+          ctx.telegram.sendPhoto(supportChat, data.file, {
             parse_mode: "HTML",
             caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
@@ -1942,6 +1966,12 @@ async function main() {
               caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
               ...Markup.inlineKeyboard(inline)
             })
+
+            ctx.telegram.sendPhoto(supportChat, user['sc_clubplus_proof'], {
+              parse_mode: "HTML",
+              caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
+              ...Markup.inlineKeyboard(inline)
+            })
           }
           else{
             const inline = inlineAcceptClubWithPacketPayment(ctx?.chat?.id ?? -1, user['sc_request_torecord_usertoclub'], paymentStatus, 'p', DateRecord());
@@ -1951,7 +1981,15 @@ async function main() {
               caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
               ...Markup.inlineKeyboard(inline)
             })
+
+            ctx.telegram.sendDocument(supportChat, user['sc_clubplus_proof'], {
+              parse_mode: "HTML",
+              caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
+              ...Markup.inlineKeyboard(inline)
+            })
           }
+
+          await set('sc_request_torecord_usertoclub')('');
         }
         else{
           if (typeOfProof === 'photo'){
@@ -1965,6 +2003,12 @@ async function main() {
           else{
             const inline = inlineAcceptPacketPayment(ctx?.chat?.id ?? -1, paymentStatus, 'plus');
             ctx.telegram.sendDocument(devChat, user['sc_clubplus_proof'], {
+              parse_mode: "HTML",
+              caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
+              ...Markup.inlineKeyboard(inline)
+            })
+
+            ctx.telegram.sendDocument(supportChat, user['sc_clubplus_proof'], {
               parse_mode: "HTML",
               caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
               ...Markup.inlineKeyboard(inline)
@@ -2104,6 +2148,12 @@ async function main() {
         inline = inlineAcceptTrialPayment(ctx?.chat?.id ?? -1, user['sc_triallesson_clubindex'], paymentStatus, date);
       
       ctx.telegram.sendPhoto(devChat, data.photo, {
+        parse_mode: "HTML",
+        caption: script.speakingClub.report.forAcceptPayment.Trial(user['name'], user['username'], user['phone_number'], date),
+        ...Markup.inlineKeyboard(inline)
+      });
+
+      ctx.telegram.sendPhoto(supportChat, data.photo, {
         parse_mode: "HTML",
         caption: script.speakingClub.report.forAcceptPayment.Trial(user['name'], user['username'], user['phone_number'], date),
         ...Markup.inlineKeyboard(inline)
@@ -4282,7 +4332,7 @@ async function main() {
     await ctx.telegram.sendMessage(idClub!.teacher_id, script.speakingClub.report.reportToTeacherNewOrder(idClub!.title, idClub!.teacher, 
       dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.count, recordedUsers));
 
-    await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedTrialLesson((await db.get(idUser)('name'))!.toString(), idClub!.date, idClub!.time, idClub!.link));
+    await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedPacketAndClubPayment((await db.get(idUser)('name'))!.toString(), dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.link, packetName));
     await db.set(idUser)('SC_TrialLessonComplet_active')('true');
 
     ctx.answerCbQuery(`Запис даних в таблицю`);
