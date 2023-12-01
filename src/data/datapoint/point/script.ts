@@ -376,7 +376,7 @@ UA773220010000026004330103247
 
     report: {
       showClub: (position: number, title: string, teacher: string, date: string, time: string, addString: string) => `✅${position}
-🗣 ШРАХ-КЛУБ
+🗣 ШПРАХ-КЛУБ
 👉🏼 Тема: ${title}
 👉🏼 Викладач: ${teacher}\n
 👉🏼 Коли: ${date}
@@ -384,7 +384,7 @@ UA773220010000026004330103247
 ${addString}`,
 
       showClubTypeAdmin: (position: number, title: string, teacher: string, date: string, time: string, addString: string, recordedUsers: string) => `✅${position}
-🗣 ШРАХ-КЛУБ
+🗣 ШПРАХ-КЛУБ
 👉🏼 <b>Тема</b>: ${title}
 👉🏼 <b>Викладач</b>: ${teacher}\n
 👉🏼 <b>Коли</b>: ${date}
@@ -392,7 +392,7 @@ ${addString}`,
 ${recordedUsers}
 ${addString}`,
 
-      showClubToUser: (title: string, teacher: string, date: string, time: string) => `🗣 ШРАХ-КЛУБ
+      showClubToUser: (title: string, teacher: string, date: string, time: string) => `🗣 ШПРАХ-КЛУБ
 👉🏼 Тема: ${title}
 👉🏼 Викладач: ${teacher}\n
 👉🏼 Коли: ${date}
@@ -406,7 +406,7 @@ Telegram: @${username}
 Користувач є: ${role}
 Кількість доступних занять: ${count > 0 ? count : '❌'}`,
 
-      checkClub: (title: string, teacher: string, date: string, time: string, link: string, count: number) => `🗣 ШРАХ-КЛУБ
+      checkClub: (title: string, teacher: string, date: string, time: string, link: string, count: number) => `🗣 ШПРАХ-КЛУБ
 👉🏼 Тема: ${title}
 👉🏼 Викладач: ${teacher}\n
 👉🏼 Коли: ${date}
@@ -443,7 +443,7 @@ ${phone}\n
 
       reportToTeacherNewOrder: (title: string, teacher: string, date: string, time: string, count: number, recordedUsers: string) => 
       `${count - 1 === 0 ? '✅❌ Вільних місць немає' : '✅ Нова реєстрація'}
-🗣 ШРАХ-КЛУБ
+🗣 ШПРАХ-КЛУБ
 👉🏼 Тема: ${title}
 👉🏼 Викладач: ${teacher}\n
 👉🏼 Коли: ${date}
@@ -453,13 +453,13 @@ ${recordedUsers === '' ? 'поки ще немає(\n' : recordedUsers}
 ${count - 1 === 0 ? '' : `кількість доступних місць: ${count}`}`,
 
       forAcceptPayment: {
-        nonPlus: (name: string, username: string, number: string, date: string) => `💰 Оплата Шрех-Клуб 💰\n
+        nonPlus: (name: string, username: string, number: string, date: string) => `💰 Оплата Шпрах-Клуб 💰\n
 👉🏽${name} (@${username})
 👉🏽${number}
 👉🏽Пакет: <b>Шпрах-Клуб</b> (5 занять) - 1200uah\n
 Дата створення заявки: ${date}`,
 
-        Plus: (name: string, username: string, number: string, email: string, course: string, date: string) => `💰 Оплата Шрех-Клуб 💰\n
+        Plus: (name: string, username: string, number: string, email: string, course: string, date: string) => `💰 Оплата Шпрах-Клуб 💰\n
 👉🏽${name} (@${username})
 👉🏽${number}
 👉🏽Пакет: <b>Шпрах-Клуб+PLUS</b> (5 занять+курс) - 2500uah

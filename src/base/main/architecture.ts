@@ -530,7 +530,7 @@ export default async function arch() {
         }
 
         const toProcessPosition = await sheets.getCell(`${this.students}!A${position - 1}`),
-          newIndexPosition = toProcessPosition.charAt(0);
+          newIndexPosition = toProcessPosition;
 
         await sheets.addRowAndShiftDown(0, `A${position}`);
         console.log(currentData.charAt(0));

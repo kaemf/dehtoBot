@@ -254,14 +254,14 @@ async function main() {
 
       await set('state')('AdminRootHandler');
     }
-    else if (data.text === 'Для Викладача'){
+    else if (data.text === 'Мої Шпрах-клуби'){
       const results = await dbProcess.ShowAll(),
         users = await dbProcess.ShowAllUsers();
 
       let addString = '';
 
       for (let i = 0; i < results.length; i++){
-        if (results[i].teacher_id === ctx?.chat?.id ?? -1){
+        if (parseInt(results[i].teacher_id) === ctx?.chat?.id ?? -1){
           let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
           for (let j = 0; j < users.length; j++) {
             if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
@@ -2265,14 +2265,18 @@ async function main() {
                 
               await sheets.changeAvaibleLessonStatus(ctx?.chat?.id ?? -1, false);
             }
-                  
-            ctx.reply(script.speakingClub.registrationLesson.acceptedRegistration(user['name'], dbProcess.getDateClub(new Date(currentClub!.date)), 
+            
+            await ctx.reply(script.speakingClub.registrationLesson.acceptedRegistration(user['name'], dbProcess.getDateClub(new Date(currentClub!.date)), 
             currentClub!.time, currentClub!.link), {
               reply_markup: {
                 one_time_keyboard: true,
                 keyboard: await keyboards.speakingClubMenu(currentUser!.haveTrialLessonClub)
               }
             });
+            
+            await ctx.telegram.sendDocument(ctx?.chat?.id ?? -1, currentClub!.documentation, {
+              caption: `ось файл із лексикою, яка допоможе Вам на шпрах-клубі ;)`}
+            )
 
             await sheets.appendLessonToUser(currentUser!.id, currentUser!.name, currentUser!.number, currentUser!.username, currentUser!.email !== undefined ? currentUser!.email : 'пошта відсутня',
               DateRecord(), currentClub!.title, currentClub!.teacher);
@@ -4211,6 +4215,10 @@ async function main() {
 
     await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedTrialLesson((await db.get(idUser)('name'))!.toString(), dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.link));
 
+    await ctx.telegram.sendDocument(idUser, idClub!.documentation, {
+      caption: `ось файл із лексикою, яка допоможе Вам на шпрах-клубі ;)`
+    });
+
     await db.set(idUser)('SC_TrialLessonComplet_active')('true');
     ctx.answerCbQuery(`Запис даних в таблицю`);
     await sheets.appendTrial(dateRecord, currentUser!.name, currentUser!.number, `@${currentUser!.username}`, idClub!.title, idClub!.teacher);
@@ -4226,7 +4234,7 @@ async function main() {
       console.log(e);
     }
 
-    return ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}`);
+    ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}`);
   })
 
   bot.action(/^declinePayment:(\d+),(.+),(.+)$/, async (ctx) => {
@@ -4282,7 +4290,7 @@ async function main() {
       console.log(e);
     }
 
-    return ctx.answerCbQuery(`Користувач: ${idUser}, Пакет: ${packetName}`);
+    ctx.answerCbQuery(`Користувач: ${idUser}, Пакет: ${packetName}`);
   })
 
   bot.action(/^declinePaymentP:(\d+),(.+)$/, async (ctx) => {
@@ -4333,6 +4341,10 @@ async function main() {
       dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.count, recordedUsers));
 
     await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedPacketAndClubPayment((await db.get(idUser)('name'))!.toString(), dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.link, packetName));
+
+    await ctx.telegram.sendDocument(idUser, idClub!.documentation, {
+      caption: `ось файл із лексикою, яка допоможе Вам на шпрах-клубі ;)`
+    });
     await db.set(idUser)('SC_TrialLessonComplet_active')('true');
 
     ctx.answerCbQuery(`Запис даних в таблицю`);
@@ -4350,7 +4362,7 @@ async function main() {
       console.log(e);
     }
 
-    return ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}, Пакет: ${packetName}`);
+    ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}, Пакет: ${packetName}`);
   })
 
   bot.action(/^declinePaymentCP:(\d+),(.+),(.+)$/, async (ctx) => {

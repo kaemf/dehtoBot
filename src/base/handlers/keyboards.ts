@@ -37,7 +37,7 @@ class Keyboard{
           },
         ],[
             {
-              text: "Для Викладача"
+              text: "Мої Шпрах-клуби"
             }  
         ],[
           {
@@ -45,6 +45,27 @@ class Keyboard{
           }
         ]
     ]
+    }
+    else if (role === 'teacher'){
+      return [
+        [
+          {
+            text: "Індивідуальні заняття"
+          }
+        ],[
+          {
+            text: "Шпрах-Клуби"
+          }
+        ],[
+          {
+            text: "Вчитель на годину",
+          },
+        ],[
+          {
+            text: "Мої Шпрах-клуби"
+          }
+        ]
+      ]
     }
       else if (checkChats(currentChatId)){
           return [
@@ -66,27 +87,6 @@ class Keyboard{
                 }
               ]
           ]
-      }
-      else if (role === 'teacher'){
-        return [
-          [
-            {
-              text: "Індивідуальні заняття"
-            }
-          ],[
-            {
-              text: "Шпрах-Клуби"
-            }
-          ],[
-            {
-              text: "Вчитель на годину",
-            },
-          ],[
-            {
-              text: "Для Викладача"
-            }
-          ]
-        ]
       }
       else{
           return [
