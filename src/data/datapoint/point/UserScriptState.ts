@@ -64,3 +64,4 @@ export type UserScriptState =
   | "ChangeTeacherAndSubmit"
   | "ChangeUserNameAndProcessChange"
   | "ProcessChangeAndReturn"
+  | "RespondIDAndShowCount&Packet"

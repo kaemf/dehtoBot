@@ -3134,7 +3134,7 @@ async function main() {
 
       await ctx.telegram.sendMessage(dataItem!.teacher_id, `❌ ${dataItem!.teacher}, клуб ${dataItem!.title} (${dbProcess.getDateClub(new Date(dataItem!.date))} о ${dataItem!.time} 🇺🇦) був видалений адміністратором і його більше не існує.`);
       for (let i = 0; i < users.length; i++){
-        await ctx.telegram.sendMessage(users[i].id, `❌ ${users[i].name}, Ви були видалені з клуба ${dataItem!.title} (${dbProcess.getDateClub(new Date(dataItem!.date))} о ${dataItem!.time} 🇺🇦), оскільки клуб був видалений.`);
+        await ctx.telegram.sendMessage(users[i].id, `❌ ${users[i].name}, Ви були видалені з клубу ${dataItem!.title} (${dbProcess.getDateClub(new Date(dataItem!.date))} о ${dataItem!.time} 🇺🇦), оскільки клуб був видалений.`);
         await dbProcess.DeleteClubFromUser(users[i].id, deleteItem);
       }
 
@@ -3704,6 +3704,13 @@ async function main() {
         }
       }
     }
+    else if (data.text === 'Кількість занять студента'){
+      ctx.reply('Введіть id студента, щоб побачити кількість доступних йому занять так активний пакет');
+      await set('state')('RespondIDAndShowCount&Packet');
+    }
+    else if (data.text === 'Прибрати заняття студенту'){
+      bug
+    }
     else if (data.text === 'Показати Адмінів та Розробника'){
       const results = await dbProcess.ShowAllUsers();
     
@@ -4090,6 +4097,38 @@ async function main() {
       }
 
       await set('state')('PeronalStudentHandler');
+    }
+    else{
+      ctx.reply(script.errorException.textGettingError.defaultException);
+    }
+  })
+
+  onTextMessage('RespondIDAndShowCount&Packet', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (CheckException.TextException(data)){
+      if (!isNaN(parseInt(data.text))){
+        const requestedUser = (await db.getAll(parseInt(data.text))());
+        if (requestedUser){
+          const user = await dbProcess.ShowOneUser(parseInt(data.text)),
+            activePacket = await db.get(parseInt(data.text))('club-typeclub');
+
+          ctx.reply(`Користувач ${user!.name} має на своєму рахунку ${user!.count} занять і активний пакет ${activePacket}`, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.personalStudentAdminPanel()
+            }
+          });
+
+          await set('state')('PeronalStudentHandler');
+        }
+        else{
+          ctx.reply('Нажаль, такого користувача не знайдено.');
+        }
+      }
+      else{
+        ctx.reply('Вибачте, але не знав, що id може містити букви...\n\nПовторіть, будь ласка, знову')
+      }
     }
     else{
       ctx.reply(script.errorException.textGettingError.defaultException);
