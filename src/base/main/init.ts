@@ -1,7 +1,7 @@
 // DehtoBot for dehto German Course
 // Developed by Yaroslav Volkivskyi (TheLaidSon)
 
-// Actual v4.9.3
+// Actual v4.10.3
 
 // Initialization File
 
@@ -11,6 +11,7 @@ import { MongoClient } from "mongodb";
 import express from 'express';
 import { google, sheets_v4 } from "googleapis";
 import { getColorCell, getBordersCell } from "../handlers/sheetStyleHandler";
+import { versionBot } from "../../data/datapoint/point/chats";
 
 async function connectToClubDB() {
   try {
@@ -28,7 +29,7 @@ async function connectToClubDB() {
 
 export default async function init() {
 
-  console.log("\n     DehtoBot v4.8.3\n\n   Developed by Yaroslav Volkivskyi (TheLaidSon)\n\n\n");
+  console.log(`\n     DehtoBot ${versionBot}\n\n   Developed by Yaroslav Volkivskyi (TheLaidSon)\n\n\n`);
 
   console.log("Creating redis client...");
   const redis = createClient();
@@ -335,7 +336,7 @@ export default async function init() {
     
       try {
         const response = await sheets.spreadsheets.batchUpdate(request);
-        console.log(`New Style Applied for: ${response.data}`);
+        console.log(`New Style Applied for:` +response.data);
       } catch (err) {
         console.error(`Error to Apply Style: ${err}`);
       }

@@ -1,7 +1,7 @@
 // DehtoBot for dehto German Course
 // Developed by Yaroslav Volkivskyi (TheLaidSon)
 
-// Actual v4.8.3
+// Actual v4.10.3
 
 // Main File
 import script from "./data/datapoint/point/script";
@@ -2245,12 +2245,10 @@ async function main() {
                 recordedUsers += `- ${users[i].name} (@${users[i].username})\n📲${users[i].number}\n\n`;
               }
             }
-
-            recordedUsers += `- ${currentUser!.name} (@${currentUser!.username})\n📲${currentUser!.number}\n\n`;
         
             //Send Message To Teacher
             await ctx.telegram.sendMessage(currentClub!.teacher_id, script.speakingClub.report.reportToTeacherNewOrder(currentClub!.title, currentClub!.teacher, 
-              dbProcess.getDateClub(new Date(currentClub!.date)), currentClub!.time, currentClub!.count, recordedUsers));
+              dbProcess.getDateClub(new Date(currentClub!.date)), currentClub!.time, currentClub!.count - 1, recordedUsers));
             
             ctx.reply('Обробка, зачекайте, будь ласка...');
 
@@ -3242,6 +3240,7 @@ async function main() {
     }
     else if (Key(data.text) !== null){
       await set('AP_keyforchange')(Key(data.text)!);
+      await set('AP_keyforchange_services')(data.text);
 
       if (data.text === 'Документація'){
         ctx.reply("Завантажте файл");
@@ -3323,7 +3322,7 @@ async function main() {
     
           await set('AP_keydatatochange')(data.text);
     
-          await dbProcess.ChangeKeyData(dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid'])]), keyForChange, data.text);
+          await dbProcess.ChangeKeyData(dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid'])]), keyForChange, parseInt(data.text));
           ctx.reply('Успішно виконана операція!', {
             parse_mode: "Markdown",
             reply_markup: {
@@ -3339,14 +3338,16 @@ async function main() {
         const getCurrentClub: (MongoDBReturnType | Object | null)[] = [
           await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]),
           dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
-        ], keyForChange = user['AP_keyforchange'];
+        ], keyForChange = user['AP_keyforchange'], keyForChangeService = user['AP_keyforchange_services'];
   
         await set('AP_prev_keyvalue(backup)')(Array(getCurrentClub[0]).filter((club): club is MongoDBReturnType => typeof club === 'object')
         .map((club) => club[keyForChange as keyof MongoDBReturnType].toString()).join(''));
   
         await set('AP_keydatatochange')(data.text);
-  
-        await dbProcess.ChangeKeyData(dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]), keyForChange, data.text);
+
+        const object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
+        ctx.telegram.sendMessage(object!.teacher_id, `${object!.teacher}! Хочемо вас повідомити, що на шпрах-клубі ${object!.title}, котрий на ${dbProcess.getDateClub(new Date(object!.date))} о ${object!.time} були змінені наступні дані:\n\n\nЩо було змінено - ${keyForChangeService}\n\nНові дані - ${data.text}`)
+        await dbProcess.ChangeKeyData(getCurrentClub[0]!, keyForChange, data.text);
         ctx.reply('Успішно виконана операція!', {
           parse_mode: "Markdown",
           reply_markup: {
@@ -3378,13 +3379,14 @@ async function main() {
       await set('state')('GetChangesAndChangeThis');
     }
     else if (CheckException.FileException(data)){
-      const keyForChange = user['AP_keyforchange'];
+      const keyForChange = user['AP_keyforchange'],
+        object = results[parseInt(user['AP_respondkeydata_clubid']) - 1];
+
+        console.log(object.title);
 
       await set('AP_keydatatochange')(data.text);
-
-      console.log(results[parseInt(user['AP_respondkeydata_clubid']) - 1].title);
-
-      await dbProcess.ChangeKeyData(results[parseInt(user['AP_respondkeydata_clubid']) - 1], keyForChange, data.file);
+      await dbProcess.ChangeKeyData(object, keyForChange, data.file);
+      ctx.telegram.sendMessage(object.teacher_id, `${object.teacher}! Хочемо вас попередити, що у клуба ${object.title}, котрий на ${dbProcess.getDateClub(new Date(object.date))} о ${object.time} було змінено документацію`);
       ctx.reply('Успішно виконана операція!', {
         parse_mode: "Markdown",
         reply_markup: {
@@ -3468,6 +3470,7 @@ async function main() {
             object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
 
           await dbProcess.ChangeKeyData(object!, 'date', `${data.text}-${user['change_date_month']}-${user['change_date_day']}`)
+          await ctx.telegram.sendMessage(object!.teacher_id, `${object!.teacher}! Хочемо вас попередити, що на клубі ${object!.title}, котрий на ${dbProcess.getDateClub(new Date(object!.date))} о ${object!.time}, відтепер відбудеться ${dbProcess.getDateClub(new Date(`${data.text}-${user['change_date_month']}-${user['change_date_day']}`))}`)
           ctx.reply('Операція успішна!', {
             reply_markup: {
               one_time_keyboard: true,
@@ -3533,6 +3536,7 @@ async function main() {
           object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
   
         await dbProcess.ChangeKeyData(object!, 'time', `${user['change_time_hour']}:${data.text}`);
+        await ctx.telegram.sendMessage(object!.teacher_id, `${object!.teacher}! Хочемо вас попередити, що час клуба ${object!.title}, котрий на ${dbProcess.getDateClub(new Date(object!.date))} о ${object!.time}, відтепер о ${user['change_time_hour']}:${data.text}.`)
         ctx.reply('Операція успішна!', {
           reply_markup: {
             one_time_keyboard: true,
@@ -3705,7 +3709,7 @@ async function main() {
       }
     }
     else if (data.text === 'Кількість занять студента'){
-      ctx.reply('Введіть id студента, щоб побачити кількість доступних йому занять так активний пакет');
+      ctx.reply('Введіть id студента, щоб побачити кількість доступних йому занять та активний пакет');
       await set('state')('RespondIDAndShowCount&Packet');
     }
     else if (data.text === 'Прибрати заняття студенту'){
@@ -4087,7 +4091,11 @@ async function main() {
       userInDB = await dbProcess.ShowOneUser(userIDToChange),
       userInGoogleSheet = await sheets.CheckHaveUser(userIDToChange);
 
-    if (CheckException.TextException(data)){
+    if (CheckException.BackRoot(data)){
+      ctx.reply('Введіть id користувача, якому потрібно змінити імʼя', {reply_markup: {remove_keyboard: true}});
+      await set('state')('ChangeUserNameAndProcessChange');
+    }
+    else if (CheckException.TextException(data)){
       await dbProcess.ChangeUserName(userInDB!._id, data.text);
       if (userInGoogleSheet){
         await sheets.ChangeUserNameInSheet(id, data.text);
@@ -4143,7 +4151,7 @@ async function main() {
           const user = await dbProcess.ShowOneUser(parseInt(data.text)),
             activePacket = await db.get(parseInt(data.text))('club-typeclub');
 
-          ctx.reply(`Користувач ${user!.name} має на своєму рахунку ${user!.count} занять і активний пакет ${activePacket}`, {
+          ctx.reply(`Користувач ${user!.name} має на своєму рахунку ${user!.count} занять і активний пакет ${activePacket !== null ? activePacket : 'Відсутній'}`, {
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.personalStudentAdminPanel()
@@ -4168,7 +4176,17 @@ async function main() {
   onTextMessage('ResondIDAndForceChangeAvaibleLessons', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (CheckException.TextException(data)){
+    if (CheckException.BackRoot(data)){
+      ctx.reply('Прекрасно, над ким сьогодні будемо знущатись?)', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.personalStudentAdminPanel()
+        }
+      })
+
+      await set('state')('PeronalStudentHandler');
+    }
+    else if (CheckException.TextException(data)){
       if (!isNaN(parseInt(data.text))){
         const requestedUser = (await db.getAll(parseInt(data.text))());
         if (requestedUser){
@@ -4197,7 +4215,11 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1),
       idUser = user['userid_for_forceChangeAvaibleLessons'];
 
-    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) > 0 && parseInt(data.text) <= 5){
+    if (CheckException.BackRoot(data)){
+      ctx.reply('Введіть id студента, щоб змінити кількість його занять');
+      await set('state')('ResondIDAndForceChangeAvaibleLessons');
+    }
+    else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 0 && parseInt(data.text) <= 5){
       const user = await dbProcess.ShowOneUser(parseInt(idUser));
       await dbProcess.ChangeCountUser(user!._id, parseInt(data.text))
 
@@ -4326,11 +4348,9 @@ async function main() {
       }
     }
 
-    recordedUsers += `- ${currentUser!.name} (@${currentUser!.username})\n📲${currentUser!.number}\n\n`;
-
     //Send Message To Teacher
     await ctx.telegram.sendMessage(idClub!.teacher_id, script.speakingClub.report.reportToTeacherNewOrder(idClub!.title, idClub!.teacher, 
-      dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.count, recordedUsers));
+      dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.count - 1, recordedUsers));
 
     await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedTrialLesson((await db.get(idUser)('name'))!.toString(), dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.link));
 
@@ -4453,11 +4473,9 @@ async function main() {
       }
     }
 
-    recordedUsers += `- ${currentUser!.name} (@${currentUser!.username})\n📲${currentUser!.number}\n\n`;
-
     //Send Message To Teacher
     await ctx.telegram.sendMessage(idClub!.teacher_id, script.speakingClub.report.reportToTeacherNewOrder(idClub!.title, idClub!.teacher, 
-      dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.count, recordedUsers));
+      dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.count - 1, recordedUsers));
 
     await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedPacketAndClubPayment((await db.get(idUser)('name'))!.toString(), dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.link, packetName));
 

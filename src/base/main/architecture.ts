@@ -14,7 +14,7 @@ export default async function arch() {
       user = (await db.getAll(id)()),
       message = ctx.message;
 
-    console.log(user['state']);
+    console.log(user['state'] + ' show in contactMessage, one repeat');
   
     if (user.state === startState) {
       if ('contact' in message) {
@@ -124,7 +124,7 @@ export default async function arch() {
       message = ctx.message,
       supportedFormats : string[] = ['.pdf', '.jpeg', '.jpg', '.png', '.heic'];
     
-    console.log(user['state']);
+    console.log(user['state'] + ' show in photoMessage, one repeat');
   
     if (user.state === startState) {
       if ('text' in message) {
@@ -186,7 +186,7 @@ export default async function arch() {
       message = ctx.message,
       supportedFormats : string[] = ['.pdf', '.PDF'];
     
-    console.log(user['state']);
+    console.log(user['state'] + ' show in docMessage, one repeat');
   
     if (user.state === startState) {
       if ('text' in message) {
