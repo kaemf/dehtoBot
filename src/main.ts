@@ -4151,7 +4151,7 @@ async function main() {
           const user = await dbProcess.ShowOneUser(parseInt(data.text)),
             activePacket = await db.get(parseInt(data.text))('club-typeclub');
 
-          ctx.reply(`Користувач ${user!.name} має на своєму рахунку ${user!.count} занять і активний пакет ${activePacket !== null ? activePacket : 'Відсутній'}`, {
+          ctx.reply(`Користувач ${user!.name} має:\n\n👉🏽 ${user!.count} занять\n👉🏽 пакет: ${activePacket !== null ? activePacket : 'Відсутній'}`, {
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.personalStudentAdminPanel()
@@ -4269,12 +4269,10 @@ async function main() {
       const newInlineKeyboardButtons = inlineApprovePayment(id, 'paid'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
-
+      ctx.answerCbQuery(`Встановлений статус "ОПЛАЧЕНО" для користувача: ${id}`);
     } catch (e) {
       console.log(e);
     }
-
-    return ctx.answerCbQuery(`Встановлений статус "ОПЛАЧЕНО" для користувача: ${id}`);
   });
 
   bot.action(/^rejectPayment:(\d+)$/, async (ctx) => {
@@ -4293,12 +4291,10 @@ async function main() {
       const newInlineKeyboardButtons = inlineApprovePayment(id, 'nopaid'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
-
+      ctx.answerCbQuery(`Встановлений статус "НЕ ОПЛАЧЕНО" для користувача: ${id}`);
     } catch (e) {
       console.log(e);
     }
-
-    return ctx.answerCbQuery(`Встановлений статус "НЕ ОПЛАЧЕНО" для користувача: ${id}`);
   });
 
   bot.action(/^resetPaymentStatus:(\d+)$/, async (ctx) => {
@@ -4310,12 +4306,10 @@ async function main() {
       const newInlineKeyboardButtons = inlineApprovePayment(id, 'unknown'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
-
+      ctx.answerCbQuery(`Встановлений статус "НЕ ВИЗНАЧЕНИЙ" для користувача: ${id}`);
     } catch (e) {
       console.log(e);
     }
-
-    return ctx.answerCbQuery(`Встановлений статус "НЕ ВИЗНАЧЕНИЙ" для користувача: ${id}`);
   });
 
   bot.action(/^paidCheck:(\d+)$/, (ctx) => {
@@ -4359,7 +4353,7 @@ async function main() {
     });
 
     await db.set(idUser)('SC_TrialLessonComplet_active')('true');
-    ctx.answerCbQuery(`Запис даних в таблицю`);
+    await ctx.answerCbQuery(`Запис даних в таблицю`);
     await sheets.appendTrial(dateRecord, currentUser!.name, currentUser!.number, `@${currentUser!.username}`, idClub!.title, idClub!.teacher);
 
     try {
@@ -4368,12 +4362,10 @@ async function main() {
       const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'paid', 'date_in_db'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
-
+      await ctx.answerCbQuery(`Успішно! Користувач: ${idUser}, Клуб: ${idClub!.title}`);
     } catch (e) {
       console.log(e);
     }
-
-    ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}`);
   })
 
   bot.action(/^declinePayment:(\d+),(.+),(.+)$/, async (ctx) => {
@@ -4388,12 +4380,10 @@ async function main() {
       const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'nopaid', 'date_in_db'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
-
+      ctx.answerCbQuery(`Відміна! Користувач: ${idUser}, Клуб: ${idClub!.title}`);
     } catch (e) {
       console.log(e);
     }
-
-    return ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}`);
   })
 
   bot.action(/^paidCheckT:(\d+)$/, async (ctx) => {
@@ -4424,12 +4414,10 @@ async function main() {
       const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'paid', 'date_in_db'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
-
+      ctx.answerCbQuery(`Успішно! Користувач: ${idUser}, Пакет: ${packetName}`);
     } catch (e) {
       console.log(e);
     }
-
-    ctx.answerCbQuery(`Користувач: ${idUser}, Пакет: ${packetName}`);
   })
 
   bot.action(/^declinePaymentP:(\d+),(.+)$/, async (ctx) => {
@@ -4444,12 +4432,10 @@ async function main() {
       const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'nopaid', 'date_in_db'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
-
+      ctx.answerCbQuery(`Відмінено! Користувач: ${idUser}, Пакет: ${packetName}`);
     } catch (e) {
       console.log(e);
     }
-
-    return ctx.answerCbQuery(`Користувач: ${idUser}, Пакет: ${packetName}`);
   })
 
   // Club PacketAndClub Payment
@@ -4494,12 +4480,10 @@ async function main() {
       const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'paid', 'date_in_db'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
-
+      ctx.answerCbQuery(`Успішно! Користувач: ${idUser}, Клуб: ${idClub!.title}, Пакет: ${packetName}`);
     } catch (e) {
       console.log(e);
     }
-
-    ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}, Пакет: ${packetName}`);
   })
 
   bot.action(/^declinePaymentCP:(\d+),(.+),(.+)$/, async (ctx) => {
@@ -4515,12 +4499,10 @@ async function main() {
       const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'nopaid', 'date_in_db'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
-
+      ctx.answerCbQuery(`Відмінено! Користувач: ${idUser}, Клуб: ${idClub!.title}, Пакет: ${packetName}`);
     } catch (e) {
       console.log(e);
     }
-
-    return ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}, Пакет: ${packetName}`);
   })
 
   bot.launch();
