@@ -3709,7 +3709,8 @@ async function main() {
       await set('state')('RespondIDAndShowCount&Packet');
     }
     else if (data.text === 'Прибрати заняття студенту'){
-      bug
+      ctx.reply('Введіть id студента, щоб змінити кількість його занять');
+      await set('state')('ResondIDAndForceChangeAvaibleLessons');
     }
     else if (data.text === 'Показати Адмінів та Розробника'){
       const results = await dbProcess.ShowAllUsers();
@@ -4053,13 +4054,23 @@ async function main() {
       userInDB = await dbProcess.ShowOneUser(parseInt(data.text)),
       userInGoogleSheet = await sheets.CheckHaveUser(parseInt(data.text));
 
-    if (userInDB){
+    if (CheckException.BackRoot(data)){
+      ctx.reply('Виберіть, будь ласка, що вам потрібно', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.personalStudentAdminPanel()
+        }
+      })
+
+      await set('state')('PeronalStudentHandler');
+    }
+    else if (userInDB){
       await set('user_to_name_change')(data.text);
       if (userInGoogleSheet){
-        await ctx.reply(`Користувач ${userInDB!.name} знайдений і також знайдений в таблиці Шпрах-клубів`, {reply_markup: {remove_keyboard: true}});
+        await ctx.reply(`Користувач ${userInDB!.name} знайдений і також знайдений в таблиці Шпрах-клубів\n\nА тепер, будь ласка, напишіть нове імʼя для цього користувача`, {reply_markup: {remove_keyboard: true}});
       }
       else{
-        await ctx.reply(`Користувач ${userInDB!.name} знайдений, але на жаль, не знайдений в таблиці Шпрах-клубів`, {reply_markup: {remove_keyboard: true}});
+        await ctx.reply(`Користувач ${userInDB!.name} знайдений, але на жаль, не знайдений в таблиці Шпрах-клубів\n\nА тепер, будь ласка, напишіть нове імʼя для цього користувача`, {reply_markup: {remove_keyboard: true}});
       }
 
       await set('state')('ProcessChangeAndReturn');
@@ -4106,7 +4117,26 @@ async function main() {
   onTextMessage('RespondIDAndShowCount&Packet', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
-    if (CheckException.TextException(data)){
+    if (CheckException.BackRoot(data)){
+      const userIDToChange = parseInt(user['user_to_name_change']),
+        userInDB = await dbProcess.ShowOneUser(userIDToChange),
+        userInGoogleSheet = await sheets.CheckHaveUser(userIDToChange);
+
+      if (userInDB){
+        if (userInGoogleSheet){
+          await ctx.reply(`Користувач ${userInDB!.name} знайдений і також знайдений в таблиці Шпрах-клубів\n\nА тепер, будь ласка, напишіть нове імʼя для цього користувача`, {reply_markup: {remove_keyboard: true}});
+        }
+        else{
+          await ctx.reply(`Користувач ${userInDB!.name} знайдений, але на жаль, не знайдений в таблиці Шпрах-клубів\n\nА тепер, будь ласка, напишіть нове імʼя для цього користувача`, {reply_markup: {remove_keyboard: true}});
+        }
+  
+        await set('state')('ProcessChangeAndReturn');
+      }
+      else{
+        ctx.reply('Такого користувача, на жаль, не знайдено, повторіть, будь ласка, ще раз!');
+      }
+    }
+    else if (CheckException.TextException(data)){
       if (!isNaN(parseInt(data.text))){
         const requestedUser = (await db.getAll(parseInt(data.text))());
         if (requestedUser){
@@ -4129,6 +4159,56 @@ async function main() {
       else{
         ctx.reply('Вибачте, але не знав, що id може містити букви...\n\nПовторіть, будь ласка, знову')
       }
+    }
+    else{
+      ctx.reply(script.errorException.textGettingError.defaultException);
+    }
+  })
+
+  onTextMessage('ResondIDAndForceChangeAvaibleLessons', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (CheckException.TextException(data)){
+      if (!isNaN(parseInt(data.text))){
+        const requestedUser = (await db.getAll(parseInt(data.text))());
+        if (requestedUser){
+          const user = await dbProcess.ShowOneUser(parseInt(data.text));
+
+          await set('userid_for_forceChangeAvaibleLessons')(data.text);
+
+          ctx.reply(`Користувач ${user!.name} має на своєму рахунку ${user!.count} занять.\n\nСкільки поставим?`, {reply_markup: {remove_keyboard: true}});
+
+          await set('state')('ForceChangeAvaibleLessonsAndReturn');
+        }
+        else{
+          ctx.reply('Нажаль, такого користувача не знайдено.');
+        }
+      }
+      else{
+        ctx.reply('Вибачте, але не знав, що id може містити букви...\n\nПовторіть, будь ласка, знову')
+      }
+    }
+    else{
+      ctx.reply(script.errorException.textGettingError.defaultException);
+    }
+  })
+
+  onTextMessage('ForceChangeAvaibleLessonsAndReturn', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1),
+      idUser = user['userid_for_forceChangeAvaibleLessons'];
+
+    if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) > 0 && parseInt(data.text) <= 5){
+      const user = await dbProcess.ShowOneUser(parseInt(idUser));
+      await dbProcess.ChangeCountUser(user!._id, parseInt(data.text))
+
+      ctx.reply('Успішно виконана операція!', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.personalStudentAdminPanel()
+        }
+      });
+
+      await set('state')('PeronalStudentHandler');
     }
     else{
       ctx.reply(script.errorException.textGettingError.defaultException);

@@ -65,3 +65,5 @@ export type UserScriptState =
   | "ChangeUserNameAndProcessChange"
   | "ProcessChangeAndReturn"
   | "RespondIDAndShowCount&Packet"
+  | "ResondIDAndForceChangeAvaibleLessons"
+  | "ForceChangeAvaibleLessonsAndReturn"
