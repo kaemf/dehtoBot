@@ -1973,7 +1973,6 @@ async function main() {
             ],
           },
         })
-        // await set('SC_TrialLessonComplet_active')('true');
         await set('state')('EndRootManager');
       }
       else if (user['club-typeclub'] === 'Шпрах-Клуб+PLUS'){
@@ -3500,10 +3499,10 @@ async function main() {
 
       await set('AP_keydatatochange')(data.text);
       await dbProcess.ChangeKeyData(object, keyForChange, data.file);
-      ctx.telegram.sendDocument(object.teacher_id, data.file, {caption: `Хей!\n\n🤝🏽 Хочемо повідомити, що у клуба ${object.title}, котрий на ${dbProcess.getDateClub(new Date(object.date))} о ${object.time} було змінено документ із лексикою\n\nПросимо вас ознайомитись❤️`});
+      ctx.telegram.sendDocument(object.teacher_id, data.file, {caption: `Хей!\n\n🤝🏽 Хочемо повідомити, що у клуба ${object.title}, котрий на ${dbProcess.getDateClub(new Date(object.date))} о ${object.time} було змінено документ із лексикою\n\nПросимо ознайомитись❤️`});
       for (let i = 0; i < users.length; i++){
         if (await dbProcess.HasThisClubUser(users[i].id, object!._id)){
-          await ctx.telegram.sendDocument(users[i].id, data.file, {caption: `Хей!\n\n🤝🏽 Хочемо повідомити, що у клуба ${object.title}, котрий на ${dbProcess.getDateClub(new Date(object.date))} о ${object.time} було змінено документ із лексикою\n\nПросимо вас ознайомитись❤️`});
+          await ctx.telegram.sendDocument(users[i].id, data.file, {caption: `Хей!\n\n🤝🏽 Хочемо повідомити, що у клуба ${object.title}, котрий на ${dbProcess.getDateClub(new Date(object.date))} о ${object.time} було змінено документ із лексикою\n\nПросимо ознайомитись❤️`});
         }
       }
       ctx.reply('Успішно виконана операція!', {
