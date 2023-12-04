@@ -13,141 +13,124 @@ import arch from './base/main/architecture';
 import getCourses, { Course, Courses, courseNumbersToSkip } from "./data/course/coursesAndTopics";
 import Key from "./base/handlersdb/changeKeyValue";
 import Role, { ConvertRole } from "./base/handlersdb/changeRoleValue";
-import keyboards from "./base/handlers/keyboards";
+import keyboards, { checkChats } from "./base/handlers/keyboards";
 import { inlineApprovePayment, inlineAcceptTrialPayment, inlineAcceptPacketPayment, inlineAcceptClubWithPacketPayment } from "./data/datapoint/function/paymentButtons";
 import formattedName from "./data/datapoint/function/nameFormatt";
 import DateRecord from "./base/handlers/getTime";
 import MongoDBReturnType from "./data/datapoint/point/mongoDBType";
 import { Markup } from "telegraf";
-import axios from "axios";
-import { Request, Response } from 'express';
+// import axios from "axios";
+// import { Request, Response } from 'express';
 import { ObjectId } from 'mongodb';
 
 async function main() {
-  const [ onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, db, app, token, dbProcess, sheets ] = await arch();
+  const [ onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, db, , , dbProcess, sheets ] = await arch();
 
-  app.post('/api/sendToTelegram', async (req: Request, res: Response) => {
-    try {
-      const { lang: language} = req.body;
+  // app.post('/api/sendToTelegram', async (req: Request, res: Response) => {
+  //   try {
+  //     const { lang: language} = req.body;
 
-      if (language === '31843'){
-        let {
-          'Ваше імʼя': UserName,
-          'Ваш телефон': PhoneNumber,
-          'Нік в телеграмі': TGUserName,
-          'Рівень': Level,
-          'Час занять': LessonTime,
-          'День занять': LessonDay,
-          'Date': Date,
-          'Time': Time
-        } = req.body;
+  //     if (language === '31843'){
+  //       let {
+  //         'Ваше імʼя': UserName,
+  //         'Ваш телефон': PhoneNumber,
+  //         'Нік в телеграмі': TGUserName,
+  //         'Рівень': Level,
+  //         'Час занять': LessonTime,
+  //         'День занять': LessonDay,
+  //       } = req.body;
 
-        if (Date === undefined || Time === undefined){
-          const date = new Date(),
-            formattedDate = `${date.getDay() > 9 ? date.getDay() : '0' + date.getDay()}.${date.getMonth() - 1 > 9 ? date.getMonth() : '0' + (date.getMonth() - 1)}.${date.getDate()}`,
-            formattedTime = `${date.getHours()}:${date.getMinutes}`;
+  //       const date = new Date(),
+  //         formattedDate = DateRecord(),
+  //         formattedTime = `${date.getHours() < 10 ? `0${date.getHours()}` : date.getHours()}:${date.getMinutes() < 10 ? `0${date.getMinutes()}` : date.getMinutes()}`;
 
-          Date = formattedDate;
-          Time = formattedTime;
-        }
+  //       await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+  //         chat_id: confirmationChat,
+  //         text: script.apiReport(UserName, PhoneNumber, TGUserName, Level, LessonTime, LessonDay, formattedDate, formattedTime),
+  //         parse_mode: "HTML"
+  //       });
 
-        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-          chat_id: confirmationChat,
-          text: script.apiReport(UserName, PhoneNumber, TGUserName, Level, LessonTime, LessonDay, Date, Time),
-          parse_mode: "HTML"
-        });
+  //       await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+  //         chat_id: supportChat,
+  //         text: script.apiReport(UserName, PhoneNumber, TGUserName, Level, LessonTime, LessonDay, formattedDate, formattedTime),
+  //         parse_mode: "HTML"
+  //       });
 
-        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-          chat_id: supportChat,
-          text: script.apiReport(UserName, PhoneNumber, TGUserName, Level, LessonTime, LessonDay, Date, Time),
-          parse_mode: "HTML"
-        });
-
-        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-          chat_id: devChat,
-          text: script.apiReport(UserName, PhoneNumber, TGUserName, Level, LessonTime, LessonDay, Date, Time),
-          parse_mode: "HTML"
-        });
+  //       await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+  //         chat_id: devChat,
+  //         text: script.apiReport(UserName, PhoneNumber, TGUserName, Level, LessonTime, LessonDay, formattedDate, formattedTime),
+  //         parse_mode: "HTML"
+  //       });
         
-        console.log("\n\nNew Request For API was sent\n\n", req.body);
-        res.status(200).json({ message: 'Message successfully sent to Telegram' });
-      }
-      else if (language === '32813'){
-        let {
-          'Ваше имя': UserName,
-          'Ваш телефон': PhoneNumber,
-          'Ник в телеграме': TGUserName,
-          'Уровень': Level,
-          'Время занятий': LessonTime,
-          'День занятий': LessonDay,
-          'Date': Date,
-          'Time': Time
-        } = req.body;
-
-        if (Date === undefined || Time === undefined){
-          const date = new Date(),
-            formattedDate = `${date.getDay() > 9 ? date.getDay() : '0' + date.getDay()}.${date.getMonth() - 1 > 9 ? date.getMonth() : '0' + (date.getMonth() - 1)}.${date.getDate()}`,
-            formattedTime = `${date.getHours()}:${date.getMinutes}`;
-
-          Date = formattedDate;
-          Time = formattedTime;
-        }
-
-        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-          chat_id: confirmationChat,
-          text: script.apiReport(UserName, PhoneNumber, TGUserName, Level, LessonTime, LessonDay, Date, Time),
-          parse_mode: "HTML"
-        });
-
-        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-          chat_id: supportChat,
-          text: script.apiReport(UserName, PhoneNumber, TGUserName, Level, LessonTime, LessonDay, Date, Time),
-          parse_mode: "HTML"
-        });
-
-        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-          chat_id: devChat,
-          text: script.apiReport(UserName, PhoneNumber, TGUserName, Level, LessonTime, LessonDay, Date, Time),
-          parse_mode: "HTML"
-        });
+  //       console.log("\n\nNew Request For API was sent\n", req.body);
+  //       res.status(200).json({ message: 'Message successfully sent to Telegram' });
+  //     }
+  //     else if (language === '32813'){
+  //       let {
+  //         'Ваше имя': UserName,
+  //         'Ваш телефон': PhoneNumber,
+  //         'Ник в телеграме': TGUserName,
+  //         'Уровень': Level,
+  //         'Время занятий': LessonTime,
+  //         'День занятий': LessonDay,
+  //       } = req.body;
         
-        console.log("\n\nNew Request For API was sent\n\n", req.body);
-        res.status(200).json({ message: 'Message successfully sent to Telegram' });
-      }
-      else{
-        const date = new Date(),
-            formattedDate = `${date.getDay() > 9 ? date.getDay() : '0' + date.getDay()}.${date.getMonth() - 1 > 9 ? date.getMonth() : '0' + (date.getMonth() - 1)}.${date.getDate()}`,
-            formattedTime = `${date.getHours()}:${date.getMinutes}`;
+  //       const date = new Date(),
+  //         formattedDate = DateRecord(),
+  //         formattedTime = `${date.getHours() < 10 ? `0${date.getHours()}` : date.getHours()}:${date.getMinutes() < 10 ? `0${date.getMinutes()}` : date.getMinutes()}`;
 
-        const _Date = formattedDate,
-          Time = formattedTime;
+  //       await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+  //         chat_id: confirmationChat,
+  //         text: script.apiReport(UserName, PhoneNumber, TGUserName, Level, LessonTime, LessonDay, formattedDate, formattedTime),
+  //         parse_mode: "HTML"
+  //       });
 
-        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-          chat_id: confirmationChat,
-          text: script.apiReport('відсутнє', 'відсутній', 'не знайдений', 'не надісланий', 'безлімітний', 'будь коли', _Date, Time),
-          parse_mode: "HTML"
-        });
+  //       await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+  //         chat_id: supportChat,
+  //         text: script.apiReport(UserName, PhoneNumber, TGUserName, Level, LessonTime, LessonDay, formattedDate, formattedTime),
+  //         parse_mode: "HTML"
+  //       });
 
-        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-          chat_id: supportChat,
-          text: script.apiReport('відсутнє', 'відсутній', 'не знайдений', 'не надісланий', 'безлімітний', 'будь коли', _Date, Time),
-          parse_mode: "HTML"
-        });
-
-        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-          chat_id: devChat,
-          text: script.apiReport('відсутнє', 'відсутній', 'не знайдений', 'не надісланий', 'безлімітний', 'будь коли', _Date, Time),
-          parse_mode: "HTML"
-        });
+  //       await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+  //         chat_id: devChat,
+  //         text: script.apiReport(UserName, PhoneNumber, TGUserName, Level, LessonTime, LessonDay, formattedDate, formattedTime),
+  //         parse_mode: "HTML"
+  //       });
         
-        console.log("\n\nNew Request For API was sent with errors (language trouble)\n\n", req.body);
-        res.status(200).json({ message: 'Message successfully sent to Telegram, but without data (language is not correct)' });
-      }
-    } catch (error) {
-      console.error('Error, detail:', error);
-      res.status(500).json({ error: 'Error to Sent message, Check Console for Detail' });
-    }
-  });
+  //       console.log("\n\nNew Request For API was sent\n", req.body);
+  //       res.status(200).json({ message: 'Message successfully sent to Telegram' });
+  //     }
+  //     else{
+  //       const date = new Date(),
+  //         formattedDate = DateRecord(),
+  //         formattedTime = `${date.getHours() < 10 ? `0${date.getHours()}` : date.getHours()}:${date.getMinutes() < 10 ? `0${date.getMinutes()}` : date.getMinutes()}`;
+
+  //       await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+  //         chat_id: confirmationChat,
+  //         text: script.apiReport('відсутнє', 'відсутній', 'не знайдений', 'не надісланий', 'безлімітний', 'будь коли', formattedDate, formattedTime),
+  //         parse_mode: "HTML"
+  //       });
+
+  //       await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+  //         chat_id: supportChat,
+  //         text: script.apiReport('відсутнє', 'відсутній', 'не знайдений', 'не надісланий', 'безлімітний', 'будь коли', formattedDate, formattedTime),
+  //         parse_mode: "HTML"
+  //       });
+
+  //       await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+  //         chat_id: devChat,
+  //         text: script.apiReport('відсутнє', 'відсутній', 'не знайдений', 'не надісланий', 'безлімітний', 'будь коли', formattedDate, formattedTime),
+  //         parse_mode: "HTML"
+  //       });
+        
+  //       console.log("\n\nNew Request For API was sent with errors (language trouble)\n\n", req.body);
+  //       res.status(200).json({ message: 'Message successfully sent to Telegram, but without data (language is not correct)' });
+  //     }
+  //   } catch (error) {
+  //     console.error('Error, detail:', error);
+  //     res.status(500).json({ error: 'Error to Sent message, Check Console for Detail' });
+  //   }
+  // });
 
   //Begin bot work, collecting user data (his telegram name) set up state_1
   bot.start( (ctx) => {
@@ -168,7 +151,7 @@ async function main() {
       parse_mode: "Markdown",
       reply_markup: {
         one_time_keyboard: true,
-        keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
+        keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role ?? 'student')
       }
     })
 
@@ -313,7 +296,7 @@ async function main() {
 
       await set('state')('ActionClubRespondAndRootAction');
     }
-    else if (data.text === "Адмін Панель"){
+    else if (data.text === "Адмін Панель" && checkChats(ctx?.chat?.id ?? -1)){
       ctx.reply("З поверненням, Меркель! :)", {
         parse_mode: "Markdown",
         reply_markup: {
@@ -3500,10 +3483,10 @@ async function main() {
 
       await set('AP_keydatatochange')(data.text);
       await dbProcess.ChangeKeyData(object, keyForChange, data.file);
-      ctx.telegram.sendDocument(object.teacher_id, data.file, {caption: `Хей!\n\n🤝🏽 Хочемо повідомити, що у клуба ${object.title}, котрий на ${dbProcess.getDateClub(new Date(object.date))} о ${object.time} було змінено документ із лексикою\n\nПросимо вас ознайомитись❤️`});
+      ctx.telegram.sendDocument(object.teacher_id, data.file, {caption: `Хей!\n\n🤝🏽 Хочемо повідомити, що у клуба ${object.title}, котрий на ${dbProcess.getDateClub(new Date(object.date))} о ${object.time} було змінено документ із лексикою\n\nПросимо ознайомитись❤️`});
       for (let i = 0; i < users.length; i++){
         if (await dbProcess.HasThisClubUser(users[i].id, object!._id)){
-          await ctx.telegram.sendDocument(users[i].id, data.file, {caption: `Хей!\n\n🤝🏽 Хочемо повідомити, що у клуба ${object.title}, котрий на ${dbProcess.getDateClub(new Date(object.date))} о ${object.time} було змінено документ із лексикою\n\nПросимо вас ознайомитись❤️`});
+          await ctx.telegram.sendDocument(users[i].id, data.file, {caption: `Хей!\n\n🤝🏽 Хочемо повідомити, що у клуба ${object.title}, котрий на ${dbProcess.getDateClub(new Date(object.date))} о ${object.time} було змінено документ із лексикою\n\nПросимо ознайомитись❤️`});
         }
       }
       ctx.reply('Успішно виконана операція!', {

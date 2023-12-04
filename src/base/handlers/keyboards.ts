@@ -5,7 +5,7 @@ const devChatInt = parseInt(devChat),
   supportChatInt = parseInt(supportChat),
   eugeneChatInt = parseInt(eugeneChat);
 
-function checkChats(currentChatId: number){
+export function checkChats(currentChatId: number){
   if (currentChatId === devChatInt || currentChatId === confirmationChatInt || currentChatId === supportChatInt || currentChatId === eugeneChatInt){
     return true;
   } 
