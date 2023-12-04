@@ -28,38 +28,121 @@ async function main() {
 
   app.post('/api/sendToTelegram', async (req: Request, res: Response) => {
     try {
-      const {
-        'Ваше імʼя': UserName,
-        'Ваш телефон': PhoneNumber,
-        'Нік в телеграмі': TGUserName,
-        'Email': Email,
-        'Рівень': Level,
-        'Час занять': LessonTime,
-        'День занять': LessonDay,
-        'Date': Date,
-        'Time': Time
-      } = req.body;
+      const { lang: language} = req.body;
 
-      await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-        chat_id: confirmationChat,
-        text: script.apiReport(UserName, PhoneNumber, TGUserName, Email, Level, LessonTime, LessonDay, Date, Time),
-        parse_mode: "HTML"
-      });
+      if (language === '31843'){
+        let {
+          'Ваше імʼя': UserName,
+          'Ваш телефон': PhoneNumber,
+          'Нік в телеграмі': TGUserName,
+          'Рівень': Level,
+          'Час занять': LessonTime,
+          'День занять': LessonDay,
+          'Date': Date,
+          'Time': Time
+        } = req.body;
 
-      await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-        chat_id: supportChat,
-        text: script.apiReport(UserName, PhoneNumber, TGUserName, Email, Level, LessonTime, LessonDay, Date, Time),
-        parse_mode: "HTML"
-      });
+        if (Date === undefined || Time === undefined){
+          const date = new Date(),
+            formattedDate = `${date.getDay() > 9 ? date.getDay() : '0' + date.getDay()}.${date.getMonth() - 1 > 9 ? date.getMonth() : '0' + (date.getMonth() - 1)}.${date.getDate()}`,
+            formattedTime = `${date.getHours()}:${date.getMinutes}`;
 
-      await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-        chat_id: devChat,
-        text: script.apiReport(UserName, PhoneNumber, TGUserName, Email, Level, LessonTime, LessonDay, Date, Time),
-        parse_mode: "HTML"
-      });
-      
-      console.log("\n\nNew Request For API was sent\n\n");
-      res.status(200).json({ message: 'Message successfully sent to Telegram' });
+          Date = formattedDate;
+          Time = formattedTime;
+        }
+
+        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+          chat_id: confirmationChat,
+          text: script.apiReport(UserName, PhoneNumber, TGUserName, Level, LessonTime, LessonDay, Date, Time),
+          parse_mode: "HTML"
+        });
+
+        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+          chat_id: supportChat,
+          text: script.apiReport(UserName, PhoneNumber, TGUserName, Level, LessonTime, LessonDay, Date, Time),
+          parse_mode: "HTML"
+        });
+
+        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+          chat_id: devChat,
+          text: script.apiReport(UserName, PhoneNumber, TGUserName, Level, LessonTime, LessonDay, Date, Time),
+          parse_mode: "HTML"
+        });
+        
+        console.log("\n\nNew Request For API was sent\n\n", req.body);
+        res.status(200).json({ message: 'Message successfully sent to Telegram' });
+      }
+      else if (language === '32813'){
+        let {
+          'Ваше имя': UserName,
+          'Ваш телефон': PhoneNumber,
+          'Ник в телеграме': TGUserName,
+          'Уровень': Level,
+          'Время занятий': LessonTime,
+          'День занятий': LessonDay,
+          'Date': Date,
+          'Time': Time
+        } = req.body;
+
+        if (Date === undefined || Time === undefined){
+          const date = new Date(),
+            formattedDate = `${date.getDay() > 9 ? date.getDay() : '0' + date.getDay()}.${date.getMonth() - 1 > 9 ? date.getMonth() : '0' + (date.getMonth() - 1)}.${date.getDate()}`,
+            formattedTime = `${date.getHours()}:${date.getMinutes}`;
+
+          Date = formattedDate;
+          Time = formattedTime;
+        }
+
+        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+          chat_id: confirmationChat,
+          text: script.apiReport(UserName, PhoneNumber, TGUserName, Level, LessonTime, LessonDay, Date, Time),
+          parse_mode: "HTML"
+        });
+
+        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+          chat_id: supportChat,
+          text: script.apiReport(UserName, PhoneNumber, TGUserName, Level, LessonTime, LessonDay, Date, Time),
+          parse_mode: "HTML"
+        });
+
+        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+          chat_id: devChat,
+          text: script.apiReport(UserName, PhoneNumber, TGUserName, Level, LessonTime, LessonDay, Date, Time),
+          parse_mode: "HTML"
+        });
+        
+        console.log("\n\nNew Request For API was sent\n\n", req.body);
+        res.status(200).json({ message: 'Message successfully sent to Telegram' });
+      }
+      else{
+        const date = new Date(),
+            formattedDate = `${date.getDay() > 9 ? date.getDay() : '0' + date.getDay()}.${date.getMonth() - 1 > 9 ? date.getMonth() : '0' + (date.getMonth() - 1)}.${date.getDate()}`,
+            formattedTime = `${date.getHours()}:${date.getMinutes}`;
+
+        const _Date = formattedDate,
+          Time = formattedTime;
+
+        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+          chat_id: confirmationChat,
+          text: script.apiReport('відсутнє', 'відсутній', 'не знайдений', 'не надісланий', 'безлімітний', 'будь коли', _Date, Time),
+          parse_mode: "HTML"
+        });
+
+        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+          chat_id: supportChat,
+          text: script.apiReport('відсутнє', 'відсутній', 'не знайдений', 'не надісланий', 'безлімітний', 'будь коли', _Date, Time),
+          parse_mode: "HTML"
+        });
+
+        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+          chat_id: devChat,
+          text: script.apiReport('відсутнє', 'відсутній', 'не знайдений', 'не надісланий', 'безлімітний', 'будь коли', _Date, Time),
+          parse_mode: "HTML"
+        });
+        
+        console.log("\n\nNew Request For API was sent with errors (language trouble)\n\n", req.body);
+        res.status(200).json({ message: 'Message successfully sent to Telegram, but without data (language is not correct)' });
+      }
     } catch (error) {
       console.error('Error, detail:', error);
       res.status(500).json({ error: 'Error to Sent message, Check Console for Detail' });
@@ -241,7 +324,7 @@ async function main() {
                 text: "Шпрах-Клуби"
               },
               {
-                text: "Особові справи студентів"
+                text: "Особові справи"
               }
             ],[
               {
@@ -277,7 +360,7 @@ async function main() {
               addString = `❌ немає вільних місць ❌`;
             }
   
-          await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved), {
+          await ctx.reply(script.speakingClub.report.showClubTypeTeacher(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved, results[i].link), {
             parse_mode: "HTML"
           });
         }
@@ -1763,11 +1846,12 @@ async function main() {
           const inline = inlineAcceptClubWithPacketPayment(id, clubIndex, paymentStatus, 's', date);
 
           // packet and club
-          await ctx.telegram.sendPhoto(devChat, unique_file_id, {
-            parse_mode: "HTML",
-            caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
-            ...Markup.inlineKeyboard(inline)
-          })
+          // For Developer
+          // await ctx.telegram.sendPhoto(devChat, unique_file_id, {
+          //   parse_mode: "HTML",
+          //   caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
+          //   ...Markup.inlineKeyboard(inline)
+          // })
 
           await ctx.telegram.sendPhoto(supportChat, unique_file_id, {
             parse_mode: "HTML",
@@ -1779,11 +1863,12 @@ async function main() {
           const inline = inlineAcceptPacketPayment(id, paymentStatus, 's');
 
           //packet
-          await ctx.telegram.sendPhoto(devChat, unique_file_id, {
-            parse_mode: "HTML",
-            caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
-            ...Markup.inlineKeyboard(inline)
-          })
+          // For Developer
+          // await ctx.telegram.sendPhoto(devChat, unique_file_id, {
+          //   parse_mode: "HTML",
+          //   caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
+          //   ...Markup.inlineKeyboard(inline)
+          // })
 
           await ctx.telegram.sendPhoto(supportChat, unique_file_id, {
             parse_mode: "HTML",
@@ -1839,11 +1924,12 @@ async function main() {
         if (clubIndex !== ''){
           const inline = inlineAcceptClubWithPacketPayment(id, clubIndex, paymentStatus, "s", DateRecord());
 
-          ctx.telegram.sendDocument(devChat, data.file, {
-            parse_mode: "HTML",
-            caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
-            ...Markup.inlineKeyboard(inline)
-          })
+          // For Developer
+          // ctx.telegram.sendDocument(devChat, data.file, {
+          //   parse_mode: "HTML",
+          //   caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
+          //   ...Markup.inlineKeyboard(inline)
+          // })
 
           ctx.telegram.sendDocument(supportChat, data.file, {
             parse_mode: "HTML",
@@ -1853,11 +1939,13 @@ async function main() {
         }
         else{
           const inline = inlineAcceptPacketPayment(id, paymentStatus, 's');
-          ctx.telegram.sendPhoto(devChat, data.file, {
-            parse_mode: "HTML",
-            caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
-            ...Markup.inlineKeyboard(inline)
-          })
+
+          // For Developer
+          // ctx.telegram.sendPhoto(devChat, data.file, {
+          //   parse_mode: "HTML",
+          //   caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
+          //   ...Markup.inlineKeyboard(inline)
+          // })
 
           ctx.telegram.sendPhoto(supportChat, data.file, {
             parse_mode: "HTML",
@@ -1961,11 +2049,12 @@ async function main() {
           if (typeOfProof === 'photo'){
             const inline = inlineAcceptClubWithPacketPayment(ctx?.chat?.id ?? -1, user['sc_request_torecord_usertoclub'], paymentStatus, 'p', DateRecord());
   
-            ctx.telegram.sendPhoto(devChat, user['sc_clubplus_proof'], {
-              parse_mode: "HTML",
-              caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
-              ...Markup.inlineKeyboard(inline)
-            })
+            // For Developer
+            // ctx.telegram.sendPhoto(devChat, user['sc_clubplus_proof'], {
+            //   parse_mode: "HTML",
+            //   caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
+            //   ...Markup.inlineKeyboard(inline)
+            // })
 
             ctx.telegram.sendPhoto(supportChat, user['sc_clubplus_proof'], {
               parse_mode: "HTML",
@@ -1976,11 +2065,12 @@ async function main() {
           else{
             const inline = inlineAcceptClubWithPacketPayment(ctx?.chat?.id ?? -1, user['sc_request_torecord_usertoclub'], paymentStatus, 'p', DateRecord());
   
-            ctx.telegram.sendDocument(devChat, user['sc_clubplus_proof'], {
-              parse_mode: "HTML",
-              caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
-              ...Markup.inlineKeyboard(inline)
-            })
+            // For Developer
+            // ctx.telegram.sendDocument(devChat, user['sc_clubplus_proof'], {
+            //   parse_mode: "HTML",
+            //   caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
+            //   ...Markup.inlineKeyboard(inline)
+            // })
 
             ctx.telegram.sendDocument(supportChat, user['sc_clubplus_proof'], {
               parse_mode: "HTML",
@@ -1994,7 +2084,15 @@ async function main() {
         else{
           if (typeOfProof === 'photo'){
             const inline = inlineAcceptPacketPayment(ctx?.chat?.id ?? -1, paymentStatus, 'plus');
-            ctx.telegram.sendPhoto(devChat, user['sc_clubplus_proof'], {
+
+            // For Developer
+            // ctx.telegram.sendPhoto(devChat, user['sc_clubplus_proof'], {
+            //   parse_mode: "HTML",
+            //   caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
+            //   ...Markup.inlineKeyboard(inline)
+            // })
+
+            ctx.telegram.sendPhoto(supportChat, user['sc_clubplus_proof'], {
               parse_mode: "HTML",
               caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
               ...Markup.inlineKeyboard(inline)
@@ -2002,11 +2100,13 @@ async function main() {
           }
           else{
             const inline = inlineAcceptPacketPayment(ctx?.chat?.id ?? -1, paymentStatus, 'plus');
-            ctx.telegram.sendDocument(devChat, user['sc_clubplus_proof'], {
-              parse_mode: "HTML",
-              caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
-              ...Markup.inlineKeyboard(inline)
-            })
+
+            // For Developer
+            // ctx.telegram.sendDocument(devChat, user['sc_clubplus_proof'], {
+            //   parse_mode: "HTML",
+            //   caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
+            //   ...Markup.inlineKeyboard(inline)
+            // })
 
             ctx.telegram.sendDocument(supportChat, user['sc_clubplus_proof'], {
               parse_mode: "HTML",
@@ -2147,11 +2247,12 @@ async function main() {
         date = DateRecord(),
         inline = inlineAcceptTrialPayment(ctx?.chat?.id ?? -1, user['sc_triallesson_clubindex'], paymentStatus, date);
       
-      ctx.telegram.sendPhoto(devChat, data.photo, {
-        parse_mode: "HTML",
-        caption: script.speakingClub.report.forAcceptPayment.Trial(user['name'], user['username'], user['phone_number'], date),
-        ...Markup.inlineKeyboard(inline)
-      });
+      // For Developer
+      // ctx.telegram.sendPhoto(devChat, data.photo, {
+      //   parse_mode: "HTML",
+      //   caption: script.speakingClub.report.forAcceptPayment.Trial(user['name'], user['username'], user['phone_number'], date),
+      //   ...Markup.inlineKeyboard(inline)
+      // });
 
       ctx.telegram.sendPhoto(supportChat, data.photo, {
         parse_mode: "HTML",
@@ -2180,7 +2281,14 @@ async function main() {
         date = DateRecord(),
         inline = inlineAcceptTrialPayment(ctx?.chat?.id ?? -1, user['sc_triallesson_clubindex'], paymentStatus, date);
         
-      ctx.telegram.sendDocument(devChat, data.file, {
+      // For Developer
+      // ctx.telegram.sendDocument(devChat, data.file, {
+      //   parse_mode: "HTML",
+      //   caption: script.speakingClub.report.forAcceptPayment.Trial(user['name'], user['username'], user['phone_number'], date),
+      //   ...Markup.inlineKeyboard(inline)
+      // });
+
+      ctx.telegram.sendDocument(supportChat, data.file, {
         parse_mode: "HTML",
         caption: script.speakingClub.report.forAcceptPayment.Trial(user['name'], user['username'], user['phone_number'], date),
         ...Markup.inlineKeyboard(inline)
@@ -2253,6 +2361,7 @@ async function main() {
             ctx.reply('Обробка, зачекайте, будь ласка...');
 
             if (currentUser!.count === 1){
+              // For Developer
               await ctx.telegram.sendMessage(devChat, script.speakingClub.report.notEnoughLessons(
                 user['name'], user['username'], user['phone_number'], currentUser!.email !== undefined ? currentUser!.email : "Пошта відсутня", user['club-typeclub']
               ));
@@ -2473,7 +2582,7 @@ async function main() {
 
       await set('state')('RespondAdminActionAndRootChoose');
     }
-    else if (data.text === 'Особові справи студентів'){
+    else if (data.text === 'Особові справи'){
       ctx.reply('Прекрасно, над ким сьогодні будемо знущатись?)', {
         reply_markup: {
           one_time_keyboard: true,
@@ -2506,7 +2615,7 @@ async function main() {
                 text: "Шпрах-Клуби"
               },
               {
-                text: "Особові справи студентів"
+                text: "Особові справи"
               }
             ],[
               {
@@ -2534,7 +2643,7 @@ async function main() {
                 text: "Шпрах-Клуби"
               },
               {
-                text: "Особові справи студентів"
+                text: "Особові справи"
               }
             ],[
               {
@@ -3114,14 +3223,12 @@ async function main() {
         });
       }
 
-      const keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
-        return [{ text: `${index + 1}` }];
-      });
-
       await ctx.reply('Виберіть номер шпраха для видалення:', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboard
+          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+            return [{ text: `${index + 1}` }];
+          })
         }
       })
 
@@ -3195,7 +3302,6 @@ async function main() {
       ctx.reply(script.errorException.chooseButtonError);
     }
   })
-
 
   // Change Process
   onTextMessage('GetChangesAndChangeThis', async(ctx, user, data) => {
@@ -3345,8 +3451,15 @@ async function main() {
   
         await set('AP_keydatatochange')(data.text);
 
-        const object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
-        ctx.telegram.sendMessage(object!.teacher_id, `${object!.teacher}! Хочемо вас повідомити, що на шпрах-клубі ${object!.title}, котрий на ${dbProcess.getDateClub(new Date(object!.date))} о ${object!.time} були змінені наступні дані:\n\n\nЩо було змінено - ${keyForChangeService}\n\nНові дані - ${data.text}`)
+        const object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]),
+          users = await dbProcess.ShowAllUsers();
+          
+        ctx.telegram.sendMessage(object!.teacher_id, `${object!.teacher}!\n\nХочемо вас повідомити, що на шпрах-клубі ${object!.title}, котрий на ${dbProcess.getDateClub(new Date(object!.date))} о ${object!.time} були змінені наступні дані:\n\n\n👉🏽Було змінено - ${keyForChangeService}\n✅Нові дані - ${data.text}`);
+        for (let i = 0; i < users.length; i++){
+          if (await dbProcess.HasThisClubUser(users[i].id, object!._id)){
+            ctx.telegram.sendMessage(users[i].id, `${users[i].name}!\n\nХочемо вас повідомити, що на шпрах-клубі ${object!.title}, котрий на ${dbProcess.getDateClub(new Date(object!.date))} о ${object!.time} були змінені наступні дані:\n\n\n👉🏽Було змінено - ${keyForChangeService}\n✅Нові дані - ${data.text}`);
+          }
+        }
         await dbProcess.ChangeKeyData(getCurrentClub[0]!, keyForChange, data.text);
         ctx.reply('Успішно виконана операція!', {
           parse_mode: "Markdown",
@@ -3380,13 +3493,19 @@ async function main() {
     }
     else if (CheckException.FileException(data)){
       const keyForChange = user['AP_keyforchange'],
-        object = results[parseInt(user['AP_respondkeydata_clubid']) - 1];
+        object = results[parseInt(user['AP_respondkeydata_clubid']) - 1],
+        users = await dbProcess.ShowAllUsers();
 
         console.log(object.title);
 
       await set('AP_keydatatochange')(data.text);
       await dbProcess.ChangeKeyData(object, keyForChange, data.file);
-      ctx.telegram.sendMessage(object.teacher_id, `${object.teacher}! Хочемо вас попередити, що у клуба ${object.title}, котрий на ${dbProcess.getDateClub(new Date(object.date))} о ${object.time} було змінено документацію`);
+      ctx.telegram.sendDocument(object.teacher_id, data.file, {caption: `Хей!\n\n🤝🏽 Хочемо повідомити, що у клуба ${object.title}, котрий на ${dbProcess.getDateClub(new Date(object.date))} о ${object.time} було змінено документ із лексикою\n\nПросимо вас ознайомитись❤️`});
+      for (let i = 0; i < users.length; i++){
+        if (await dbProcess.HasThisClubUser(users[i].id, object!._id)){
+          await ctx.telegram.sendDocument(users[i].id, data.file, {caption: `Хей!\n\n🤝🏽 Хочемо повідомити, що у клуба ${object.title}, котрий на ${dbProcess.getDateClub(new Date(object.date))} о ${object.time} було змінено документ із лексикою\n\nПросимо вас ознайомитись❤️`});
+        }
+      }
       ctx.reply('Успішно виконана операція!', {
         parse_mode: "Markdown",
         reply_markup: {
@@ -3467,10 +3586,16 @@ async function main() {
         if (year.getFullYear() + 1 >= parseInt(data.text)){
           await set('change_date_year')(data.text);
           const currentItem = (await dbProcess.ShowAll()).map(result => result._id),
-            object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
+            object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]),
+            users = await dbProcess.ShowAllUsers();
 
           await dbProcess.ChangeKeyData(object!, 'date', `${data.text}-${user['change_date_month']}-${user['change_date_day']}`)
-          await ctx.telegram.sendMessage(object!.teacher_id, `${object!.teacher}! Хочемо вас попередити, що на клубі ${object!.title}, котрий на ${dbProcess.getDateClub(new Date(object!.date))} о ${object!.time}, відтепер відбудеться ${dbProcess.getDateClub(new Date(`${data.text}-${user['change_date_month']}-${user['change_date_day']}`))}`)
+          await ctx.telegram.sendMessage(object!.teacher_id, `${object!.teacher}!\n\n➡️ Хочемо вас попередити, що клуб ${object!.title}, котрий ${dbProcess.getDateClub(new Date(object!.date))} о ${object!.time}, відтепер відбудеться ${dbProcess.getDateClub(new Date(`${data.text}-${user['change_date_month']}-${user['change_date_day']}`))} ${object!.time}\n\nДякуємо за розуміння❤️`)
+          for (let i = 0; i < users.length; i++){
+            if (await dbProcess.HasThisClubUser(users[i].id, object!._id)){
+              await ctx.telegram.sendMessage(users[i].id, `${users[i].name}!\n\n➡️ Хочемо попередити, що клубі ${object!.title}, котрий ${dbProcess.getDateClub(new Date(object!.date))} о ${object!.time}, відтепер відбудеться ${dbProcess.getDateClub(new Date(`${data.text}-${user['change_date_month']}-${user['change_date_day']}`))} ${object!.time}\n\nДякуємо за розуміння❤️`)
+            }
+          }
           ctx.reply('Операція успішна!', {
             reply_markup: {
               one_time_keyboard: true,
@@ -3533,10 +3658,16 @@ async function main() {
       if (parseInt(data.text) < 60 && parseInt(data.text) >= 0){
         await set('change_time_minute')(data.text);
         const currentItem = (await dbProcess.ShowAll()).map(result => result._id),
-          object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
+          object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]),
+          users = await dbProcess.ShowAllUsers();
   
         await dbProcess.ChangeKeyData(object!, 'time', `${user['change_time_hour']}:${data.text}`);
-        await ctx.telegram.sendMessage(object!.teacher_id, `${object!.teacher}! Хочемо вас попередити, що час клуба ${object!.title}, котрий на ${dbProcess.getDateClub(new Date(object!.date))} о ${object!.time}, відтепер о ${user['change_time_hour']}:${data.text}.`)
+        await ctx.telegram.sendMessage(object!.teacher_id, `${object!.teacher}!\n\nХочемо попередити, що клуб ${object!.title}, котрий на ${dbProcess.getDateClub(new Date(object!.date))} о ${object!.time}, тепер буде проходити о ${user['change_time_hour']}:${data.text}\n\nУдачі❤️`)
+        for (let i = 0; i < users.length; i++){
+          if (await dbProcess.HasThisClubUser(users[i].id, object!._id)){
+            await ctx.telegram.sendMessage(users[i].id, `${users[i].name}!\n\n➡️ Хочемо попередити, що клуб ${object!.title}, котрий на ${dbProcess.getDateClub(new Date(object!.date))} о ${object!.time}, тепер буде проходити о ${user['change_time_hour']}:${data.text}\n\nДякуємо за розуміння❤️`)
+          }
+        }
         ctx.reply('Операція успішна!', {
           reply_markup: {
             one_time_keyboard: true,
@@ -3584,10 +3715,10 @@ async function main() {
           teacher = await dbProcess.GetTeacherNameAndID(data.text, true);
 
         if (object!.teacher_id !== '' && object!.teacher_id !== undefined){
-          ctx.telegram.sendMessage(object!.teacher_id, `Ви були видалені з клуба ${object!.title}`);
+          ctx.telegram.sendMessage(object!.teacher_id, `А хай йому грець!\n\nЯк викладач, Ви були видалені з клуба ${object!.title}\n\nПобачимося на наступних❤️`);
         }
 
-        ctx.telegram.sendMessage(teacher[1], `Ви були встановлені викладачем на клубі ${object!.title}`);
+        ctx.telegram.sendMessage(teacher[1], `Йоу!\n\nВи були встановлені викладачем на клубі ${object!.title}\n\nВдалого заняття🍓`);
 
         await dbProcess.ChangeKeyData(object!, 'teacher', teacher[0]);
         await dbProcess.ChangeKeyData(object!, 'teacher_id', teacher[1]);
@@ -3651,7 +3782,7 @@ async function main() {
                 text: "Шпрах-Клуби"
               },
               {
-                text: "Особові справи студентів"
+                text: "Особові справи"
               }
             ],[
               {

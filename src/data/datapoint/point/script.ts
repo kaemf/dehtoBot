@@ -241,8 +241,7 @@ Instagram: <b><a href="https://www.instagram.com/watthatt/">@watthatt</a></b>
   `,
   apiReport: (name: string | string[] | ParsedQs | ParsedQs[] | undefined, 
     phone_number: string | string[] | ParsedQs | ParsedQs[] | undefined, 
-    tg_nickname: string | string[] | ParsedQs | ParsedQs[] | undefined, 
-    mail: string | string[] | ParsedQs | ParsedQs[] | undefined, 
+    tg_nickname: string | string[] | ParsedQs | ParsedQs[] | undefined,
     level: string | string[] | ParsedQs | ParsedQs[] | undefined, 
     time: string | string[] | ParsedQs | ParsedQs[] | undefined, 
     day: string | string[] | ParsedQs | ParsedQs[] | undefined, 
@@ -251,8 +250,7 @@ Instagram: <b><a href="https://www.instagram.com/watthatt/">@watthatt</a></b>
 
 <b>Імʼя:</b> ${name}
 <b>Телефон:</b> ${phone_number}
-<b>Нік в Telegram:</b> ${tg_nickname}
-<b>Email:</b> ${mail}
+<b>Telegram:</b> ${tg_nickname}
 
 👉🏽 Рівень: ${level}
 👉🏽 Час: ${time}
@@ -264,7 +262,7 @@ Instagram: <b><a href="https://www.instagram.com/watthatt/">@watthatt</a></b>
     speakingClub: {
       entire: `Виберіть кнопку:`,
 
-      about: `дякуємо, що цікавишся нашими шпрах-клубами🥹\n\nза ось цим посиланням ти можеш переглянути коротеньке відео про те, як вони у нас влаштовані та про правила поводження на клубі: https://www.youtube.com/\n\nчекатимемо тебе на шпрах-клубах dehto!\nцьом♥️`,
+      about: `дякуємо, що цікавишся нашими шпрах-клубами🥹\n\nза ось цим посиланням ти можеш переглянути коротеньке відео про те, як вони у нас влаштовані та про правила поводження на клубі: (скоро тут буде відео про те, як влаштований наш клаб - а поки можете глянути свої улюблені відосики на YouTube;)) https://www.youtube.com/\n\nчекатимемо тебе на шпрах-клубах dehto!\nцьом♥️`,
 
       trialLesson: {
         entire: `раді, що ти облав_ла пробне заняття!\n\nрадше разове заняття на звичайному шпрах-клубі, щоб зрозуміти, чи пасує тобі такий формат☺️\n\nзаняття вартує як і звичайне - 240uah\n\nготовий_а продовжувати?)`,
@@ -391,6 +389,16 @@ ${addString}`,
 👉🏼 <b>На котру</b>: ${time} 🇺🇦
 ${recordedUsers}
 ${addString}`,
+
+      showClubTypeTeacher: (position: number, title: string, teacher: string, date: string, time: string, addString: string, recordedUsers: string, link: string) => `✅${position}
+🗣 ШПРАХ-КЛУБ
+👉🏼 <b>Тема</b>: ${title}
+👉🏼 <b>Викладач</b>: ${teacher}\n
+👉🏼 <b>Коли</b>: ${date}
+👉🏼 <b>На котру</b>: ${time} 🇺🇦
+${recordedUsers}
+${addString}\n
+👉🏼 <b>Посилання</b>: ${link}`,
 
       showClubToUser: (title: string, teacher: string, date: string, time: string) => `🗣 ШПРАХ-КЛУБ
 👉🏼 Тема: ${title}
