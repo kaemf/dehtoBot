@@ -218,7 +218,7 @@ export default async function init() {
 
     getLastValueInColumn: async () => {
       try {
-        const range = `💁🏽‍♀️ Студенти!A:A`;
+        const range = `💁🏽‍♀️ Студенти_dev!A:A`;
         const response = await sheets.spreadsheets.values.get({
           auth,
           spreadsheetId,

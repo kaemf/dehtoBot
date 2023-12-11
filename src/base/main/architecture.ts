@@ -497,8 +497,8 @@ export default async function arch() {
   }
 
   class GoogleSheets{
-    private students = '💁🏽‍♀️ Студенти';
-    private trials = '✅ Пробні';
+    private students = '💁🏽‍♀️ Студенти_dev';
+    private trials = '✅ Пробні_dev';
 
     async appendTrial(date: string, name: string, phone: string, nickname: string, title_club: string, teacher: string){
       let data = await sheets.getCell(`${this.trials}!A2`),
@@ -544,21 +544,40 @@ export default async function arch() {
         const newIndex = await sheets.getLastValueInColumn();
         let newRow = newIndex?.row === null ? 1 : newIndex!.row;
 
-        await sheets.updateRow(`${this.students}!A${newRow + 2}:E${newRow + 2}`, [idUser, name, phone, nickname, mail]);
-        await sheets.updateRow(`${this.students}!A${newRow + 3}:E${newRow + 3}`, ['№:',	'Дата:', 'Тема:', 'Викладач:', 'Оплата:']);
-        await sheets.updateRow(`${this.students}!A${newRow + 4}:D${newRow + 4}`, [1, date, title, teacher]);
+        if (newRow === 1){
+          await sheets.updateRow(`${this.students}!A${newRow}:E${newRow}`, [idUser, name, phone, nickname, mail]);
+          await sheets.updateRow(`${this.students}!A${newRow + 1}:E${newRow + 1}`, ['№:',	'Дата:', 'Тема:', 'Викладач:', 'Оплата:']);
+          await sheets.updateRow(`${this.students}!A${newRow + 2}:D${newRow + 2}`, [1, date, title, teacher]);
 
-        await sheets.setCellStyle(this.students, `A${newRow + 2}:A${newRow + 2}`, 13, true, 'RIGHT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
-        await sheets.setCellStyle(this.students, `B${newRow + 2}:B${newRow + 2}`, 13, true, 'LEFT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
-        await sheets.setCellStyle(this.students, `C${newRow + 2}:D${newRow + 2}`, 10, false, 'LEFT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
-        await sheets.setCellStyle(this.students, `E${newRow + 2}:E${newRow + 2}`, 9, false, 'LEFT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
+          await sheets.setCellStyle(this.students, `A${newRow}:A${newRow}`, 13, true, 'RIGHT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
+          await sheets.setCellStyle(this.students, `B${newRow}:B${newRow}`, 13, true, 'LEFT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
+          await sheets.setCellStyle(this.students, `C${newRow}:D${newRow}`, 10, false, 'LEFT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
+          await sheets.setCellStyle(this.students, `E${newRow}:E${newRow}`, 9, false, 'LEFT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
 
-        await sheets.setCellStyle(this.students, `A${newRow + 3}:E${newRow + 3}`, 10, true, 'LEFT', 'MIDDLE', null, 'SOLID', 'SOLID', 'SOLID', 'white');
+          await sheets.setCellStyle(this.students, `A${newRow + 1}:E${newRow + 1}`, 10, true, 'LEFT', 'MIDDLE', null, 'SOLID', 'SOLID', 'SOLID', 'white');
 
-        await sheets.setCellStyle(this.students, `A${newRow + 4}:A${newRow + 4}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
-        await sheets.setCellStyle(this.students, `B${newRow + 4}:B${newRow + 4}`, 10, false, 'RIGHT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
-        await sheets.setCellStyle(this.students, `C${newRow + 4}:E${newRow + 4}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
+          await sheets.setCellStyle(this.students, `A${newRow + 2}:A${newRow + 2}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
+          await sheets.setCellStyle(this.students, `B${newRow + 2}:B${newRow + 2}`, 10, false, 'RIGHT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
+          await sheets.setCellStyle(this.students, `C${newRow + 2}:E${newRow + 2}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
+        }
+        else{
+          await sheets.updateRow(`${this.students}!A${newRow + 2}:E${newRow + 2}`, [idUser, name, phone, nickname, mail]);
+          await sheets.updateRow(`${this.students}!A${newRow + 3}:E${newRow + 3}`, ['№:',	'Дата:', 'Тема:', 'Викладач:', 'Оплата:']);
+          await sheets.updateRow(`${this.students}!A${newRow + 4}:D${newRow + 4}`, [1, date, title, teacher]);
+  
+          await sheets.setCellStyle(this.students, `A${newRow + 2}:A${newRow + 2}`, 13, true, 'RIGHT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
+          await sheets.setCellStyle(this.students, `B${newRow + 2}:B${newRow + 2}`, 13, true, 'LEFT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
+          await sheets.setCellStyle(this.students, `C${newRow + 2}:D${newRow + 2}`, 10, false, 'LEFT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
+          await sheets.setCellStyle(this.students, `E${newRow + 2}:E${newRow + 2}`, 9, false, 'LEFT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
+  
+          await sheets.setCellStyle(this.students, `A${newRow + 3}:E${newRow + 3}`, 10, true, 'LEFT', 'MIDDLE', null, 'SOLID', 'SOLID', 'SOLID', 'white');
+  
+          await sheets.setCellStyle(this.students, `A${newRow + 4}:A${newRow + 4}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
+          await sheets.setCellStyle(this.students, `B${newRow + 4}:B${newRow + 4}`, 10, false, 'RIGHT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
+          await sheets.setCellStyle(this.students, `C${newRow + 4}:E${newRow + 4}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
+        }
       }
+
     }
 
     async changeAvaibleLessonStatus(idUser: number, payment: boolean){
