@@ -3242,8 +3242,10 @@ async function main() {
 
       await ctx.telegram.sendMessage(dataItem!.teacher_id, `❌ ${dataItem!.teacher}, клуб ${dataItem!.title} (${dbProcess.getDateClub(new Date(dataItem!.date))} о ${dataItem!.time} 🇺🇦) був видалений адміністратором і його більше не існує.`);
       for (let i = 0; i < users.length; i++){
-        await ctx.telegram.sendMessage(users[i].id, `❌ ${users[i].name}, Ви були видалені з клубу ${dataItem!.title} (${dbProcess.getDateClub(new Date(dataItem!.date))} о ${dataItem!.time} 🇺🇦), оскільки клуб був видалений.`);
-        await dbProcess.DeleteClubFromUser(users[i].id, deleteItem);
+        if (await dbProcess.HasThisClubUser(users[i].id, dataItem!._id)){
+          await ctx.telegram.sendMessage(users[i].id, `❌ ${users[i].name}, Ви були видалені з клубу ${dataItem!.title} (${dbProcess.getDateClub(new Date(dataItem!.date))} о ${dataItem!.time} 🇺🇦), оскільки клуб був видалений.`);
+          await dbProcess.DeleteClubFromUser(users[i].id, deleteItem);
+        }
       }
 
       await ctx.reply(`Шпрах клаб №${indexToDelete} успішно видалений.`, {
