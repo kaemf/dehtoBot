@@ -468,7 +468,7 @@ ${phone}\n
 Останній пакет: ${club_packet}`,
 
       reportToTeacherNewOrder: (title: string, teacher: string, date: string, time: string, count: number, recordedUsers: string) => 
-      `${count - 1 === 0 ? '✅❌ Вільних місць немає' : '✅ Нова реєстрація'}
+      `${count === 0 ? '✅❌ Вільних місць немає' : '✅ Нова реєстрація'}
 🗣 ШПРАХ-КЛУБ
 👉🏼 Тема: ${title}
 👉🏼 Викладач: ${teacher}\n
@@ -476,7 +476,7 @@ ${phone}\n
 👉🏼 На котру: ${time} 🇺🇦\n
 Список учасників:
 ${recordedUsers === '' ? 'поки ще немає(\n' : recordedUsers}
-${count - 1 === 0 ? '' : `кількість доступних місць: ${count}`}`,
+${count === 0 ? '' : `кількість доступних місць: ${count}`}`,
 
       forAcceptPayment: {
         nonPlus: (name: string, username: string, number: string, date: string) => `💰 Оплата Шпрах-Клуб 💰\n

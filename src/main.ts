@@ -2361,7 +2361,7 @@ async function main() {
             await ctx.telegram.sendMessage(currentClub!.teacher_id, script.speakingClub.report.reportToTeacherNewOrder(currentClub!.title, currentClub!.teacher, 
               dbProcess.getDateClub(new Date(currentClub!.date)), currentClub!.time, currentClub!.count - 1, recordedUsers));
             
-            ctx.reply('Обробка, зачекайте, будь ласка...');
+            await ctx.reply('Обробка, зачекайте, будь ласка...');
 
             if (currentUser!.count === 1){
               // For Developer
@@ -4472,21 +4472,23 @@ async function main() {
       users = await dbProcess.ShowAllUsers(),
       currentUser = await dbProcess.ShowOneUser(idUser);
 
+    let currentAvailableCount = idClub!.count - 1
+
     await dbProcess.WriteNewClubToUser(idUser, idClub!._id)
-    await dbProcess.ChangeKeyData(idClub!, 'count', idClub!.count - 1);
+    await dbProcess.ChangeKeyData(idClub!, 'count', currentAvailableCount);
     await dbProcess.SwitchToCompletTrialLesson(idUser, 'true');
 
     let recordedUsers = '';
 
-    for(let i = 0; i < users.length; i++){
-      if (await dbProcess.HasThisClubUser(idUser, idClub!._id)){
+    for (let i = 0; i < users.length; i++){
+      if (await dbProcess.HasThisClubUser(users[i].id, idClub!._id)){
         recordedUsers += `- ${users[i].name} (@${users[i].username})\n📲${users[i].number}\n\n`;
       }
     }
 
     //Send Message To Teacher
     await ctx.telegram.sendMessage(idClub!.teacher_id, script.speakingClub.report.reportToTeacherNewOrder(idClub!.title, idClub!.teacher, 
-      dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.count - 1, recordedUsers));
+      dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, currentAvailableCount, recordedUsers));
 
     await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedTrialLesson((await db.get(idUser)('name'))!.toString(), dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.link));
 
@@ -4649,7 +4651,7 @@ async function main() {
     await dbProcess.ChangeKeyData(idClub!, 'count', idClub!.count - 1);
     await dbProcess.SwitchToCompletTrialLesson(idUser, 'true');
 
-    for(let i = 0; i < users.length; i++){
+    for (let i = 0; i < users.length; i++){
       if (await dbProcess.HasThisClubUser(users[i].id, new ObjectId(ctx.match[2]))){
         recordedUsers += `- ${users[i].name} (@${users[i].username})\n📲${users[i].number}\n\n`;
       }
