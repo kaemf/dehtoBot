@@ -14,7 +14,7 @@ import getCourses, { Course, Courses, courseNumbersToSkip } from "./data/course/
 import Key from "./base/handlersdb/changeKeyValue";
 import Role, { ConvertRole } from "./base/handlersdb/changeRoleValue";
 import keyboards, { checkChats } from "./base/handlers/keyboards";
-import { inlineApprovePayment, inlineAcceptTrialPayment, inlineAcceptPacketPayment, inlineAcceptClubWithPacketPayment } from "./data/datapoint/function/paymentButtons";
+import { inlineApprovePayment, inlineAcceptOncePayment, inlineAcceptOncePaymentWithoutClub, inlineAcceptPacketPayment, inlineAcceptClubWithPacketPayment } from "./data/datapoint/function/paymentButtons";
 import formattedName from "./data/datapoint/function/nameFormatt";
 import DateRecord from "./base/handlers/getTime";
 import MongoDBReturnType from "./data/datapoint/point/mongoDBType";
@@ -1423,31 +1423,31 @@ async function main() {
         },
       });
     }
-    else if (data.text === 'Пробне заняття'){
-      if (userA!.role !== 'teacher'){
-        ctx.reply(script.speakingClub.trialLesson.entire, {
-          parse_mode: "HTML",
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: [
-              [
-                {
-                  text: "так"
-                },
-                {
-                  text: "ні"
-                }
-              ]
-            ],
-          },
-        })
+    // else if (data.text === 'Оплатити заняття'){
+    //   if (userA!.role !== 'teacher'){
+    //     ctx.reply(script.speakingClub.trialLesson.entire, {
+    //       parse_mode: "HTML",
+    //       reply_markup: {
+    //         one_time_keyboard: true,
+    //         keyboard: [
+    //           [
+    //             {
+    //               text: "так"
+    //             },
+    //             {
+    //               text: "ні"
+    //             }
+    //           ]
+    //         ],
+    //       },
+    //     })
   
-        await set('state')('RespondChooseAndRespondGetLesson');
-      }
-      else{
-        ctx.reply('викладачі не можуть брати пробне заняття');
-      }
-    }
+    //     await set('state')('RespondChooseAndRespondGetLesson');
+    //   }
+    //   else{
+    //     ctx.reply('викладачі не можуть брати пробне заняття');
+    //   }
+    // }
     else if (data.text === 'Реєстрація на клуб'){
       if (userA!.role !== 'teacher'){
         const results = await dbProcess.ShowAll();
@@ -1522,23 +1522,14 @@ async function main() {
         ctx.reply('викладач немає занять');
       }
     }
-    else if (data.text === 'Оплатити пакет занять'){
+    else if (data.text === 'Оплатити заняття'){
       const user = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
       if (user!.role !== 'teacher'){
         ctx.reply(script.speakingClub.payPacketLesson, {
           parse_mode: "HTML",
           reply_markup: {
             one_time_keyboard: true,
-            keyboard: [
-              [
-                {
-                  text: "Шпрах-Клуб"
-                },
-                {
-                  text: "Шпрах-Клуб+PLUS"
-                }
-              ]
-            ],
+            keyboard: keyboards.payPacketLessons()
           },
         });
         await set('temp-prev-state')('menu-state');
@@ -1639,6 +1630,7 @@ async function main() {
   })
 
   // Check count of lessons and pay more if it need
+  //back
   onTextMessage('RespondCheckLessonsAndGetLessons', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1);
 
@@ -1648,16 +1640,7 @@ async function main() {
         parse_mode: "HTML",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Шпрах-Клуб"
-              },
-              {
-                text: "Шпрах-Клуб+PLUS"
-              }
-            ]
-          ],
+          keyboard: keyboards.payPacketLessons()
         },
       });
       await set('state')('RespondTypePacketAndGetPayment');
@@ -1762,6 +1745,11 @@ async function main() {
         await set('state')('RespondCheckLessonsAndGetLessons');
       }
     }
+    else if (data.text === 'Разове заняття'){
+      ctx.reply(script.speakingClub.onceClub);
+      await set('club-typeclub')('РазовеЗаняття');
+      await set('state')('RespondPaymentAndGetCourseOrFinal');
+    }
     else if (data.text === 'Шпрах-Клуб'){
       ctx.reply(script.speakingClub.standartClub);
       await set('club-typeclub')(data.text);
@@ -1777,16 +1765,7 @@ async function main() {
         parse_mode: "HTML",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Шпрах-Клуб"
-              },
-              {
-                text: "Шпрах-Клуб+PLUS"
-              }
-            ]
-          ],
+          keyboard: keyboards.payPacketLessons()
         },
       })
     }
@@ -1819,11 +1798,31 @@ async function main() {
     }
     else if (CheckException.PhotoException(data)){
       await set('paymentStatusClubOrPacket')('unknown');
-      const paymentStatus = await get('paymentStatusClubOrPacket') ?? 'unknown';
+      const paymentStatus = await get('paymentStatusClubOrPacket') ?? 'unknown',
+        unique_file_id = data.photo;
   
-      const unique_file_id = data.photo;
-  
-      if (user['club-typeclub'] === 'Шпрах-Клуб'){
+      if (user['club-typeclub'] === 'Разовезаняття'){
+        const date = DateRecord();
+        if (clubIndex !== ''){
+          const inline = inlineAcceptOncePayment(id, clubIndex, paymentStatus, date);
+
+          await ctx.telegram.sendPhoto(devChat, unique_file_id, {
+            parse_mode: "HTML",
+            caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
+            ...Markup.inlineKeyboard(inline)
+          })
+        }
+        else{
+          const inline = inlineAcceptOncePaymentWithoutClub(id, paymentStatus, date);
+
+          await ctx.telegram.sendPhoto(devChat, unique_file_id, {
+            parse_mode: "HTML",
+            caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
+            ...Markup.inlineKeyboard(inline)
+          })
+        }
+      }
+      else if (user['club-typeclub'] === 'Шпрах-Клуб'){
         const date = DateRecord();
         if (clubIndex !== ''){
           const inline = inlineAcceptClubWithPacketPayment(id, clubIndex, paymentStatus, 's', date);
@@ -1902,7 +1901,28 @@ async function main() {
       await set('paymentStatusClubOrPacket')('unknown');
       const paymentStatus = await get('paymentStatusClubOrPacket') ?? 'unknown';
 
-      if (user['club-typeclub'] === 'Шпрах-Клуб'){
+      if (user['club-typeclub'] === 'Разовезаняття'){
+        const date = DateRecord();
+        if (clubIndex !== ''){
+          const inline = inlineAcceptOncePayment(id, clubIndex, paymentStatus, date);
+
+          await ctx.telegram.sendPhoto(devChat, data.file, {
+            parse_mode: "HTML",
+            caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
+            ...Markup.inlineKeyboard(inline)
+          })
+        }
+        else{
+          const inline = inlineAcceptOncePaymentWithoutClub(id, paymentStatus, date);
+
+          await ctx.telegram.sendPhoto(devChat, data.file, {
+            parse_mode: "HTML",
+            caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
+            ...Markup.inlineKeyboard(inline)
+          })
+        }
+      }
+      else if (user['club-typeclub'] === 'Шпрах-Клуб'){
         const date = DateRecord();
         if (clubIndex !== ''){
           const inline = inlineAcceptClubWithPacketPayment(id, clubIndex, paymentStatus, "s", DateRecord());
@@ -2195,107 +2215,107 @@ async function main() {
   })
 
   // Waiting Payment for Trial Lesson Club
-  onPhotoMessage('CheckPaymentAndReturn', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      get = db.get(ctx?.chat?.id ?? -1);
+  // onPhotoMessage('CheckPaymentAndReturn', async(ctx, user, data) => {
+  //   const set = db.set(ctx?.chat?.id ?? -1),
+  //     get = db.get(ctx?.chat?.id ?? -1);
 
-    if (CheckException.BackRoot(data)){
-      await ctx.reply(script.speakingClub.trialLesson.ifYes)
-      const results = await dbProcess.ShowAll(),
-        keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
-          return [{ text: `${index + 1}` }];
-        });
-      let addString : string = '';
+  //   if (CheckException.BackRoot(data)){
+  //     await ctx.reply(script.speakingClub.trialLesson.ifYes)
+  //     const results = await dbProcess.ShowAll(),
+  //       keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
+  //         return [{ text: `${index + 1}` }];
+  //       });
+  //     let addString : string = '';
     
-      for (let i = 0; i < results.length; i++) {
-          if (results[i].count > 0) {
-            addString = `кількість доступних місць: ${results[i].count}`;
-          } else {
-            addString = `❌ немає вільних місць ❌`;
-          }
+  //     for (let i = 0; i < results.length; i++) {
+  //         if (results[i].count > 0) {
+  //           addString = `кількість доступних місць: ${results[i].count}`;
+  //         } else {
+  //           addString = `❌ немає вільних місць ❌`;
+  //         }
 
-        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString), {
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: keyboard
-          }
-        });
-      }
+  //       await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString), {
+  //         reply_markup: {
+  //           one_time_keyboard: true,
+  //           keyboard: keyboard
+  //         }
+  //       });
+  //     }
 
-      await set('state')('RespondTrialClubAndCheckPayment');
-    }
-    else if (CheckException.PhotoException(data)){
-      await set('paymentStatusTrialLesson')('unknown');
-      const paymentStatus: string = await get('paymentStatusTrialLesson') ?? 'unknown',
-        date = DateRecord(),
-        inline = inlineAcceptTrialPayment(ctx?.chat?.id ?? -1, user['sc_triallesson_clubindex'], paymentStatus, date);
+  //     await set('state')('RespondTrialClubAndCheckPayment');
+  //   }
+  //   else if (CheckException.PhotoException(data)){
+  //     await set('paymentStatusTrialLesson')('unknown');
+  //     const paymentStatus: string = await get('paymentStatusTrialLesson') ?? 'unknown',
+  //       date = DateRecord(),
+  //       inline = inlineAcceptTrialPayment(ctx?.chat?.id ?? -1, user['sc_triallesson_clubindex'], paymentStatus, date);
       
-      // For Developer
-      // ctx.telegram.sendPhoto(devChat, data.photo, {
-      //   parse_mode: "HTML",
-      //   caption: script.speakingClub.report.forAcceptPayment.Trial(user['name'], user['username'], user['phone_number'], date),
-      //   ...Markup.inlineKeyboard(inline)
-      // });
+  //     // For Developer
+  //     // ctx.telegram.sendPhoto(devChat, data.photo, {
+  //     //   parse_mode: "HTML",
+  //     //   caption: script.speakingClub.report.forAcceptPayment.Trial(user['name'], user['username'], user['phone_number'], date),
+  //     //   ...Markup.inlineKeyboard(inline)
+  //     // });
 
-      ctx.telegram.sendPhoto(supportChat, data.photo, {
-        parse_mode: "HTML",
-        caption: script.speakingClub.report.forAcceptPayment.Trial(user['name'], user['username'], user['phone_number'], date),
-        ...Markup.inlineKeyboard(inline)
-      });
+  //     ctx.telegram.sendPhoto(supportChat, data.photo, {
+  //       parse_mode: "HTML",
+  //       caption: script.speakingClub.report.forAcceptPayment.Trial(user['name'], user['username'], user['phone_number'], date),
+  //       ...Markup.inlineKeyboard(inline)
+  //     });
 
-      await ctx.reply('Ваше замовлення прийнято, очікуйте на підтвердження', {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "В МЕНЮ"
-              }
-            ]
-          ]
-        }
-      });
+  //     await ctx.reply('Ваше замовлення прийнято, очікуйте на підтвердження', {
+  //       reply_markup: {
+  //         one_time_keyboard: true,
+  //         keyboard: [
+  //           [
+  //             {
+  //               text: "В МЕНЮ"
+  //             }
+  //           ]
+  //         ]
+  //       }
+  //     });
 
-      await set('state')('EndRootManager');
-    }
-    else if (CheckException.FileException(data)){
-      await set('paymentStatusTrialLesson')('unknown');
-      const paymentStatus: string = await get('paymentStatusTrialLesson') ?? 'unknown',
-        date = DateRecord(),
-        inline = inlineAcceptTrialPayment(ctx?.chat?.id ?? -1, user['sc_triallesson_clubindex'], paymentStatus, date);
+  //     await set('state')('EndRootManager');
+  //   }
+  //   else if (CheckException.FileException(data)){
+  //     await set('paymentStatusTrialLesson')('unknown');
+  //     const paymentStatus: string = await get('paymentStatusTrialLesson') ?? 'unknown',
+  //       date = DateRecord(),
+  //       inline = inlineAcceptTrialPayment(ctx?.chat?.id ?? -1, user['sc_triallesson_clubindex'], paymentStatus, date);
         
-      // For Developer
-      // ctx.telegram.sendDocument(devChat, data.file, {
-      //   parse_mode: "HTML",
-      //   caption: script.speakingClub.report.forAcceptPayment.Trial(user['name'], user['username'], user['phone_number'], date),
-      //   ...Markup.inlineKeyboard(inline)
-      // });
+  //     // For Developer
+  //     // ctx.telegram.sendDocument(devChat, data.file, {
+  //     //   parse_mode: "HTML",
+  //     //   caption: script.speakingClub.report.forAcceptPayment.Trial(user['name'], user['username'], user['phone_number'], date),
+  //     //   ...Markup.inlineKeyboard(inline)
+  //     // });
 
-      ctx.telegram.sendDocument(supportChat, data.file, {
-        parse_mode: "HTML",
-        caption: script.speakingClub.report.forAcceptPayment.Trial(user['name'], user['username'], user['phone_number'], date),
-        ...Markup.inlineKeyboard(inline)
-      });
+  //     ctx.telegram.sendDocument(supportChat, data.file, {
+  //       parse_mode: "HTML",
+  //       caption: script.speakingClub.report.forAcceptPayment.Trial(user['name'], user['username'], user['phone_number'], date),
+  //       ...Markup.inlineKeyboard(inline)
+  //     });
 
-      await ctx.reply('Ваше замовлення прийнято, очікуйте на підтвердження', {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "В МЕНЮ"
-              }
-            ]
-          ]
-        }
-      });
+  //     await ctx.reply('Ваше замовлення прийнято, очікуйте на підтвердження', {
+  //       reply_markup: {
+  //         one_time_keyboard: true,
+  //         keyboard: [
+  //           [
+  //             {
+  //               text: "В МЕНЮ"
+  //             }
+  //           ]
+  //         ]
+  //       }
+  //     });
 
-      await set('state')('EndRootManager');
-    }
-    else{
-      ctx.reply(script.errorException.paymentGettingError);
-    }
-  })
+  //     await set('state')('EndRootManager');
+  //   }
+  //   else{
+  //     ctx.reply(script.errorException.paymentGettingError);
+  //   }
+  // })
 
   //Club Registration (start)
   onTextMessage('GetClubToRegistrationAndCheckPayment', async(ctx, user, data) => {
@@ -4442,7 +4462,7 @@ async function main() {
     return ctx.answerCbQuery(`Користувач: ${id}, стан: НЕ ОПЛАЧЕНО`);
   });
 
-  // Club trial lesson payment action
+  // Club Once lesson payment action
   bot.action(/^acceptPayment:(\d+),(.+),(.+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]),
       idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2])),
@@ -4479,7 +4499,7 @@ async function main() {
     try {
       // set up payment status "paid"
       await db.set(idUser)('paymentStatusTrialLesson')('paid');
-      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'paid', 'date_in_db'),
+      const newInlineKeyboardButtons = inlineAcceptOncePayment(idUser, ctx.match[2], 'paid', 'date_in_db'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
 
@@ -4488,6 +4508,52 @@ async function main() {
     }
 
     ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}`);
+  })
+
+  bot.action(/^acceptPaymentWO:(\d+),(.+)$/, async (ctx) => {
+    const idUser = Number.parseInt(ctx.match[1]),
+      //dateRecord = ctx.match[2],
+      currentUser = await dbProcess.ShowOneUser(idUser);
+
+    await dbProcess.SwitchToCompletTrialLesson(idUser, 'true');
+    await dbProcess.ChangeCountUser(currentUser!._id, currentUser!.count + 1);
+    await ctx.telegram.sendMessage(idUser, script.speakingClub.thanksType.typeOnce(currentUser!.name));
+
+    await db.set(idUser)('SC_TrialLessonComplet_active')('true');
+    ctx.answerCbQuery(`Запис даних в таблицю`);
+
+    try {
+      // set up payment status "paid"
+      await db.set(idUser)('paymentStatusTrialLesson')('paid');
+      const newInlineKeyboardButtons = inlineAcceptOncePayment(idUser, ctx.match[2], 'paid', 'date_in_db'),
+        newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
+      await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
+
+    } catch (e) {
+      console.log(e);
+    }
+
+    ctx.answerCbQuery(`Користувач: ${currentUser!.name}, ПІДТВЕРДЖЕНО`);
+  })
+
+  bot.action(/^declinePaymentWO:(\d+),(.+)$/, async (ctx) => {
+    const idUser = Number.parseInt(ctx.match[1]);
+    //const idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2]));
+
+    await ctx.telegram.sendMessage(idUser, `вибачте, ${await db.get(idUser)('name')}, але нажаль ваша оплата не успішна.\nповторіть будь ласка змовлення`);
+
+    try {
+      // set up payment status "nopaid"
+      await db.set(idUser)('paymentStatusTrialLesson')('nopaid');
+      const newInlineKeyboardButtons = inlineAcceptOncePayment(idUser, ctx.match[2], 'nopaid', 'date_in_db'),
+        newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
+      await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
+
+    } catch (e) {
+      console.log(e);
+    }
+
+    return ctx.answerCbQuery(`Користувач: ${idUser}, ВІДМІНА`);
   })
 
   bot.action(/^declinePayment:(\d+),(.+),(.+)$/, async (ctx) => {
@@ -4499,7 +4565,7 @@ async function main() {
     try {
       // set up payment status "nopaid"
       await db.set(idUser)('paymentStatusTrialLesson')('nopaid');
-      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'nopaid', 'date_in_db'),
+      const newInlineKeyboardButtons = inlineAcceptOncePayment(idUser, ctx.match[2], 'nopaid', 'date_in_db'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
 
@@ -4535,7 +4601,7 @@ async function main() {
     try {
       // set up payment status "paid"
       await db.set(idUser)('paymentStatusTrialLesson')('paid');
-      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'paid', 'date_in_db'),
+      const newInlineKeyboardButtons = inlineAcceptOncePayment(idUser, ctx.match[2], 'paid', 'date_in_db'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
 
@@ -4555,7 +4621,7 @@ async function main() {
     try {
       // set up payment status "nopaid"
       await db.set(idUser)('paymentStatusTrialLesson')('nopaid');
-      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'nopaid', 'date_in_db'),
+      const newInlineKeyboardButtons = inlineAcceptOncePayment(idUser, ctx.match[2], 'nopaid', 'date_in_db'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
 
@@ -4605,7 +4671,7 @@ async function main() {
     try {
       // set up payment status "paid"
       await db.set(idUser)('paymentStatusTrialLesson')('paid');
-      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'paid', 'date_in_db'),
+      const newInlineKeyboardButtons = inlineAcceptOncePayment(idUser, ctx.match[2], 'paid', 'date_in_db'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
 
@@ -4626,7 +4692,7 @@ async function main() {
     try {
       // set up payment status "nopaid"
       await db.set(idUser)('paymentStatusTrialLesson')('nopaid');
-      const newInlineKeyboardButtons = inlineAcceptTrialPayment(idUser, ctx.match[2], 'nopaid', 'date_in_db'),
+      const newInlineKeyboardButtons = inlineAcceptOncePayment(idUser, ctx.match[2], 'nopaid', 'date_in_db'),
         newInlineKeyboardMarkup = Markup.inlineKeyboard(newInlineKeyboardButtons).reply_markup;
       await ctx.editMessageReplyMarkup(newInlineKeyboardMarkup);
 

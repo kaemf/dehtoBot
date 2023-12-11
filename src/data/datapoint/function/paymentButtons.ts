@@ -30,13 +30,40 @@ export const inlineApprovePayment = (id: number, paymentStatus: string): Hideabl
     return [];
 };
 
-//Generate button for payment status in Club Trial Lesson
-export const inlineAcceptTrialPayment = (id: number, ObjectIDClub: string, paymentStatus: string, date: string): HideableIKBtn[][] => {
+//Generate button for payment status in Club Once Lesson
+export const inlineAcceptOncePayment = (id: number, ObjectIDClub: string, paymentStatus: string, date: string): HideableIKBtn[][] => {
     if (paymentStatus === 'unknown') {
         return [
             [
                 Markup.button.callback("👌", `acceptPayment:${id},${ObjectIDClub},${date}`),
                 Markup.button.callback("❌", `declinePayment:${id},${ObjectIDClub},${date}`),
+            ]
+        ];
+        } 
+    else if (paymentStatus === 'paid') {
+        return [
+            [
+                Markup.button.callback("🟢 Оплачено", `paidCheckT:${id}`)
+            ]
+        ];
+    } 
+    else if (paymentStatus === 'nopaid') {
+        return [
+            [
+                Markup.button.callback("🔴 Не оплачено", `nopaidCheckT:${id}`)
+            ]
+        ];
+    }
+    return [];
+}
+
+// Generate button for payment status in Club Once Lesson without Club
+export const inlineAcceptOncePaymentWithoutClub = (id: number, paymentStatus: string, date: string): HideableIKBtn[][] => {
+    if (paymentStatus === 'unknown') {
+        return [
+            [
+                Markup.button.callback("👌", `acceptPaymentWO:${id},${date}`),
+                Markup.button.callback("❌", `declinePaymentWO:${id},${date}`),
             ]
         ];
         } 
