@@ -137,3 +137,13 @@ export const inlineAcceptClubWithPacketPayment = (id: number, ObjectIDClub: stri
     }
     return [];
 }
+
+//Generate Event buttons for announcement clubs
+export const inlineEventAnnouncementClub = (id: number, ObjectIDClub: string): HideableIKBtn[][] => {
+    return [
+        [
+            Markup.button.callback("😍 зареєструватися!", `acceptEventAnnouncementClub:${id},${ObjectIDClub}`),
+            Markup.button.callback("😒 нє, не цікаво", `declineEventAnnouncementClub:${id},${ObjectIDClub}`),
+        ]
+    ];
+}

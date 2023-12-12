@@ -67,3 +67,4 @@ export type UserScriptState =
   | "RespondIDAndShowCount&Packet"
   | "ResondIDAndForceChangeAvaibleLessons"
   | "ForceChangeAvaibleLessonsAndReturn"
+  | "MyClubEmptyHandler"

@@ -252,7 +252,7 @@ export default async function arch() {
     }
 
     async AddData(data: {title: string, teacher: string, date: string, time: string, count: number, link: string}) {
-      await this.clubdb.insertOne(data);
+      return await this.clubdb.insertOne(data);
     }
 
     async DeleteData(id: ObjectId) {
@@ -494,27 +494,38 @@ export default async function arch() {
         return regex.test(inputStr);
       }
     }
+
+    async getUserActiveClubs(idUser: number){
+      const user = await this.ShowOneUser(idUser),
+        data = user!.recordClubs !== undefined ? user!.recordClubs.toString() : false;
+
+      if (data){
+        return data.split(',');
+      }
+      else{
+        return false;
+      }
+    }
   }
 
   class GoogleSheets{
     private students = '💁🏽‍♀️ Студенти_dev';
-    private trials = '✅ Пробні_dev';
 
-    async appendTrial(date: string, name: string, phone: string, nickname: string, title_club: string, teacher: string){
-      let data = await sheets.getCell(`${this.trials}!A2`),
-        number = 2;
-      while (data !== ''){
-        number++;
-        data = await sheets.getCell(`${this.trials}!A${number}`);
-      }
+    // async appendTrial(date: string, name: string, phone: string, nickname: string, title_club: string, teacher: string){
+    //   let data = await sheets.getCell(`${this.students}!A2`),
+    //     number = 2;
+    //   while (data !== ''){
+    //     number++;
+    //     data = await sheets.getCell(`${this.students}!A${number}`);
+    //   }
 
-      const numberOfTrial = await sheets.getCell(`${this.trials}!A${number - 1}`) === '№' ? '1' : parseInt(await sheets.getCell(`${this.trials}!A${number - 1}`)) + 1;
-      await sheets.updateRow(`${this.trials}!A${number}:I${number}`, [numberOfTrial, date, name, phone, nickname, title_club, teacher]);
+    //   const numberOfTrial = await sheets.getCell(`${this.students}!A${number - 1}`) === '№' ? '1' : parseInt(await sheets.getCell(`${this.students}!A${number - 1}`)) + 1;
+    //   await sheets.updateRow(`${this.students}!A${number}:I${number}`, [numberOfTrial, date, name, phone, nickname, title_club, teacher]);
 
-      await sheets.setCellStyle(this.trials, `A${number}:A${number}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
-      await sheets.setCellStyle(this.trials, `B${number}:B${number}`, 10, false, 'RIGHT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
-      await sheets.setCellStyle(this.trials, `C${number}:I${number}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
-    }
+    //   await sheets.setCellStyle(this.students, `A${number}:A${number}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
+    //   await sheets.setCellStyle(this.students, `B${number}:B${number}`, 10, false, 'RIGHT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
+    //   await sheets.setCellStyle(this.students, `C${number}:I${number}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
+    // }
 
     async appendLessonToUser(idUser: number, name: string, phone: string, nickname: string, mail: string, date: string, title: string, teacher: string){
       const index = await sheets.findDataInCell(idUser.toString(), this.students),

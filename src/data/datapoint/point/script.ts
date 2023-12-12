@@ -424,6 +424,15 @@ ${addString}\n
 👉🏼 Коли: ${date}
 👉🏼 На котру: ${time} 🇺🇦`,
 
+      showOwnClubToUser: (count: number, title: string, teacher: string, date: string, time: string, link: string) => `✅${count}
+🗣 ШПРАХ-КЛУБ
+👉🏼 Тема: ${title}
+👉🏼 Викладач: ${teacher}\n
+👉🏼 Коли: ${date}
+👉🏼 На котру: ${time} 🇺🇦\n
+Посилання:
+${link}`,
+
       showUser: (position: number, name: string, id: number, username: string, phone_number: string, count: number, role: string) => `✅${position}
 ID: ${id}
 Ім'я: ${name}
@@ -499,7 +508,18 @@ ${count === 0 ? '' : `кількість доступних місць: ${count}
 👉🏽${number}
 👉🏽Разове заняття - 300uah\n
 Дата створення заявки: ${date}`
-      }
+      },
+
+      mySpeackingClub: {
+        ifTrue: `ось клуби, на які Ви зареєстровані:`,
+        ifFalse: `Ви не зареєстровані на жоден клаб😳\nбажаєте зареєструватися?)`
+      },
+
+      announcementClub: (title: string, teacher: string, date: string, time: string) => `🔥dehto має новий Шпрах-Клуб🔥 \n
+🗣 ШПРАХ-КЛУБ
+👉🏼 Тема: ${title}
+👉🏼 Викладач: ${teacher}\n
+🕒 Чекаємо тебе <b>${date} о ${time}</b> 🇺🇦`
     },
 
 
