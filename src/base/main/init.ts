@@ -1,7 +1,7 @@
 // DehtoBot for dehto German Course
 // Developed by Yaroslav Volkivskyi (TheLaidSon)
 
-// Actual v4.10.3
+// Actual v4.11.0
 
 // Initialization File
 
@@ -158,15 +158,24 @@ export default async function init() {
       }
     },
 
-    addRowAndShiftDown: async (sheetId: number, targetCell: string) => {
-      const targetRowIndex = Number(targetCell.match(/\d+/)![0]);
+    addRowAndShiftDown: async (sheetId: string, targetCell: string) => {
+      const targetRowIndex = Number(targetCell.match(/\d+/)![0]),
+
+      getSheetId = async (sheetName: string) => {
+        const { data } = await sheets.spreadsheets.get({
+          spreadsheetId,
+        });
+      
+        const sheet = data.sheets!.find((s) => s.properties!.title === sheetName);
+        return sheet!.properties!.sheetId;
+      }
     
       const insertOperation: sheets_v4.Schema$Request = {
         insertDimension: {
           range: {
-            sheetId,
+            sheetId: await getSheetId(sheetId),
             dimension: 'ROWS',
-            startIndex: targetRowIndex - 1, // Вставить перед целевой строкой
+            startIndex: targetRowIndex - 1,
             endIndex: targetRowIndex,
           },
           inheritFromBefore: false,
@@ -197,15 +206,21 @@ export default async function init() {
         });
     
         const values = response.data.values;
-    
-        for (let row = 0; row < values!.length; row++) {
-          for (let col = 0; col < values![row].length; col++) {
-            const cellValue = values![row][col];
-            if (cellValue === targetData) {
-              console.log(`Data found in "${targetData}" in row "${String.fromCharCode('A'.charCodeAt(0) + col)}${row + 1}"`);
-              return { row, col };
+
+        if (values){
+          for (let row = 0; row < values!.length; row++) {
+            for (let col = 0; col < values![row].length; col++) {
+              const cellValue = values![row][col];
+              if (cellValue === targetData) {
+                console.log(`Data found in "${targetData}" in row "${String.fromCharCode('A'.charCodeAt(0) + col)}${row + 1}"`);
+                return { row, col };
+              }
             }
           }
+        }
+        else{
+          const row = '', col = '';
+          return {row, col};
         }
 
         console.log(`Data '${targetData}' not found`);

@@ -543,7 +543,7 @@ export default async function arch() {
         const toProcessPosition = await sheets.getCell(`${this.students}!A${position - 1}`),
           newIndexPosition = toProcessPosition;
 
-        await sheets.addRowAndShiftDown(0, `A${position}`);
+        await sheets.addRowAndShiftDown(this.students, `A${position}`);
         console.log(currentData.charAt(0));
         await sheets.updateRow(`${this.students}!A${position}:D${position}`, [`${parseInt(newIndexPosition) + 1}`, date, title, teacher]);
 

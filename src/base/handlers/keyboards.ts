@@ -144,7 +144,7 @@ class Keyboard{
       ]
   }
 
-  async speakingClubMenu(line: string){
+  async speakingClubMenu(){
     return [
       [
         {
