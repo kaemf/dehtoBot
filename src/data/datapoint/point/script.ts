@@ -441,6 +441,15 @@ Telegram: @${username}
 Користувач є: ${role}
 Кількість доступних занять: ${count > 0 ? count : '❌'}`,
 
+      showUserToAdmin: (position: number, name: string, id: number, username: string, phone_number: string, count: number, role: string, packet: string) => `✅${position}
+ID: ${id}
+Ім'я: ${name}
+Telegram: @${username}
+Номер телефону: ${phone_number}
+Користувач є: ${role}
+Активний пакет: ${packet}
+Кількість доступних занять: ${count > 0 ? count : '❌'}`,
+
       checkClub: (title: string, teacher: string, date: string, time: string, link: string, count: number) => `🗣 ШПРАХ-КЛУБ
 👉🏼 Тема: ${title}
 👉🏼 Викладач: ${teacher}\n

@@ -14,6 +14,7 @@ import getCourses, { Course, Courses, courseNumbersToSkip } from "./data/course/
 import Key from "./base/handlersdb/changeKeyValue";
 import Role, { ConvertRole } from "./base/handlersdb/changeRoleValue";
 import keyboards, { checkChats } from "./base/handlers/keyboards";
+import { ConvertToPrice, ConvertToPacket } from "./data/datapoint/function/convertPaymentPerLesson";
 import { inlineApprovePayment, inlineAcceptOncePayment, inlineAcceptOncePaymentWithoutClub, 
   inlineAcceptPacketPayment, inlineAcceptClubWithPacketPayment, inlineEventAnnouncementClub } 
   from "./data/datapoint/function/paymentButtons";
@@ -326,8 +327,7 @@ async function main() {
       const results = await dbProcess.ShowAll(),
         users = await dbProcess.ShowAllUsers();
 
-      let addString = '';
-
+      // For Teachers
       for (let i = 0; i < results.length; i++){
         if (parseInt(results[i].teacher_id) === ctx?.chat?.id ?? -1){
           let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
@@ -339,11 +339,8 @@ async function main() {
             if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
               userHaved = '';
             }
-            if (results[i].count > 0) {
-              addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
-            } else {
-              addString = `❌ немає вільних місць ❌`;
-            }
+
+            let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
   
           await ctx.reply(script.speakingClub.report.showClubTypeTeacher(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved, results[i].link), {
             parse_mode: "HTML"
@@ -1687,64 +1684,58 @@ async function main() {
   })
 
   // Club Trial Lesson Handler (start)
-  onTextMessage('RespondChooseAndRespondGetLesson', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+  // onTextMessage('RespondChooseAndRespondGetLesson', async(ctx, user, data) => {
+  //   const set = db.set(ctx?.chat?.id ?? -1),
+  //     currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
-    if (CheckException.BackRoot(data)){
-      ctx.reply("Виберіть одну із запропонованих кнопок", {
-        parse_mode: "Markdown",
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: await keyboards.speakingClubMenu(currentUser!.haveTrialLessonClub)
-        },
-      });
+  //   if (CheckException.BackRoot(data)){
+  //     ctx.reply("Виберіть одну із запропонованих кнопок", {
+  //       parse_mode: "Markdown",
+  //       reply_markup: {
+  //         one_time_keyboard: true,
+  //         keyboard: await keyboards.speakingClubMenu(currentUser!.haveTrialLessonClub)
+  //       },
+  //     });
 
-      await set('state')('ActionClubRespondAndRootAction');
-    }
-    else if (data.text === 'так'){
-      await ctx.reply(script.speakingClub.trialLesson.ifYes)
-      const results = await dbProcess.ShowAll(),
-        keyboard = results.map(result => result._id).map((value : ObjectId, index : number) => {
-          return [{ text: `${index + 1}` }];
-        });
-      let addString : string = '';
+  //     await set('state')('ActionClubRespondAndRootAction');
+  //   }
+  //   else if (data.text === 'так'){
+  //     await ctx.reply(script.speakingClub.trialLesson.ifYes)
+  //     const results = await dbProcess.ShowAll();
     
-      for (let i = 0; i < results.length; i++) {
-          if (results[i].count > 0) {
-            addString = `кількість доступних місць: ${results[i].count}`;
-          } else {
-            addString = `❌ немає вільних місць ❌`;
-          }
+  //     for (let i = 0; i < results.length; i++) {
+  //       let addString = results[i].count > 0 ? `кількість доступних місць: ${results[i].count}` : `❌ немає вільних місць ❌`;
 
-        await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString), {
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: keyboard
-          }
-        });
-      }
+  //       await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString), {
+  //         reply_markup: {
+  //           one_time_keyboard: true,
+  //           keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+  //             return [{ text: `${index + 1}` }];
+  //           })
+  //         }
+  //       });
+  //     }
 
-      await set('state')('RespondTrialClubAndCheckPayment');
-    }
-    else if (data.text === 'ні'){
-      ctx.reply(script.speakingClub.trialLesson.ifNo, {
-        parse_mode: "Markdown",
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "В МЕНЮ"
-              }
-            ],
-          ],
-        },
-      });
+  //     await set('state')('RespondTrialClubAndCheckPayment');
+  //   }
+  //   else if (data.text === 'ні'){
+  //     ctx.reply(script.speakingClub.trialLesson.ifNo, {
+  //       parse_mode: "Markdown",
+  //       reply_markup: {
+  //         one_time_keyboard: true,
+  //         keyboard: [
+  //           [
+  //             {
+  //               text: "В МЕНЮ"
+  //             }
+  //           ],
+  //         ],
+  //       },
+  //     });
 
-      await set('state')('EndRootManager');
-    }
-  })
+  //     await set('state')('EndRootManager');
+  //   }
+  // })
 
   // Check count of lessons and pay more if it need
   //back
@@ -1899,16 +1890,7 @@ async function main() {
         parse_mode: "HTML",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Шпрах-Клуб"
-              },
-              {
-                text: "Шпрах-Клуб+PLUS"
-              }
-            ]
-          ],
+          keyboard: keyboards.payPacketLessons()
         },
       });
       await set('state')('RespondTypePacketAndGetPayment');
@@ -2093,7 +2075,6 @@ async function main() {
             ],
           },
         })
-        // await set('SC_TrialLessonComplet_active')('true');
         await set('state')('EndRootManager');
       }
       else if (user['club-typeclub'] === 'Шпрах-Клуб+PLUS'){
@@ -2270,24 +2251,7 @@ async function main() {
       results = await dbProcess.ShowAll();
 
     if (CheckException.BackRoot(data)){
-      ctx.reply(script.speakingClub.trialLesson.entire, {
-        parse_mode: "HTML",
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "так"
-              },
-              {
-                text: "ні"
-              }
-            ]
-          ],
-        },
-      })
-
-      await set('state')('RespondChooseAndRespondGetLesson');
+      pointer
     }
     else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length + 1){
       const currentItemIndex = results.map(item => item._id)[parseInt(data.text) - 1],
@@ -2639,16 +2603,7 @@ async function main() {
         parse_mode: "HTML",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Шпрах-Клуб"
-              },
-              {
-                text: "Шпрах-Клуб+PLUS"
-              }
-            ]
-          ],
+          keyboard: keyboards.payPacketLessons()
         },
       });
       await set('temp-prev-state')('clubList-state');
@@ -2783,23 +2738,19 @@ async function main() {
     else if (data.text === 'Видалити'){
       const results = await dbProcess.ShowAll(),
         users = await dbProcess.ShowAllUsers();
-      let addString : string = '';
     
       for (let i = 0; i < results.length; i++) {
         let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
         for (let j = 0; j < users.length; j++) {
           if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
-            userHaved += `- ${users[j].name} (@${users[j].username})\n📲${users[j].number}\n\n`;
+            userHaved += `- ${users[j].name} (@${users[j].username}) - ${ConvertToPrice((await db.get(users[j].id)('club-typeclub'))!)} uah.\n📲${users[j].number}\n\n`;
           }
         }
           if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
             userHaved = '';
           }
-          if (results[i].count > 0) {
-            addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
-          } else {
-            addString = `❌ немає вільних місць ❌`;
-          }
+
+          let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
 
         await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved), {
           parse_mode: "HTML"
@@ -2820,23 +2771,19 @@ async function main() {
     else if (data.text === 'Редагувати'){
       const results = await dbProcess.ShowAll(),
         users = await dbProcess.ShowAllUsers();
-      let addString : string = '';
     
       for (let i = 0; i < results.length; i++) {
         let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
         for (let j = 0; j < users.length; j++) {
           if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
-            userHaved += `- ${users[j].name} (@${users[j].username})\n📲${users[j].number}\n\n`;
+            userHaved += `- ${users[j].name} (@${users[j].username}) - ${ConvertToPrice((await db.get(users[j].id)('club-typeclub'))!)} uah.\n📲${users[j].number}\n\n`;
           }
         }
           if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
             userHaved = '';
           }
-          if (results[i].count > 0) {
-            addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
-          } else {
-            addString = `❌ немає вільних місць ❌`;
-          }
+
+          let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
 
         await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved), {
           parse_mode: "HTML"
@@ -2857,23 +2804,19 @@ async function main() {
     else if (data.text === 'Показати всі'){
       const results = await dbProcess.ShowAll(),
         users = await dbProcess.ShowAllUsers();
-      let addString : string = '';
     
       for (let i = 0; i < results.length; i++) {
         let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
         for (let j = 0; j < users.length; j++) {
           if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
-            userHaved += `- ${users[j].name} (@${users[j].username})\n📲${users[j].number}\n\n`;
+            userHaved += `- ${users[j].name} (@${users[j].username}) - ${ConvertToPrice((await db.get(users[j].id)('club-typeclub'))!)} uah.\n📲${users[j].number}\n\n`;
           }
         }
         if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
           userHaved = '';
         }
-        if (results[i].count > 0) {
-          addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
-        } else {
-          addString = `❌ немає вільних місць ❌`;
-        }
+
+        let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
 
         await ctx.telegram.sendDocument(ctx?.chat?.id ?? -1, results[i].documentation, {
           parse_mode: "HTML",
@@ -3333,23 +3276,19 @@ async function main() {
     if (CheckException.BackRoot(data)){
       const results = await dbProcess.ShowAll(),
         users = await dbProcess.ShowAllUsers();
-      let addString : string = '';
     
       for (let i = 0; i < results.length; i++) {
         let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
         for (let j = 0; j < users.length; j++) {
           if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
-            userHaved += `- ${users[j].name} (@${users[j].username})\n📲${users[j].number}\n\n`;
+            userHaved += `- ${users[j].name} (@${users[j].username}) - ${ConvertToPrice((await db.get(users[j].id)('club-typeclub'))!)} uah.\n📲${users[j].number}\n\n`;
           }
         }
           if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
             userHaved = '';
           }
-          if (results[i].count > 0) {
-            addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
-          } else {
-            addString = `❌ немає вільних місць ❌`;
-          }
+
+          let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
 
         await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved), {
           parse_mode: "HTML"
@@ -3445,23 +3384,19 @@ async function main() {
     if (CheckException.BackRoot(data)){
       const results = await dbProcess.ShowAll(),
         users = await dbProcess.ShowAllUsers();
-      let addString : string = '';
     
       for (let i = 0; i < results.length; i++) {
         let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
         for (let j = 0; j < users.length; j++) {
           if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
-            userHaved += `- ${users[j].name} (@${users[j].username})\n📲${users[j].number}\n\n`;
+            userHaved += `- ${users[j].name} (@${users[j].username}) - ${ConvertToPrice((await db.get(users[j].id)('club-typeclub'))!)} uah.\n📲${users[j].number}\n\n`;
           }
         }
           if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
             userHaved = '';
           }
-          if (results[i].count > 0) {
-            addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
-          } else {
-            addString = `❌ немає вільних місць ❌`;
-          }
+
+          let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
 
         await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved), {
           parse_mode: "HTML"
@@ -3948,10 +3883,11 @@ async function main() {
     }
     else if (data.text === 'Показати студентів'){
       const results = await dbProcess.ShowAllUsers();
-    
+      //need_
       for (let i = 0; i < results.length; i++) {
         if (results[i].role === 'student'){
-          await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()), {
+          await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, 
+            results[i].number, results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!)), {
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.personalStudentAdminPanel()
@@ -3999,8 +3935,10 @@ async function main() {
     else if (data.text === 'Додати заняття студенту'){
       const results = await dbProcess.ShowAllUsers();
     
+      //need_
       for (let i = 0; i < results.length; i++) {
-        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
+        await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, 
+          results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!)));
       }
 
       await ctx.reply('Виберіть номер студента, якому потрібно додати заняття', {
@@ -4017,8 +3955,10 @@ async function main() {
     else if (data.text === 'Видалити студента'){
       const results = await dbProcess.ShowAllUsers();
   
+      //need_
       for (let i = 0; i < results.length; i++) {
-        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
+        await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, 
+          results[i].number, results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!)));
       }
 
       await ctx.reply('Виберіть номер студента, якого потрібно видалити', {
@@ -4108,8 +4048,10 @@ async function main() {
     if (CheckException.BackRoot(data)){
       const results = await dbProcess.ShowAllUsers();
     
+      //need_
       for (let i = 0; i < results.length; i++) {
-        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
+        await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, 
+          results[i].number, results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!)));
       }
 
       await ctx.reply('Виберіть номер студента, якому потрібно додати заняття', {
@@ -4198,8 +4140,10 @@ async function main() {
     if (CheckException.BackRoot(data)){
       const results = await dbProcess.ShowAllUsers();
   
+      //need_
       for (let i = 0; i < results.length; i++) {
-        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
+        await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, 
+          results[i].number, results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!)));
       }
 
       await ctx.reply('Виберіть номер студента, якого потрібно видалити', {
@@ -4280,9 +4224,11 @@ async function main() {
 
     if (CheckException.BackRoot(data)){
       const results = await dbProcess.ShowAllUsers();
-  
+      
+      //need_
       for (let i = 0; i < results.length; i++) {
-        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()));
+        await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, 
+          results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!)));
       }
 
       await ctx.reply('Виберіть номер студента, якому потрібно змінити роль', {

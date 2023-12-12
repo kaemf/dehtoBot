@@ -1,4 +1,4 @@
-export default function convertPaymentPerLesson(packet: string){
+export function ConvertToPrice(packet: string){
     if (packet === 'РазовеЗаняття'){
         return 300;
     }
@@ -7,5 +7,17 @@ export default function convertPaymentPerLesson(packet: string){
     }
     else{
         return null;
+    }
+}
+
+export function ConvertToPacket(source: string){
+    if (source === 'РазовеЗаняття'){
+        return 'Разове заняття';
+    }
+    else if (source === undefined || source === null || source === ''){
+        return 'Відсутній';
+    }
+    else{
+        return source;
     }
 }
