@@ -191,6 +191,15 @@ async function main() {
 
       await set('state')('ActionClubRespondAndRootAction');
     }
+    else if (data.text === 'sysinfo'){
+      ctx.reply(script.about(versionBot), {
+        parse_mode: "HTML",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{text: 'В МЕНЮ'}]]
+        }
+      })
+    }
     else if (data.text === "Адмін Панель" && checkChats(ctx?.chat?.id ?? -1)){
       ctx.reply("З поверненням, Меркель! :)", {
         parse_mode: "Markdown",
