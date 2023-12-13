@@ -41,9 +41,9 @@ export default async function init() {
   console.log("Done");
 
   const app = express();
-  const port = 3000;
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  // const port = 3000;
+  // app.use(express.json());
+  // app.use(express.urlencoded({ extended: true }));
 
   console.log("Connecting to mongodb...")
   const dbclub = await connectToClubDB();
@@ -57,7 +57,7 @@ export default async function init() {
   const bot = new Telegraf(token);
   console.log("Done\n");
 
-  console.log("Creating new google auth instanse")
+  console.log("Creating google auth instanse")
   const auth = new google.auth.GoogleAuth({
     keyFile: "credentials.json",
     scopes: "https://www.googleapis.com/auth/spreadsheets",
@@ -67,11 +67,11 @@ export default async function init() {
   console.log("Creating google apis client...");
   const client = await auth.getClient();
   const sheets = google.sheets({ version: "v4", auth: client });
-  console.log("Done");
+  console.log("Done\n\n\n BOT READY TO WORK!\n\n");
 
-  app.listen(port, () => {
-    console.log(`Server started at ${port}\n\n\n BOT READY TO WORK!\n\n`);
-  });
+  // app.listen(port, () => {
+  //   console.log(`Server started at ${port}\n\n\n BOT READY TO WORK!\n\n`);
+  // });
 
   // wrap redis with helper functions
   const wRedis = ({

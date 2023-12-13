@@ -68,3 +68,5 @@ export type UserScriptState =
   | "ResondIDAndForceChangeAvaibleLessons"
   | "ForceChangeAvaibleLessonsAndReturn"
   | "MyClubEmptyHandler"
+  | "ChangeActivePacket_GetID"
+  | "ChangeActivePacket_Handler"

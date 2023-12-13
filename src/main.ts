@@ -3609,6 +3609,10 @@ async function main() {
       ctx.reply('Введіть id користувача, якому потрібно змінити імʼя', {reply_markup: {remove_keyboard: true}});
       await set('state')('ChangeUserNameAndProcessChange');
     }
+    else if (data.text === 'Змінити активний пакет'){
+      ctx.reply('Введіть id студента, якому потрібно змінити активний пакет', {reply_markup: {remove_keyboard: true}});
+      await set('state')('ChangeActivePacket_GetID');
+    }
     else if (data.text === 'Показати студентів'){
       const results = await dbProcess.ShowAllUsers();
       //need_
@@ -4165,6 +4169,71 @@ async function main() {
     }
     else{
       ctx.reply(script.errorException.textGettingError.defaultException);
+    }
+  })
+
+  onTextMessage('ChangeActivePacket_GetID', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (CheckException.BackRoot(data)){
+      ctx.reply('Прекрасно, над ким сьогодні будемо знущатись?)', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.personalStudentAdminPanel()
+        }
+      })
+
+      await set('state')('PeronalStudentHandler');
+    }
+    else if (CheckException.TextException(data)){
+      if (!isNaN(parseInt(data.text))){
+        const requestedUser = (await db.getAll(parseInt(data.text))());
+        if (requestedUser){
+          const user = await dbProcess.ShowOneUser(parseInt(data.text));
+
+          await set('userid_for_forceChangeActivePacket')(data.text);
+
+          ctx.reply(`Користувач ${user!.name} має активний пакет ${(await db.get(parseInt(data.text))('club-typeclub')) === undefined ? 'Відсутній' : ConvertToPacket((await db.get(parseInt(data.text))('club-typeclub'))!)}\n\nНа який змінимо?`, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.payPacketLessons()
+            }
+          });
+
+          await set('state')('ChangeActivePacket_Handler');
+        }
+        else{
+          ctx.reply('Нажаль, такого користувача не знайдено.');
+        }
+      }
+      else{
+        ctx.reply('Вибачте, але не знав, що id може містити букви...\n\nПовторіть, будь ласка, знову')
+      }
+    }
+    else{
+      ctx.reply(script.errorException.textGettingError.defaultException);
+    }
+  })
+
+  onTextMessage('ChangeActivePacket_Handler', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1);
+
+    if (CheckException.BackRoot(data)){
+      ctx.reply('Введіть id студента, якому потрібно змінити активний пакет', {reply_markup: {remove_keyboard: true}});
+      await set('state')('ChangeActivePacket_GetID');
+    }
+    else if (data.text === 'Разове заняття' || data.text === 'Шпрах-Клуб' || data.text === 'Шпрах-Клуб+PLUS'){
+      await db.set(parseInt(user['userid_for_forceChangeActivePacket']))('club-typeclub')(data.text);
+
+      ctx.reply('Успішно виконана операція!');
+    }
+    else{
+      ctx.reply(script.errorException.chooseButtonError, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.payPacketLessons()
+        }
+      });
     }
   })
 
