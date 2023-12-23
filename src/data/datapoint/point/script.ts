@@ -399,13 +399,14 @@ UA773220010000026004330103247
 👉🏼 На котру: ${time} 🇺🇦\n
 ${addString}`,
 
-      showClubTypeAdmin: (position: number, title: string, teacher: string, date: string, time: string, addString: string, recordedUsers: string) => `✅${position}
+      showClubTypeAdmin: (position: number, title: string, teacher: string, date: string, time: string, addString: string, recordedUsers: string, link: string) => `✅${position}
 🗣 ШПРАХ-КЛУБ
 👉🏼 <b>Тема</b>: ${title}
 👉🏼 <b>Викладач</b>: ${teacher}\n
 👉🏼 <b>Коли</b>: ${date}
 👉🏼 <b>На котру</b>: ${time} 🇺🇦
-${recordedUsers}
+${recordedUsers}\n
+👉🏼 <b>На котру</b>: ${link}\n
 ${addString}`,
 
       showClubTypeTeacher: (position: number, title: string, teacher: string, date: string, time: string, addString: string, recordedUsers: string, link: string) => `✅${position}
