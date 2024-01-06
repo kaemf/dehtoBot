@@ -406,7 +406,7 @@ ${addString}`,
 👉🏼 <b>Коли</b>: ${date}
 👉🏼 <b>На котру</b>: ${time} 🇺🇦
 ${recordedUsers}\n
-👉🏼 <b>На котру</b>: ${link}\n
+👉🏼 <b>Посилання</b>: ${link}\n
 ${addString}`,
 
       showClubTypeTeacher: (position: number, title: string, teacher: string, date: string, time: string, addString: string, recordedUsers: string, link: string) => `✅${position}
@@ -431,8 +431,7 @@ ${addString}\n
 👉🏼 Викладач: ${teacher}\n
 👉🏼 Коли: ${date}
 👉🏼 На котру: ${time} 🇺🇦\n
-Посилання:
-${link}`,
+Посилання: ${link}`,
 
       showUser: (position: number, name: string, id: number, username: string, phone_number: string, count: number, role: string) => `✅${position}
 ID: ${id}
@@ -457,8 +456,7 @@ Telegram: @${username}
 👉🏼 Коли: ${date}
 👉🏼 На котру: ${time} 🇺🇦\n
 ${count > 0 ? `кількість доступних місць: ${count}` : `❌ немає вільних місць ❌`}\n
-Посилання:
-${link}`,
+Посилання: ${link}`,
 
       acceptedTrialLesson: (name: string, date: string, time: string, link: string) => `✅ ${name}, Вашу реєстрацію підтвержено!\n
 😁 Чекатимемо Вас

@@ -2726,9 +2726,9 @@ async function main() {
       await set('state')('ADD_RespondDateMonthAndGetDateYear');
     }
     else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && dbProcess.isValidInput(data.text, true)){
-      const year = new Date();
-      if (new Date(`${parseInt(data.text)}-${user['AP_date_month']}-${user['AP_date_day']}`) >= new Date()){
-        if (year.getFullYear() + 1 >= parseInt(data.text)){
+      const currentDate = new Date();
+      if (new Date(`${parseInt(data.text)}-${user['AP_date_month']}-${user['AP_date_day']}`) >= new Date(`${currentDate.getFullYear}-${currentDate.getMonth() + 1}-${currentDate.getDate()}`)){
+        if (currentDate.getFullYear() + 1 >= parseInt(data.text)){
           await set('AP_date_year')(data.text);
     
           ctx.reply('Час (години):');
