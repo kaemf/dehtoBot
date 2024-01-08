@@ -11,7 +11,7 @@ import { MongoClient } from "mongodb";
 import express from 'express';
 import { google, sheets_v4 } from "googleapis";
 import { getColorCell, getBordersCell } from "../handlers/sheetStyleHandler";
-import { versionBot } from "../../data/datapoint/point/chats";
+import { versionBot } from "../../data/general/chats";
 
 async function connectToClubDB() {
   try {

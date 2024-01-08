@@ -1,19 +1,30 @@
 export function getColorCell(color: string){
     let red, green, blue;
-    if (color === 'white'){
-        red = 1.0;
-        green = 1.0;
-        blue = 1.0;
-    }
-    else if (color === 'red'){
-        red = 1.0;
-        green = 0.2;
-        blue = 0.2;
-    }
-    else if (color === 'green'){
-        red = 0.2;
-        green = 1.0;
-        blue = 0.2;
+
+    switch(color){
+        case "white":
+            red = 1.0;
+            green = 1.0;
+            blue = 1.0;
+            break;
+
+        case "red":
+            red = 1.0;
+            green = 0.2;
+            blue = 0.2;
+            break;
+
+        case "green":
+            red = 0.2;
+            green = 1.0;
+            blue = 0.2;
+            break;
+
+        default:
+            red = 1.0;
+            green = 1.0;
+            blue = 1.0;
+            break;
     }
 
     return {red: red, green: green, blue: blue}

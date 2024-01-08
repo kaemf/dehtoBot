@@ -103,3 +103,25 @@
 //     res.status(500).json({ error: 'Error to Sent message, Check Console for Detail' });
 //   }
 // });
+
+
+// import { ParsedQs } from 'qs';
+// apiReport: (name: string | string[] | ParsedQs | ParsedQs[] | undefined, 
+//     phone_number: string | string[] | ParsedQs | ParsedQs[] | undefined, 
+//     tg_nickname: string | string[] | ParsedQs | ParsedQs[] | undefined,
+//     level: string | string[] | ParsedQs | ParsedQs[] | undefined, 
+//     time: string | string[] | ParsedQs | ParsedQs[] | undefined, 
+//     day: string | string[] | ParsedQs | ParsedQs[] | undefined, 
+//     date_report: string | string[] | ParsedQs | ParsedQs[] | undefined, 
+//     time_report: string | string[] | ParsedQs | ParsedQs[] | undefined) => `📩 Заявка на сайті 📩
+
+// <b>Імʼя:</b> ${name}
+// <b>Телефон:</b> ${phone_number}
+// <b>Telegram:</b> ${tg_nickname}
+
+// 👉🏽 Рівень: ${level}
+// 👉🏽 Час: ${time}
+// 👉🏽 День: ${day}
+
+// <b>Дата заявки:</b> ${date_report}
+// <b>Час заявки:</b> ${time_report}`

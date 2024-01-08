@@ -1,7 +1,7 @@
 import init from './init'
 import { Context } from "telegraf";
 import { Update } from "telegraf/typings/core/types/typegram";
-import { UserScriptState } from "../../data/datapoint/point/UserScriptState";
+import { UserScriptState } from "../../data/general/UserScriptState";
 import { ObjectId } from 'mongodb';
 type ActionType<T> = (ctx: Context<Update>, user: {[x: string]: string}, additionalData: T) => void;
 
@@ -14,9 +14,9 @@ export default async function arch() {
       user = (await db.getAll(id)()),
       message = ctx.message;
 
-    console.log(user['state'] + ' show in contactMessage, one repeat');
-  
+      
     if (user.state === startState) {
+      console.log(user['state']);
       if ('contact' in message) {
         action(ctx, user, { phone_number: message.contact.phone_number, text: '', photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`TYPE: ONCONTACTMESSAGE, TEXT&PHOTO = UNDEFINED, NUMBER: ${message.contact.phone_number}, CODE: 0\n`);
@@ -123,10 +123,9 @@ export default async function arch() {
       user = (await db.getAll(id)()),
       message = ctx.message,
       supportedFormats : string[] = ['.pdf', '.jpeg', '.jpg', '.png', '.heic'];
-    
-    console.log(user['state'] + ' show in photoMessage, one repeat');
-  
+
     if (user.state === startState) {
+      console.log(user['state']);
       if ('text' in message) {
         action(ctx, user, { phone_number: '', text: message.text, photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&PHOTO = UNDEFINED, TEXT: ${message.text}, CODE: 1\n`);
@@ -185,10 +184,9 @@ export default async function arch() {
       user = (await db.getAll(id)()),
       message = ctx.message,
       supportedFormats : string[] = ['.pdf', '.PDF'];
-    
-    console.log(user['state'] + ' show in docMessage, one repeat');
   
     if (user.state === startState) {
+      console.log(user['state']);
       if ('text' in message) {
         action(ctx, user, { phone_number: '', text: message.text, photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&PHOTO = UNDEFINED, TEXT: ${message.text}, CODE: 1\n`);
@@ -510,22 +508,6 @@ export default async function arch() {
 
   class GoogleSheets{
     private students = '💁🏽‍♀️ Студенти_dev';
-
-    // async appendTrial(date: string, name: string, phone: string, nickname: string, title_club: string, teacher: string){
-    //   let data = await sheets.getCell(`${this.students}!A2`),
-    //     number = 2;
-    //   while (data !== ''){
-    //     number++;
-    //     data = await sheets.getCell(`${this.students}!A${number}`);
-    //   }
-
-    //   const numberOfTrial = await sheets.getCell(`${this.students}!A${number - 1}`) === '№' ? '1' : parseInt(await sheets.getCell(`${this.students}!A${number - 1}`)) + 1;
-    //   await sheets.updateRow(`${this.students}!A${number}:I${number}`, [numberOfTrial, date, name, phone, nickname, title_club, teacher]);
-
-    //   await sheets.setCellStyle(this.students, `A${number}:A${number}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
-    //   await sheets.setCellStyle(this.students, `B${number}:B${number}`, 10, false, 'RIGHT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
-    //   await sheets.setCellStyle(this.students, `C${number}:I${number}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
-    // }
 
     async appendLessonToUser(idUser: number, name: string, phone: string, nickname: string, mail: string, date: string, title: string, teacher: string){
       const index = await sheets.findDataInCell(idUser.toString(), this.students),

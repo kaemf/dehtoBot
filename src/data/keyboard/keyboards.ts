@@ -1,4 +1,4 @@
-import { devChat, confirmationChat, supportChat, eugeneChat} from "../../data/datapoint/point/chats";
+import { devChat, confirmationChat, supportChat, eugeneChat} from "../general/chats";
 
 const devChatInt = parseInt(devChat),
   confirmationChatInt = parseInt(confirmationChat),
@@ -162,7 +162,7 @@ class Keyboard{
         }
       ],[
         {
-          text: "Про шпрах-клаб"
+          text: "Про шпрах-клуб"
         }
       ]
     ]

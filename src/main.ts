@@ -4,23 +4,23 @@
 // Actual v4.11.0
 
 // Main File
-import script from "./data/datapoint/point/script";
+import script from "./data/general/script";
 import packet from "./data/course/packets";
 import * as schedule from 'node-schedule';
-import { confirmationChat, supportChat, devChat, versionBot, eugeneChat } from './data/datapoint/point/chats';
+import { confirmationChat, supportChat, devChat, versionBot, eugeneChat } from './data/general/chats';
 import { CheckException } from "./base/handlers/check";
 import arch from './base/main/architecture';
 import getCourses, { Course, Courses, courseNumbersToSkip } from "./data/course/coursesAndTopics";
 import Key from "./base/handlersdb/changeKeyValue";
 import Role, { ConvertRole } from "./base/handlersdb/changeRoleValue";
-import keyboards, { checkChats } from "./base/handlers/keyboards";
-import { ConvertToPrice, ConvertToPacket } from "./data/datapoint/function/convertPaymentPerLesson";
+import keyboards, { checkChats } from "./data/keyboard/keyboards";
+import { ConvertToPrice, ConvertToPacket } from "./data/process/convertPaymentPerLesson";
 import { inlineApprovePayment, inlineAcceptOncePayment, inlineAcceptOncePaymentWithoutClub, 
   inlineAcceptPacketPayment, inlineAcceptClubWithPacketPayment, inlineEventAnnouncementClub } 
-  from "./data/datapoint/function/paymentButtons";
-import formattedName from "./data/datapoint/function/nameFormatt";
+  from "./data/keyboard/paymentButtons";
+import formattedName from "./data/process/nameFormatt";
 import DateRecord from "./base/handlers/getTime";
-import MongoDBReturnType from "./data/datapoint/point/mongoDBType";
+import MongoDBReturnType from "./data/general/mongoDBType";
 import { Markup } from "telegraf";
 // import axios from "axios";
 // import { Request, Response } from 'express';
@@ -1462,7 +1462,7 @@ async function main() {
         await set('state')('MyClubEmptyHandler');
       }
     }
-    else if (data.text === 'Про шпрах-клаб'){
+    else if (data.text === 'Про шпрах-клуб'){
       ctx.reply(script.speakingClub.about, {
         parse_mode: "HTML",
         reply_markup: {
@@ -3763,17 +3763,18 @@ async function main() {
       await set('AP_student_id')(data.text);
 
       await ctx.reply('Скільки додамо?');
-      await set('state')('ChangeCountLessonHandlerAndReturn');
+      await set('state')('CheckAvaibleActivePacketAndChangeCountLesson');
     }
     else{
       ctx.reply(script.errorException.textGettingError.defaultException);
     }
   })
 
-  onTextMessage('ChangeCountLessonHandlerAndReturn', async(ctx, user, data) => {
+  onTextMessage('CheckAvaibleActivePacketAndChangeCountLesson', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1),
       userID: ObjectId = (await dbProcess.ShowAllUsers()).map(item => item._id)[parseInt(user['AP_student_id'] ) - 1],
       userIDWithoutProcessing = parseInt(user['AP_student_id']),
+      userIDChat: number = (await dbProcess.ShowAllUsers()).map(item => item.id)[userIDWithoutProcessing - 1],
       getCurrentUserCount = (await dbProcess.ShowAllUsers()).map(item => item.count)[userIDWithoutProcessing - 1],
       getUserActualName = (await dbProcess.ShowAllUsers()).map(item => item.name)[userIDWithoutProcessing - 1];
     
@@ -3798,8 +3799,67 @@ async function main() {
       await set('state')('AddLessonForStudent');
     }
     else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1){
-      const toWrite: number = getCurrentUserCount + parseInt(data.text);
-      await dbProcess.ChangeCountUser(userID, toWrite);
+      await set('AP_UserChangeCountLesson_Count')(getCurrentUserCount);
+      await set('AP_UserChangeCountLesson_IDChat')(userIDChat.toString());
+      await set('AP_UserChangeCountLesson_Name')(getUserActualName);
+      await set('AP_UserChangeCountLesson_New')(data.text);
+      if (await db.get(userIDChat)('club-typeclub')){
+        ctx.reply(script.speakingClub.activePacketCheck.ifAvaibleActivePacket(getUserActualName, (await db.get(userIDChat)('club-typeclub'))!), {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: [
+              [
+                {
+                  text: 'так'
+                },
+                {
+                  text: 'ні'
+                }
+              ]
+            ]
+          }
+        })
+
+        await set('state')('ChoosePacketHandlerCustomLesson')
+      }
+      else{
+        ctx.reply(script.speakingClub.activePacketCheck.noAvaibleActivePacket(getUserActualName), {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.payPacketLessons()
+          }
+        })
+      }
+      // const toWrite: number = getCurrentUserCount + parseInt(data.text);
+      // await dbProcess.ChangeCountUser(userID, toWrite);
+
+      // await ctx.reply(`Успішно! На рахунку у студента ${getUserActualName}: ${toWrite} занять`, {
+      //   parse_mode: "Markdown",
+      //   reply_markup: {
+      //     one_time_keyboard: true,
+      //     keyboard: keyboards.personalStudentAdminPanel()
+      //   },
+      // })
+
+      // await set('state')('PeronalStudentHandler');
+    }
+    else{
+      ctx.reply('Вам потрібно ввести число більше або рівне одиниці.');
+    }
+  })
+
+  onTextMessage('ChoosePacketHandlerCustomLesson', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1),
+      userID = await dbProcess.ShowOneUser(parseInt(user['AP_UserChangeCountLesson_IDChat'])),
+      // getCurrentUserCount = parseInt(user['AP_UserChangeCountLesson_Count']),
+      getUserActualName = user['AP_UserChangeCountLesson_Name'],
+      toWrite = parseInt(user['AP_UserChangeCountLesson_New'])
+
+    if (CheckException.BackRoot(data)){
+      // edit
+    }
+    else if (data.text === 'так'){
+      await dbProcess.ChangeCountUser(userID!._id, toWrite);  
 
       await ctx.reply(`Успішно! На рахунку у студента ${getUserActualName}: ${toWrite} занять`, {
         parse_mode: "Markdown",
@@ -3811,8 +3871,46 @@ async function main() {
 
       await set('state')('PeronalStudentHandler');
     }
+    else if (data.text === 'ні'){
+      ctx.reply(script.speakingClub.activePacketCheck.ifChooseActivePacket, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.payPacketLessons()
+        }
+      })
+      await set('state')('ChangeCountUserLessonsAndPacket');
+    }
     else{
-      ctx.reply('Вам потрібно ввести число більше або рівне одиниці.');
+
+    }
+  })
+
+  onTextMessage('ChangeCountUserLessonsAndPacket', async(ctx, user, data) => {
+    const set = db.set(ctx?.chat?.id ?? -1),
+      userID = await dbProcess.ShowOneUser(parseInt(user['AP_UserChangeCountLesson_IDChat'])),
+      // getCurrentUserCount = parseInt(user['AP_UserChangeCountLesson_Count']),
+      getUserActualName = user['AP_UserChangeCountLesson_Name'],
+      toWrite = parseInt(user['AP_UserChangeCountLesson_New'])
+
+    if (CheckException.BackRoot(data)){
+      // edit
+    }
+    else if (data.text === 'Разове заняття' || data.text === 'Шпрах-Клуб' || data.text === 'Шпрах-Клуб+PLUS'){
+      await dbProcess.ChangeCountUser(userID!._id, toWrite);
+      await db.set(parseInt(user['AP_UserChangeCountLesson_IDChat']))('club-typeclub')(data.text);
+
+      await ctx.reply(`Успішно! На рахунку у студента ${getUserActualName}: ${toWrite} занять та активний пакет ${data.text}`, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.personalStudentAdminPanel()
+        },
+      })
+
+      await set('state')('PeronalStudentHandler');
+    }
+    else{
+
     }
   })
 
