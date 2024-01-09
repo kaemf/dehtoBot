@@ -391,13 +391,14 @@ Telegram: @${username}
 Користувач є: ${role}
 Кількість доступних занять: ${count > 0 ? count : '❌'}`,
 
-      showUserToAdmin: (position: number, name: string, id: number, username: string, phone_number: string, count: number, role: string, packet: string) => `✅${position}
+      showUserToAdmin: (position: number, name: string, id: number, username: string, phone_number: string, count: number, role: string, packet: string, pricePerLesson: number) => `✅${position}
 ID: ${id}
 Ім'я: ${name}
 Telegram: @${username}
 Номер телефону: ${phone_number}
 Користувач є: ${role}
 Активний пакет: ${packet}
+Ціна заняття пакету: ${pricePerLesson} uah.
 Кількість доступних занять: ${count > 0 ? count : '❌'}`,
 
       checkClub: (title: string, teacher: string, date: string, time: string, link: string, count: number) => `🗣 ШПРАХ-КЛУБ
@@ -492,7 +493,7 @@ ${date} о ${time} 🇺🇦 за ось цим посиланням:\n\n${link}\
 дехто з турботою🍓`
     },
     activePacketCheck: {
-      ifAvaibleActivePacket: (name: string, packet: string) => `У користувача ${name} є активний пакет "${packet}", додаємо заняття по цьому пакету?`,
+      ifAvaibleActivePacket: (name: string, packet: string, pricePerLesson: number) => `У користувача ${name} є активний пакет "${packet}" (${pricePerLesson} uah), додаємо заняття по цьому пакету?`,
       ifChooseActivePacket: `Ну тоді добренько, який пакет оберемо?`,
       noAvaibleActivePacket: (name: string) => `У користувача ${name} немає активного пакету, який оберемо?`
     },  

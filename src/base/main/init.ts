@@ -1,7 +1,7 @@
 // DehtoBot for dehto German Course
 // Developed by Yaroslav Volkivskyi (TheLaidSon)
 
-// Actual v4.11.0
+// Actual v4.12.0
 
 // Initialization File
 

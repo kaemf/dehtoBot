@@ -1,7 +1,7 @@
 // DehtoBot for dehto German Course
 // Developed by Yaroslav Volkivskyi (TheLaidSon)
 
-// Actual v4.11.0
+// Actual v4.12.0
 
 // Main File
 import script from "./data/general/script";
@@ -3619,7 +3619,7 @@ async function main() {
       for (let i = 0; i < results.length; i++) {
         if (results[i].role === 'student'){
           await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, 
-            results[i].number, results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!)), {
+            results[i].number, results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!), ConvertToPrice((await db.get(results[i].id)('club-typeclub'))!)!), {
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.personalStudentAdminPanel()
@@ -3670,7 +3670,7 @@ async function main() {
       //need_
       for (let i = 0; i < results.length; i++) {
         await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, 
-          results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!)));
+          results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!), ConvertToPrice((await db.get(results[i].id)('club-typeclub'))!)!));
       }
 
       await ctx.reply('Виберіть номер студента, якому потрібно додати заняття', {
@@ -3690,7 +3690,7 @@ async function main() {
       //need_
       for (let i = 0; i < results.length; i++) {
         await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, 
-          results[i].number, results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!)));
+          results[i].number, results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!), ConvertToPrice((await db.get(results[i].id)('club-typeclub'))!)!));
       }
 
       await ctx.reply('Виберіть номер студента, якого потрібно видалити', {
@@ -3772,10 +3772,10 @@ async function main() {
 
   onTextMessage('CheckAvaibleActivePacketAndChangeCountLesson', async(ctx, user, data) => {
     const set = db.set(ctx?.chat?.id ?? -1),
-      userID: ObjectId = (await dbProcess.ShowAllUsers()).map(item => item._id)[parseInt(user['AP_student_id'] ) - 1],
+      // userID: ObjectId = (await dbProcess.ShowAllUsers()).map(item => item._id)[parseInt(user['AP_student_id'] ) - 1],
       userIDWithoutProcessing = parseInt(user['AP_student_id']),
       userIDChat: number = (await dbProcess.ShowAllUsers()).map(item => item.id)[userIDWithoutProcessing - 1],
-      getCurrentUserCount = (await dbProcess.ShowAllUsers()).map(item => item.count)[userIDWithoutProcessing - 1],
+      // getCurrentUserCount = (await dbProcess.ShowAllUsers()).map(item => item.count)[userIDWithoutProcessing - 1],
       getUserActualName = (await dbProcess.ShowAllUsers()).map(item => item.name)[userIDWithoutProcessing - 1];
     
     if (CheckException.BackRoot(data)){
@@ -3784,7 +3784,7 @@ async function main() {
       //need_
       for (let i = 0; i < results.length; i++) {
         await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, 
-          results[i].number, results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!)));
+          results[i].number, results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!), ConvertToPrice((await db.get(results[i].id)('club-typeclub'))!)!));
       }
 
       await ctx.reply('Виберіть номер студента, якому потрібно додати заняття', {
@@ -3799,12 +3799,12 @@ async function main() {
       await set('state')('AddLessonForStudent');
     }
     else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1){
-      await set('AP_UserChangeCountLesson_Count')(getCurrentUserCount);
+      // await set('AP_UserChangeCountLesson_Count')(getCurrentUserCount);
       await set('AP_UserChangeCountLesson_IDChat')(userIDChat.toString());
       await set('AP_UserChangeCountLesson_Name')(getUserActualName);
       await set('AP_UserChangeCountLesson_New')(data.text);
       if (await db.get(userIDChat)('club-typeclub')){
-        ctx.reply(script.speakingClub.activePacketCheck.ifAvaibleActivePacket(getUserActualName, (await db.get(userIDChat)('club-typeclub'))!), {
+        ctx.reply(script.speakingClub.activePacketCheck.ifAvaibleActivePacket(getUserActualName, (await db.get(userIDChat)('club-typeclub'))!, ConvertToPrice((await db.get(userIDChat)('club-typeclub'))!)!), {
           reply_markup: {
             one_time_keyboard: true,
             keyboard: [
@@ -3856,7 +3856,8 @@ async function main() {
       toWrite = parseInt(user['AP_UserChangeCountLesson_New'])
 
     if (CheckException.BackRoot(data)){
-      // edit
+      await ctx.reply('Скільки додамо?', {reply_markup: {remove_keyboard: true}});
+      await set('state')('CheckAvaibleActivePacketAndChangeCountLesson');
     }
     else if (data.text === 'так'){
       await dbProcess.ChangeCountUser(userID!._id, toWrite);  
@@ -3881,7 +3882,21 @@ async function main() {
       await set('state')('ChangeCountUserLessonsAndPacket');
     }
     else{
-
+      ctx.reply(script.errorException.chooseButtonError, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: 'так'
+              },
+              {
+                text: 'ні'
+              }
+            ]
+          ]
+        }
+      })
     }
   })
 
@@ -3893,13 +3908,14 @@ async function main() {
       toWrite = parseInt(user['AP_UserChangeCountLesson_New'])
 
     if (CheckException.BackRoot(data)){
-      // edit
+      await ctx.reply('Скільки додамо?', {reply_markup: {remove_keyboard: true}});
+      await set('state')('CheckAvaibleActivePacketAndChangeCountLesson');
     }
     else if (data.text === 'Разове заняття' || data.text === 'Шпрах-Клуб' || data.text === 'Шпрах-Клуб+PLUS'){
       await dbProcess.ChangeCountUser(userID!._id, toWrite);
       await db.set(parseInt(user['AP_UserChangeCountLesson_IDChat']))('club-typeclub')(data.text);
 
-      await ctx.reply(`Успішно! На рахунку у студента ${getUserActualName}: ${toWrite} занять та активний пакет ${data.text}`, {
+      await ctx.reply(`Успішно! На рахунку у студента ${getUserActualName}: ${toWrite} занять та активний пакет ${data.text} (${ConvertToPrice(data.text)} uah)`, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -3910,7 +3926,12 @@ async function main() {
       await set('state')('PeronalStudentHandler');
     }
     else{
-
+      ctx.reply(script.errorException.chooseButtonError, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.payPacketLessons()
+        }
+      })
     }
   })
 
@@ -3973,7 +3994,7 @@ async function main() {
       //need_
       for (let i = 0; i < results.length; i++) {
         await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, 
-          results[i].number, results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!)));
+          results[i].number, results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!), ConvertToPrice((await db.get(results[i].id)('club-typeclub'))!)!));
       }
 
       await ctx.reply('Виберіть номер студента, якого потрібно видалити', {
@@ -4058,7 +4079,7 @@ async function main() {
       //need_
       for (let i = 0; i < results.length; i++) {
         await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, 
-          results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!)));
+          results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!), ConvertToPrice((await db.get(results[i].id)('club-typeclub'))!)!));
       }
 
       await ctx.reply('Виберіть номер студента, якому потрібно змінити роль', {
@@ -4184,7 +4205,7 @@ async function main() {
           const user = await dbProcess.ShowOneUser(parseInt(data.text)),
             activePacket = await db.get(parseInt(data.text))('club-typeclub');
 
-          ctx.reply(`Користувач ${user!.name} має на своєму рахунку ${user!.count} занять і активний пакет ${activePacket !== null ? activePacket : 'Відсутній'}`, {
+          ctx.reply(`Користувач ${user!.name} має на своєму рахунку ${user!.count} занять і активний пакет ${activePacket !== null ? activePacket : 'Відсутній'} ${activePacket !== null ? `(${ConvertToPrice(activePacket!)} uah)` : ''}`, {
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.personalStudentAdminPanel()
