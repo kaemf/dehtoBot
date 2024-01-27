@@ -1740,11 +1740,11 @@ async function main() {
         if (clubIndex !== ''){
           const inline = inlineAcceptOncePayment(id, clubIndex, paymentStatus, date);
 
-          // await ctx.telegram.sendPhoto(devChat, unique_file_id, {
-          //   parse_mode: "HTML",
-          //   caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
-          //   ...Markup.inlineKeyboard(inline)
-          // })
+          await ctx.telegram.sendPhoto(devChat, unique_file_id, {
+            parse_mode: "HTML",
+            caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
+            ...Markup.inlineKeyboard(inline)
+          })
 
           await ctx.telegram.sendPhoto(supportChat, unique_file_id, {
             parse_mode: "HTML",
@@ -1875,13 +1875,13 @@ async function main() {
           const inline = inlineAcceptOncePayment(id, clubIndex, paymentStatus, date);
 
           // For Developer
-          // await ctx.telegram.sendPhoto(devChat, data.file, {
+          // await ctx.telegram.sendDocument(devChat, data.file, {
           //   parse_mode: "HTML",
           //   caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
           //   ...Markup.inlineKeyboard(inline)
           // })
 
-          await ctx.telegram.sendPhoto(supportChat, data.file, {
+          await ctx.telegram.sendDocument(supportChat, data.file, {
             parse_mode: "HTML",
             caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
@@ -1890,14 +1890,14 @@ async function main() {
         else{
           const inline = inlineAcceptOncePaymentWithoutClub(id, paymentStatus, date);
 
-          // For
-          // await ctx.telegram.sendPhoto(devChat, data.file, {
+          // For Developer
+          // await ctx.telegram.sendDocument(devChat, data.file, {
           //   parse_mode: "HTML",
           //   caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
           //   ...Markup.inlineKeyboard(inline)
           // })
 
-          await ctx.telegram.sendPhoto(supportChat, data.file, {
+          await ctx.telegram.sendDocument(supportChat, data.file, {
             parse_mode: "HTML",
             caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
@@ -1926,13 +1926,13 @@ async function main() {
           const inline = inlineAcceptPacketPayment(id, paymentStatus, 's');
 
           // For Developer
-          // ctx.telegram.sendPhoto(devChat, data.file, {
+          // ctx.telegram.sendDocument(devChat, data.file, {
           //   parse_mode: "HTML",
           //   caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
           //   ...Markup.inlineKeyboard(inline)
           // })
 
-          ctx.telegram.sendPhoto(supportChat, data.file, {
+          ctx.telegram.sendDocument(supportChat, data.file, {
             parse_mode: "HTML",
             caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
