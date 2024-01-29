@@ -1,7 +1,7 @@
 // DehtoBot for dehto German Course
 // Developed by Yaroslav Volkivskyi (TheLaidSon)
 
-// Actual v4.12.0
+// Actual v4.12.1
 
 // Main File
 import script from "./data/general/script";
@@ -22,8 +22,6 @@ import formattedName from "./data/process/nameFormatt";
 import DateRecord from "./base/handlers/getTime";
 import MongoDBReturnType from "./data/general/mongoDBType";
 import { Markup } from "telegraf";
-// import axios from "axios";
-// import { Request, Response } from 'express';
 import { ObjectId } from 'mongodb';
 
 async function main() {
@@ -1324,21 +1322,16 @@ async function main() {
     else if (data.text === 'Реєстрація на клуб'){
       if (userA!.role !== 'teacher'){
         const results = await dbProcess.ShowAll();
-        let addString : string = '';
       
         for (let i = 0; i < results.length; i++) {
-            if (results[i].count > 0) {
-              addString = `<b>кількість доступних місць</b>: ${results[i].count}`;
-            } else {
-              addString = `❌ немає вільних місць ❌`;
-            }
+          let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
   
           await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString), {
             parse_mode: "HTML"
           });
         }
   
-        await ctx.reply('виберіть номер шпраха для запису:', {
+        await ctx.reply('виберіть номер клуба для запису:', {
           reply_markup: {
             one_time_keyboard: true,
             keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
