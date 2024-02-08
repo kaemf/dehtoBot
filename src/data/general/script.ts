@@ -289,7 +289,7 @@ UA773220010000026004330103247
 
       standartClub: `чудно!\n
 😉 Ви обрали пакет “Шпрах-Клуб”
-👉🏽 до сплати 1500 uah\n\n
+👉🏽 до сплати 1400 uah\n\n
 👉🏽🧾 Одержувач
 ФОП Молоков Євгеній Альбертович
 IBAN 
@@ -449,7 +449,7 @@ ${count === 0 ? '' : `кількість доступних місць: ${count}
         nonPlus: (name: string, username: string, number: string, date: string) => `💰 Оплата Шпрах-Клуб 💰\n
 👉🏽${name} (@${username})
 👉🏽${number}
-👉🏽Пакет: <b>Шпрах-Клуб</b> (5 занять) - 1500uah\n
+👉🏽Пакет: <b>Шпрах-Клуб</b> (5 занять) - 1400uah\n
 Дата створення заявки: ${date}`,
 
         Plus: (name: string, username: string, number: string, email: string, course: string, date: string) => `💰 Оплата Шпрах-Клуб 💰\n
