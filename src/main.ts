@@ -21,7 +21,7 @@ import { inlineApprovePayment, inlineAcceptOncePayment, inlineAcceptOncePaymentW
 import formattedName from "./data/process/nameFormatt";
 import DateRecord from "./base/handlers/getTime";
 import MongoDBReturnType from "./data/general/mongoDBType";
-import { Markup } from "telegraf";
+import { Markup, TelegramError } from "telegraf";
 import { ObjectId } from 'mongodb';
 
 async function main() {
@@ -30,8 +30,16 @@ async function main() {
   //Begin bot work, collecting user data (his telegram name) set up state_1
   bot.start( (ctx) => {
     console.log('STARTED');
-    ctx.reply(script.entire.greeting, {reply_markup: { remove_keyboard: true }});
 
+    try {
+      ctx.reply(script.entire.greeting, {reply_markup: { remove_keyboard: true }});
+    } catch (error) {
+      if (error instanceof TelegramError && error.code === 403) {
+        console.warn('\nThe user blocked the active bot, the message was not sent to one of the recipients');
+      } else {
+        console.error('Error sending message for user: ', error);
+      }
+    }
     const username = ctx.chat.type === "private" ? ctx.chat.username ?? null : null;
     db.set(ctx.chat.id)('username')(username ?? 'unknown')
     db.set(ctx.chat.id)('state')('WaitingForName')
