@@ -3,62 +3,62 @@ import { Context } from "telegraf";
 import { Update } from "telegraf/typings/core/types/typegram";
 import { UserScriptState } from "../../data/general/UserScriptState";
 import { ObjectId } from 'mongodb';
-type ActionType<T> = (ctx: Context<Update>, user: {[x: string]: string}, additionalData: T) => void;
+type ActionType<T> = (ctx: Context<Update>, user: {[x: string]: string}, set: (key: string) => (value: string) => Promise<number>, additionalData: T) => void;
 
 export default async function arch() {
-  const [ bot, db, app, token, clubdb, sheets ] = await init();
+  const [ bot, db, clubdb ] = await init();
 
   const onContactMessage = (startState: UserScriptState, action: ActionType<{ phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number, polls: string, voice: string, audio: string, video_circle: string }>) => 
   bot.on('message', async (ctx, next) => {
     const id = ctx.chat.id,
       user = (await db.getAll(id)()),
+      set = db.set(id),
       message = ctx.message;
-
       
     if (user.state === startState) {
       console.log(user['state']);
       if ('contact' in message) {
-        action(ctx, user, { phone_number: message.contact.phone_number, text: '', photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: message.contact.phone_number, text: '', photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`TYPE: ONCONTACTMESSAGE, TEXT&PHOTO = UNDEFINED, NUMBER: ${message.contact.phone_number}, CODE: 0\n`);
       } 
       else if ('text' in message) {
-        action(ctx, user, { phone_number: '', text: message.text, photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: message.text, photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&PHOTO = UNDEFINED, TEXT: ${message.text}, CODE: 1\n`);
       } 
       else if ('photo' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: message.photo[0].file_id, file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: message.photo[0].file_id, file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, PHOTO GET, CODE: 2\n`);
       }
       else if ('document' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: message.document.file_id, stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: message.document.file_id, stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, FILE GET, CODE: 3\n`);
       }
       else if ('sticker' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: message.sticker.file_id, video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: message.sticker.file_id, video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, STICKER GET, CODE: 4\n`);
       }
       else if ('video' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: message.video.file_id, location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: message.video.file_id, location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VIDEO GET, CODE: 5\n`);
       }
       else if ('location' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: message.location.longitude, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: message.location.longitude, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, LOCATION GET, CODE: 6\n`);
       }
       else if ('poll' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: message.poll.question, voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: message.poll.question, voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, POLL GET, CODE: 7\n`);
       }
       else if ('voice' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: message.voice.file_id, audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: message.voice.file_id, audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
       }
       else if ('audio' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
       }
       else if ('video_note' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, CIRCLE VIDEO GET, CODE: 9\n`);
       }
     }
@@ -69,47 +69,48 @@ export default async function arch() {
   bot.on('message', async (ctx, next) => {
     const id = ctx.chat.id,
       user = (await db.getAll(id)()),
+      set = db.set(id),
       message = ctx.message;
   
     if (user.state === startState) {
       if ('text' in message) {
-        action(ctx, user, { phone_number: '', text: message.text, photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: message.text, photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\nTYPE: ONTEXTMESSAGE, OTHERDATA = UNDEFINED, TEXT = ${message.text}, CODE: 2\nstate: ${startState}, message: ${message.text}`);
       } 
       else if ('photo' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: message.photo[0].file_id, file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: message.photo[0].file_id, file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONTEXTMESSAGE, NUMBER&TEXT = UNDEFINED, PHOTO GET, CODE: 2\n`);
       }
       else if ('document' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: message.document.file_id, stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: message.document.file_id, stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONTEXTMESSAGE, NUMBER&TEXT = UNDEFINED, FILE GET, CODE: 3\n`);
       }
       else if ('sticker' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: message.sticker.file_id, video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: message.sticker.file_id, video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONTEXTMESSAGE, NUMBER&TEXT = UNDEFINED, STICKER GET, CODE: 4\n`);
       }
       else if ('video' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: message.video.file_id, location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: message.video.file_id, location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONTEXTMESSAGE, NUMBER&TEXT = UNDEFINED, VIDEO GET, CODE: 5\n`);
       }
       else if ('location' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: message.location.longitude, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: message.location.longitude, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, LOCATION GET, CODE: 6\n`);
       }
       else if ('poll' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: message.poll.question, voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: message.poll.question, voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, POLL GET, CODE: 7\n`);
       }
       else if ('voice' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: message.voice.file_id, audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: message.voice.file_id, audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
       }
       else if ('audio' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
       }
       else if ('video_note' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, CIRCLE VIDEO GET, CODE: 9\n`);
       }
     }
@@ -122,56 +123,57 @@ export default async function arch() {
     const id = ctx.chat.id,
       user = (await db.getAll(id)()),
       message = ctx.message,
+      set = db.set(id),
       supportedFormats : string[] = ['.pdf', '.jpeg', '.jpg', '.png', '.heic'];
 
     if (user.state === startState) {
       console.log(user['state']);
       if ('text' in message) {
-        action(ctx, user, { phone_number: '', text: message.text, photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: message.text, photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&PHOTO = UNDEFINED, TEXT: ${message.text}, CODE: 1\n`);
       } 
       else if ('photo' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: message.photo[0].file_id, file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: message.photo[0].file_id, file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, PHOTO GET, CODE: 2\n`);
       }
       else if ('document' in message) {
         const fileExtension = message.document.file_name!.substr(message.document.file_name!.lastIndexOf('.')).toLowerCase() || '';
 
         if (supportedFormats.includes(fileExtension)){
-          action(ctx, user, { phone_number: '', text: '', photo: '', file: message.document.file_id, stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+          action(ctx, user, set, { phone_number: '', text: '', photo: '', file: message.document.file_id, stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
           console.log(`TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, FILE GET (${fileExtension}), CODE: 3\n`);
         }
         else{
-          action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+          action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
           console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, UNSUPPORTED FILE GET (${fileExtension}), CODE: 3\n`);
         }
       }
       else if ('sticker' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: message.sticker.file_id, video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: message.sticker.file_id, video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, STICKER GET, CODE: 4\n`);
       }
       else if ('video' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: message.video.file_id, location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: message.video.file_id, location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, VIDEO GET, CODE: 5\n`);
       }
       else if ('location' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: message.location.longitude, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: message.location.longitude, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, LOCATION GET, CODE: 6\n`);
       }
       else if ('poll' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: message.poll.question, voice: '', audio: '', video_circle: ''});
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: message.poll.question, voice: '', audio: '', video_circle: ''});
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, POLL GET, CODE: 7\n`);
       }
       else if ('voice' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: message.voice.file_id, audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: message.voice.file_id, audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
       }
       else if ('audio' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
       }
       else if ('video_note' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, CIRCLE VIDEO GET, CODE: 9\n`);
       }
     }
@@ -183,16 +185,17 @@ export default async function arch() {
     const id = ctx.chat.id,
       user = (await db.getAll(id)()),
       message = ctx.message,
+      set = db.set(id),
       supportedFormats : string[] = ['.pdf', '.PDF'];
   
     if (user.state === startState) {
       console.log(user['state']);
       if ('text' in message) {
-        action(ctx, user, { phone_number: '', text: message.text, photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: message.text, photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&PHOTO = UNDEFINED, TEXT: ${message.text}, CODE: 1\n`);
       } 
       else if ('photo' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: message.photo[0].file_id, file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: message.photo[0].file_id, file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, PHOTO GET, CODE: 2\n`);
       }
       else if ('document' in message) {
@@ -201,40 +204,40 @@ export default async function arch() {
         const fileExtension = fileExtension0 + fileExtension1;
 
         if (supportedFormats.includes(fileExtension0) || supportedFormats.includes(fileExtension1)){
-          action(ctx, user, { phone_number: '', text: '', photo: '', file: message.document.file_id, stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+          action(ctx, user, set, { phone_number: '', text: '', photo: '', file: message.document.file_id, stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
           console.log(`TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, FILE GET (${fileExtension}), CODE: 3\n`);
         }
         else{
-          action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+          action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
           console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, UNSUPPORTED FILE GET (${fileExtension}), CODE: 3\n`);
         }
       }
       else if ('sticker' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: message.sticker.file_id, video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: message.sticker.file_id, video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, STICKER GET, CODE: 4\n`);
       }
       else if ('video' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: message.video.file_id, location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: message.video.file_id, location: -1, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, VIDEO GET, CODE: 5\n`);
       }
       else if ('location' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: message.location.longitude, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: message.location.longitude, polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, LOCATION GET, CODE: 6\n`);
       }
       else if ('poll' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: message.poll.question, voice: '', audio: '', video_circle: ''});
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: message.poll.question, voice: '', audio: '', video_circle: ''});
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, POLL GET, CODE: 7\n`);
       }
       else if ('voice' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: message.voice.file_id, audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: message.voice.file_id, audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
       }
       else if ('audio' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
       }
       else if ('video_note' in message) {
-        action(ctx, user, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, CIRCLE VIDEO GET, CODE: 9\n`);
       }
     }
@@ -497,125 +500,11 @@ export default async function arch() {
       const user = await this.ShowOneUser(idUser),
         data = user!.recordClubs !== undefined ? user!.recordClubs.toString() : false;
 
-      if (data){
-        return data.split(',');
-      }
-      else{
-        return false;
-      }
-    }
-  }
-
-  class GoogleSheets{
-    private students = '💁🏽‍♀️ Студенти_dev';
-
-    async appendLessonToUser(idUser: number, name: string, phone: string, nickname: string, mail: string, date: string, title: string, teacher: string){
-      const index = await sheets.findDataInCell(idUser.toString(), this.students),
-        row = index?.row === undefined ? '' : index!.row;
-
-      if (row !== ''){
-        let currentData = await sheets.getCell(`${this.students}!A${parseInt(row!.toString()) + 3}`),
-          position = parseInt(row!.toString()) + 3;
-
-        while (currentData !== ''){
-          position++;
-          currentData = await sheets.getCell(`${this.students}!A${position}`);
-        }
-
-        const toProcessPosition = await sheets.getCell(`${this.students}!A${position - 1}`),
-          newIndexPosition = toProcessPosition;
-
-        await sheets.addRowAndShiftDown(this.students, `A${position}`);
-        console.log(currentData.charAt(0));
-        await sheets.updateRow(`${this.students}!A${position}:D${position}`, [`${parseInt(newIndexPosition) + 1}`, date, title, teacher]);
-
-        await sheets.setCellStyle(this.students, `A${position}:A${position}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
-        await sheets.setCellStyle(this.students, `B${position}:B${position}`, 10, false, 'RIGHT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
-        await sheets.setCellStyle(this.students, `C${position}:E${position}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
-      }
-      else{
-        const newIndex = await sheets.getLastValueInColumn();
-        let newRow = newIndex?.row === null ? 1 : newIndex!.row;
-
-        if (newRow === 1){
-          await sheets.updateRow(`${this.students}!A${newRow}:E${newRow}`, [idUser, name, phone, nickname, mail]);
-          await sheets.updateRow(`${this.students}!A${newRow + 1}:E${newRow + 1}`, ['№:',	'Дата:', 'Тема:', 'Викладач:', 'Оплата:']);
-          await sheets.updateRow(`${this.students}!A${newRow + 2}:D${newRow + 2}`, [1, date, title, teacher]);
-
-          await sheets.setCellStyle(this.students, `A${newRow}:A${newRow}`, 13, true, 'RIGHT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
-          await sheets.setCellStyle(this.students, `B${newRow}:B${newRow}`, 13, true, 'LEFT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
-          await sheets.setCellStyle(this.students, `C${newRow}:D${newRow}`, 10, false, 'LEFT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
-          await sheets.setCellStyle(this.students, `E${newRow}:E${newRow}`, 9, false, 'LEFT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
-
-          await sheets.setCellStyle(this.students, `A${newRow + 1}:E${newRow + 1}`, 10, true, 'LEFT', 'MIDDLE', null, 'SOLID', 'SOLID', 'SOLID', 'white');
-
-          await sheets.setCellStyle(this.students, `A${newRow + 2}:A${newRow + 2}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
-          await sheets.setCellStyle(this.students, `B${newRow + 2}:B${newRow + 2}`, 10, false, 'RIGHT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
-          await sheets.setCellStyle(this.students, `C${newRow + 2}:E${newRow + 2}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
-        }
-        else{
-          await sheets.updateRow(`${this.students}!A${newRow + 2}:E${newRow + 2}`, [idUser, name, phone, nickname, mail]);
-          await sheets.updateRow(`${this.students}!A${newRow + 3}:E${newRow + 3}`, ['№:',	'Дата:', 'Тема:', 'Викладач:', 'Оплата:']);
-          await sheets.updateRow(`${this.students}!A${newRow + 4}:D${newRow + 4}`, [1, date, title, teacher]);
-  
-          await sheets.setCellStyle(this.students, `A${newRow + 2}:A${newRow + 2}`, 13, true, 'RIGHT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
-          await sheets.setCellStyle(this.students, `B${newRow + 2}:B${newRow + 2}`, 13, true, 'LEFT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
-          await sheets.setCellStyle(this.students, `C${newRow + 2}:D${newRow + 2}`, 10, false, 'LEFT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
-          await sheets.setCellStyle(this.students, `E${newRow + 2}:E${newRow + 2}`, 9, false, 'LEFT', 'MIDDLE', 'SOLID', 'SOLID', 'SOLID', 'SOLID', 'green');
-  
-          await sheets.setCellStyle(this.students, `A${newRow + 3}:E${newRow + 3}`, 10, true, 'LEFT', 'MIDDLE', null, 'SOLID', 'SOLID', 'SOLID', 'white');
-  
-          await sheets.setCellStyle(this.students, `A${newRow + 4}:A${newRow + 4}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
-          await sheets.setCellStyle(this.students, `B${newRow + 4}:B${newRow + 4}`, 10, false, 'RIGHT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
-          await sheets.setCellStyle(this.students, `C${newRow + 4}:E${newRow + 4}`, 10, false, 'LEFT', 'MIDDLE', null, 'SOLID', null, 'SOLID', 'white');
-        }
-      }
-
-    }
-
-    async changeAvaibleLessonStatus(idUser: number, payment: boolean){
-      const index = await sheets.findDataInCell(idUser.toString(), this.students),
-        rowIndex = index?.row === undefined ? '' : index!.row;
-
-      if (rowIndex !== ''){
-        const row = parseInt(rowIndex.toString()) + 1;
-        
-        if (payment){
-          await sheets.setCellStyle(this.students, `A${row}:A${row}`, 13, true, 'RIGHT', 'MIDDLE', null, null, null, null, 'green');
-          await sheets.setCellStyle(this.students, `B${row}:B${row}`, 13, true, 'LEFT', 'MIDDLE', null, null, null, null, 'green');
-          await sheets.setCellStyle(this.students, `C${row}:D${row}`, 10, false, 'LEFT', 'MIDDLE', null, null, null, null, 'green');
-          await sheets.setCellStyle(this.students, `E${row}:E${row}`, 9, false, 'LEFT', 'MIDDLE', null, null, null, null, 'green');
-        }
-        else{
-          await sheets.setCellStyle(this.students, `A${row}:A${row}`, 13, true, 'RIGHT', 'MIDDLE', null, null, null, null, 'red');
-          await sheets.setCellStyle(this.students, `B${row}:B${row}`, 13, true, 'LEFT', 'MIDDLE', null, null, null, null, 'red');
-          await sheets.setCellStyle(this.students, `C${row}:D${row}`, 10, false, 'LEFT', 'MIDDLE', null, null, null, null, 'red');
-          await sheets.setCellStyle(this.students, `E${row}:E${row}`, 9, false, 'LEFT', 'MIDDLE', null, null, null, null, 'red');
-        }
-      }
-    }
-
-    async CheckHaveUser(idUser: number){
-      const index = await sheets.findDataInCell(idUser.toString(), this.students),
-        rowIndex = index?.row === undefined ? '' : index!.row;
-
-      if (rowIndex !== ''){
-        return rowIndex;
-      }
-      else return false;
-    }
-
-    async ChangeUserNameInSheet(idUser: number, name: string){
-      const rowAroundChange = await this.CheckHaveUser(idUser);
-
-      if (rowAroundChange){
-        await sheets.updateRow(`${this.students}!B${parseInt(rowAroundChange.toString()) + 1}`, [name]);
-      }
+      return data ? data.split(',') : false;
     }
   }
 
   const dbProcess : DBProcess = new DBProcess();
-  const googleSheets : GoogleSheets = new GoogleSheets()
 
-  return [onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, db, app, token, dbProcess, googleSheets] as const;
+  return [onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, db, dbProcess] as const;
 }

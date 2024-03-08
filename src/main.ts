@@ -1,7 +1,7 @@
 // DehtoBot for dehto German Course
 // Developed by Yaroslav Volkivskyi (TheLaidSon)
 
-// Actual v4.12.1
+// Actual v4.13.0
 
 // Main File
 import script from "./data/general/script";
@@ -25,7 +25,7 @@ import { Markup, TelegramError } from "telegraf";
 import { ObjectId } from 'mongodb';
 
 async function main() {
-  const [ onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, db, , , dbProcess, sheets ] = await arch();
+  const [ onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, db, dbProcess ] = await arch();
 
   //Begin bot work, collecting user data (his telegram name) set up state_1
   bot.start( (ctx) => {
@@ -66,10 +66,9 @@ async function main() {
   });
 
   //Get real user name and root to get phone number with this.function
-  onTextMessage('WaitingForName', async (ctx, user, data) => {
+  onTextMessage('WaitingForName', async (ctx, user, set, data) => {
     if (CheckException.TextException(data)){
-      const name = formattedName(data.text),
-        set = db.set(ctx?.chat?.id ?? -1);
+      const name = formattedName(data.text);
       
       console.log(`Name: ${name}`)
       await set('state')('AskingForPhoneNumber');
@@ -98,9 +97,7 @@ async function main() {
   })
 
   //Get user phone number with using funciion of getting
-  onContactMessage('AskingForPhoneNumber', async (ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onContactMessage('AskingForPhoneNumber', async (ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply(script.entire.greeting, {reply_markup: { remove_keyboard: true }});
       await set('state')('WaitingForName');
@@ -143,9 +140,8 @@ async function main() {
     }
   });
 
-  onTextMessage('FunctionRoot', async (ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+  onTextMessage('FunctionRoot', async (ctx, user, set, data) => {
+    const userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
     await set('sc_request_torecord_usertoclub')('');
 
@@ -266,9 +262,8 @@ async function main() {
     }
   })
 
-  onTextMessage('IndividualHandler', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+  onTextMessage('IndividualHandler', async(ctx, user, set, data) => {
+    const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
     if (CheckException.BackRoot(data)){
       ctx.reply(script.entire.chooseFunction, {
@@ -321,9 +316,8 @@ async function main() {
     }
   })
 
-  onTextMessage('GraphicRespondAndLevelRequest', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+  onTextMessage('GraphicRespondAndLevelRequest', async(ctx, user, set, data) => {
+    const userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
     if (CheckException.BackRoot(data)) {
       ctx.reply(script.entire.chooseFunction, {
@@ -345,9 +339,7 @@ async function main() {
     }
   })
 
-  onTextMessage('LevelRespondAndRequestQuestions', async (ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('LevelRespondAndRequestQuestions', async (ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply(script.trialLesson.niceWhatATime, {reply_markup: {remove_keyboard: true}});
       await set('state')('GraphicRespondAndLevelRequest')
@@ -379,9 +371,7 @@ async function main() {
     }
   })
 
-  onTextMessage('TrialLessonQuestionsManager', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('TrialLessonQuestionsManager', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply(script.trialLesson.levelLanguageRequest, {reply_markup: {remove_keyboard: true}});
       await set('state')('LevelRespondAndRequestQuestions');
@@ -452,9 +442,8 @@ async function main() {
     }
   })
 
-  onTextMessage('GetQuestionsAndSendData', async(ctx, user, data) => {
-    const id = ctx?.chat?.id ?? -1,
-      set = db.set(id);
+  onTextMessage('GetQuestionsAndSendData', async(ctx, user, set, data) => {
+    const id = ctx?.chat?.id ?? -1;
 
     if (CheckException.BackRoot(data)){
       ctx.reply(script.trialLesson.thanksAndGetQuestion(user['name']), {
@@ -523,8 +512,7 @@ async function main() {
     }
   })
 
-  onTextMessage('EndRootManager', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
+  onTextMessage('EndRootManager', async(ctx, user, set, data) => {
     console.log('User go to end manager');
 
     if (data.text === 'Замовити ще одну зустріч'){
@@ -609,9 +597,8 @@ async function main() {
     }
   })
 
-  onTextMessage('RespondCourseAndGetPacket', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+  onTextMessage('RespondCourseAndGetPacket', async(ctx, user, set, data) => {
+    const userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
     
     if (CheckException.BackRoot(data)){
       ctx.reply(script.entire.chooseFunction, {
@@ -666,9 +653,7 @@ async function main() {
     }
   })
 
-  onTextMessage('RespondPacketAndGetPayment', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('RespondPacketAndGetPayment', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply(script.payInvidualLesson.chooseLevelCourse, {
         parse_mode: "Markdown",
@@ -722,10 +707,9 @@ async function main() {
     }
   })
 
-  onPhotoMessage('RespondPaymentAndSendData', async(ctx, user, data) => {
+  onPhotoMessage('RespondPaymentAndSendData', async(ctx, user, set, data) => {
     const id = ctx?.chat?.id ?? -1,
-      set = db.set(id),
-      get = db.get(id);
+      get = db.get(ctx?.chat?.id ?? -1);
     await set('paymentStatus')('unknown');
 
     // Оплата занять
@@ -874,9 +858,7 @@ async function main() {
   })
 
   //
-  onTextMessage('HaveAdditionalQuestion', async (ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('HaveAdditionalQuestion', async (ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply(script.teacherOnHour.additionalQuestions.question, {
         parse_mode: "Markdown",
@@ -908,9 +890,7 @@ async function main() {
     }
   })
 
-  onTextMessage('AnswerForAdditionalQuestions', async (ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('AnswerForAdditionalQuestions', async (ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       const courses = getCourses(user['course'] as Courses);
       set('course')(user['course']);
@@ -964,9 +944,7 @@ async function main() {
     }
   })
 
-  onTextMessage('AdditionalQuestions', async (ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('AdditionalQuestions', async (ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply(script.teacherOnHour.whatsTheProblem, {
         parse_mode: "Markdown",
@@ -1019,10 +997,7 @@ async function main() {
     }
   })
 
-  onTextMessage('ChoosingCourses', async (ctx, user, data) => {
-
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('ChoosingCourses', async (ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
@@ -1067,9 +1042,8 @@ async function main() {
     }
   })
 
-  onPhotoMessage('WaitingForPayment', async (ctx, user, data) => {
+  onPhotoMessage('WaitingForPayment', async (ctx, user, set, data) => {
     const id = ctx?.chat?.id ?? -1,
-      set = db.set(id),
       get = db.get(id);
 
     // Вчитель на годину
@@ -1218,9 +1192,8 @@ async function main() {
     }
   })
 
-  onTextMessage('_GraphicRespondAndLevelRequest', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+  onTextMessage('_GraphicRespondAndLevelRequest', async(ctx, user, set, data) => {
+    const userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
     if (CheckException.BackRoot(data)){
       ctx.reply(script.entire.chooseFunction, {
@@ -1243,9 +1216,7 @@ async function main() {
     }
   })
 
-  onTextMessage('_LevelRespondAndRequestQuestions', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('_LevelRespondAndRequestQuestions', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply(script.registrationLesson.niceWhatATime, {reply_markup: {remove_keyboard: true}});
       await set('state')('_GraphicRespondAndLevelRequest');
@@ -1261,9 +1232,8 @@ async function main() {
     }
   })
 
-  onTextMessage('_GetQuestionsAndSendData', async(ctx, user, data) => {
-    const id = ctx?.chat?.id ?? -1,
-      set = db.set(id);
+  onTextMessage('_GetQuestionsAndSendData', async(ctx, user, set, data) => {
+    const id = ctx?.chat?.id ?? -1;
 
     if (CheckException.BackRoot(data)){
       ctx.reply(script.registrationLesson.levelLanguageRequest, {reply_markup: {remove_keyboard: true}});
@@ -1314,9 +1284,8 @@ async function main() {
   })
 
   // Club Handler
-  onTextMessage('ActionClubRespondAndRootAction', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      userA = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+  onTextMessage('ActionClubRespondAndRootAction', async(ctx, user, set, data) => {
+    const userA = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
     if (CheckException.BackRoot(data)){
       ctx.reply(script.entire.chooseFunction, {
@@ -1492,9 +1461,7 @@ async function main() {
   })
 
   // My Club Empty Handler
-  onTextMessage('MyClubEmptyHandler', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('MyClubEmptyHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply("Виберіть одну із запропонованих кнопок", {
         parse_mode: "Markdown",
@@ -1564,9 +1531,7 @@ async function main() {
   })
 
   // Check count of lessons and pay more if it need
-  onTextMessage('RespondCheckLessonsAndGetLessons', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('RespondCheckLessonsAndGetLessons', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply("Виберіть одну із запропонованих кнопок", {
         parse_mode: "Markdown",
@@ -1609,9 +1574,8 @@ async function main() {
   })
 
   // Pay Club Type
-  onTextMessage('RespondTypePacketAndGetPayment', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      prevState = user['temp-prev-state'],
+  onTextMessage('RespondTypePacketAndGetPayment', async(ctx, user, set, data) => {
+    const prevState = user['temp-prev-state'],
       currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
     if (CheckException.BackRoot(data) && prevState === 'clubList-state'){
@@ -1715,9 +1679,8 @@ async function main() {
     }
   })
 
-  onPhotoMessage('RespondPaymentAndGetCourseOrFinal', async(ctx, user, data) => {
+  onPhotoMessage('RespondPaymentAndGetCourseOrFinal', async(ctx, user, set, data) => {
     const id = ctx?.chat?.id ?? -1,
-      set = db.set(id),
       get = db.get(id),
       clubIndex = user['sc_request_torecord_usertoclub'];
 
@@ -1982,9 +1945,7 @@ async function main() {
     }
   })
 
-  onTextMessage('RespondCourseAndGetMail', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('RespondCourseAndGetMail', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply(script.speakingClub.plusClub, {reply_markup: {remove_keyboard: true}});
       await set('state')('RespondPaymentAndGetCourseOrFinal');
@@ -2006,9 +1967,8 @@ async function main() {
     }
   })
 
-  onTextMessage('RespondMailAndFinal', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      get = db.get(ctx?.chat?.id ?? -1);
+  onTextMessage('RespondMailAndFinal', async(ctx, user, set, data) => {
+    const get = db.get(ctx?.chat?.id ?? -1);
     //set mail
 
     if (CheckException.BackRoot(data)){
@@ -2130,9 +2090,8 @@ async function main() {
   })
 
   //Club Registration (start)
-  onTextMessage('GetClubToRegistrationAndCheckPayment', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      results = await dbProcess.ShowAll(),
+  onTextMessage('GetClubToRegistrationAndCheckPayment', async(ctx, user, set, data) => {
+    const results = await dbProcess.ShowAll(),
       currentUser = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
     if (CheckException.BackRoot(data)){
@@ -2183,7 +2142,7 @@ async function main() {
                 user['name'], user['username'], user['phone_number'], currentUser!.email !== undefined ? currentUser!.email : "Пошта відсутня", user['club-typeclub']
               ));
                 
-              await sheets.changeAvaibleLessonStatus(ctx?.chat?.id ?? -1, false);
+              // await sheets.changeAvaibleLessonStatus(ctx?.chat?.id ?? -1, false);
             }
             
             await ctx.reply(script.speakingClub.registrationLesson.acceptedRegistration(user['name'], dbProcess.getDateClub(new Date(currentClub!.date)), 
@@ -2198,8 +2157,8 @@ async function main() {
               caption: `ось файл із лексикою, яка допоможе Вам на шпрах-клубі ;)`}
             )
 
-            await sheets.appendLessonToUser(currentUser!.id, currentUser!.name, currentUser!.number, currentUser!.username, currentUser!.email !== undefined ? currentUser!.email : 'пошта відсутня',
-              DateRecord(), currentClub!.title, currentClub!.teacher);
+            // await sheets.appendLessonToUser(currentUser!.id, currentUser!.name, currentUser!.number, currentUser!.username, currentUser!.email !== undefined ? currentUser!.email : 'пошта відсутня',
+            //   DateRecord(), currentClub!.title, currentClub!.teacher);
 
             await set('state')('ActionClubRespondAndRootAction');
           }
@@ -2297,9 +2256,7 @@ async function main() {
     }
   })
 
-  onTextMessage('RegistrationChooseHandlerPayment', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('RegistrationChooseHandlerPayment', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       const results = await dbProcess.ShowAll();
       let addString : string = '';
@@ -2360,9 +2317,8 @@ async function main() {
   })
 
   // Admin Root Handler
-  onTextMessage('AdminRootHandler', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+  onTextMessage('AdminRootHandler', async(ctx, user, set, data) => {
+    const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
     if (CheckException.BackRoot(data)){
       ctx.reply(script.entire.chooseFunction, {
@@ -2433,9 +2389,7 @@ async function main() {
   })
 
   // Admin Panel (start)
-  onTextMessage('RespondAdminActionAndRootChoose', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('RespondAdminActionAndRootChoose', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply("З поверненням, Меркель! :)", {
         parse_mode: "Markdown",
@@ -2581,9 +2535,7 @@ async function main() {
   });
 
   //Add Method
-  onTextMessage('ADD_RespondTitleAndGetTeacher', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('ADD_RespondTitleAndGetTeacher', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply("Добренько, і що на цей раз?)", {
         parse_mode: "Markdown",
@@ -2620,9 +2572,7 @@ async function main() {
     }
   })
 
-  onTextMessage('ADD_RespondTeacherAndGetDate', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('ADD_RespondTeacherAndGetDate', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply("Тема:", {reply_markup: {remove_keyboard: true}});
       await set('state')('ADD_RespondTitleAndGetTeacher');
@@ -2658,9 +2608,7 @@ async function main() {
     }
   })
 
-  onTextMessage('ADD_RespondDateDayAndGetDateMonth', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-    
+  onTextMessage('ADD_RespondDateDayAndGetDateMonth', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       const users = await dbProcess.ShowAllUsers();
       let keyboard = [];
@@ -2696,9 +2644,7 @@ async function main() {
     }
   })
 
-  onTextMessage('ADD_RespondDateMonthAndGetDateYear', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-    
+  onTextMessage('ADD_RespondDateMonthAndGetDateYear', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply('Коли (день):', {reply_markup: {remove_keyboard: true}});
       await set('state')('ADD_RespondDateDayAndGetDateMonth');
@@ -2719,9 +2665,7 @@ async function main() {
     }
   })
 
-  onTextMessage('ADD_RespondDateAndGetTime', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('ADD_RespondDateAndGetTime', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply('Коли (місяць):');
       await set('state')('ADD_RespondDateMonthAndGetDateYear');
@@ -2748,9 +2692,7 @@ async function main() {
     }
   })
 
-  onTextMessage('ADD_RespondTimeHourAndGetMinute', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('ADD_RespondTimeHourAndGetMinute', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply('Коли (рік):');
       await set('state')('ADD_RespondDateAndGetTime');
@@ -2771,9 +2713,7 @@ async function main() {
     }
   })
 
-  onTextMessage('ADD_RespondTimeAndGetCount', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('ADD_RespondTimeAndGetCount', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply('Час (години):');
       await set('state')('ADD_RespondTimeHourAndGetMinute'); 
@@ -2794,9 +2734,7 @@ async function main() {
     }
   })
 
-  onTextMessage('ADD_RespondCountAndGetLink', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('ADD_RespondCountAndGetLink', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply('Час (хвилини):');
       await set('state')('ADD_RespondTimeAndGetCount');
@@ -2817,9 +2755,7 @@ async function main() {
     }
   })
 
-  onDocumentationMessage('ADD_RespondDocumentationAndGetLink', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onDocumentationMessage('ADD_RespondDocumentationAndGetLink', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply('Кількість місць:');
       await set('state')('ADD_RespondCountAndGetLink');
@@ -2835,9 +2771,8 @@ async function main() {
     }
   })
 
-  onTextMessage('ADD_RespondLinkAndCheckRight', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      datePart = `${user['AP_date_day']}-${user['AP_date_month']}-${user['AP_date_year']} (${dbProcess.getDateClub(new Date(`
+  onTextMessage('ADD_RespondLinkAndCheckRight', async(ctx, user, set, data) => {
+    const datePart = `${user['AP_date_day']}-${user['AP_date_month']}-${user['AP_date_year']} (${dbProcess.getDateClub(new Date(`
         ${user['AP_date_year']}-${user['AP_date_month']}-${user['AP_date_day']}`))})`;
 
     if (CheckException.BackRoot(data)){
@@ -2872,9 +2807,8 @@ async function main() {
     }
   })
 
-  onTextMessage('ADD_CheckHandlerAndRoot', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      users = await dbProcess.ShowAllUsers();
+  onTextMessage('ADD_CheckHandlerAndRoot', async(ctx, user, set, data) => {
+    const users = await dbProcess.ShowAllUsers();
 
     if (CheckException.BackRoot(data)){
       ctx.reply('Посилання:');
@@ -2946,9 +2880,8 @@ async function main() {
   })
 
   // Delete Handler
-  onTextMessage('DeleteClubAndCheckAction', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      results = await dbProcess.ShowAll();
+  onTextMessage('DeleteClubAndCheckAction', async(ctx, user, set, data) => {
+    const results = await dbProcess.ShowAll();
 
     if (CheckException.BackRoot(data)){
       ctx.reply("Добренько, і що на цей раз?)", {
@@ -2994,9 +2927,8 @@ async function main() {
     }
   })
 
-  onTextMessage('CheckingActionDeleteAndReturn', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      results = await dbProcess.ShowAll(),
+  onTextMessage('CheckingActionDeleteAndReturn', async(ctx, user, set, data) => {
+    const results = await dbProcess.ShowAll(),
       users = await dbProcess.ShowAllUsers(),
       indexToDelete = user['AP_DeleteHandler_indextodelete'],
       deleteItem = results.map(result => result._id)[parseInt(indexToDelete) - 1],
@@ -3073,9 +3005,8 @@ async function main() {
   })
 
   // Change Key Data
-  onTextMessage('RespondKeyDataAndGetChanges', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      results = await dbProcess.ShowAll();
+  onTextMessage('RespondKeyDataAndGetChanges', async(ctx, user, set, data) => {
+    const results = await dbProcess.ShowAll();
 
     if (CheckException.BackRoot(data)){
       ctx.reply("Добренько, і що на цей раз?)", {
@@ -3107,9 +3038,7 @@ async function main() {
   })
 
   // Change Process
-  onTextMessage('GetChangesAndChangeThis', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('GetChangesAndChangeThis', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       const results = await dbProcess.ShowAll(),
         users = await dbProcess.ShowAllUsers();
@@ -3193,9 +3122,8 @@ async function main() {
     }
   })
 
-  onTextMessage('ChangeThisAndCheckThis', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      results = await dbProcess.ShowAll(),
+  onTextMessage('ChangeThisAndCheckThis', async(ctx, user, set, data) => {
+    const results = await dbProcess.ShowAll(),
       currentItem = results.map(result => result._id);
 
     if (CheckException.BackRoot(data)){
@@ -3276,9 +3204,8 @@ async function main() {
     }
   })
 
-  onDocumentationMessage('ChangeThisDocAndCheckThis', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      results = await dbProcess.ShowAll();
+  onDocumentationMessage('ChangeThisDocAndCheckThis', async(ctx, user, set, data) => {
+    const results = await dbProcess.ShowAll();
 
     if (CheckException.BackRoot(data)){
       ctx.reply("Який саме пункт тре змінити?", {
@@ -3320,9 +3247,7 @@ async function main() {
     }
   })
 
-  onTextMessage('ChangeDateDayAndGetChangeMonth', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('ChangeDateDayAndGetChangeMonth', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply("Який саме пункт тре змінити?", {
         reply_markup: {
@@ -3349,9 +3274,7 @@ async function main() {
     }
   })
 
-  onTextMessage('ChangeDateMonthAndGetChangeYear', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('ChangeDateMonthAndGetChangeYear', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply("Введіть день:");
       await set('state')('ChangeDateDayAndGetChangeMonth');
@@ -3372,9 +3295,7 @@ async function main() {
     }
   })
 
-  onTextMessage('ChangeDateYearAndSubmit', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('ChangeDateYearAndSubmit', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply("А тепер введіть місяць");
       await set('state')('ChangeDateMonthAndGetChangeYear');
@@ -3417,9 +3338,7 @@ async function main() {
     }
   })
 
-  onTextMessage('ChangeTimeHourAndGetChangeMinute', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-    
+  onTextMessage('ChangeTimeHourAndGetChangeMinute', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply("Який саме пункт тре змінити?", {
         reply_markup: {
@@ -3446,9 +3365,7 @@ async function main() {
     }
   })
 
-  onTextMessage('ChangeTimeMinuteAndSubmit', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('ChangeTimeMinuteAndSubmit', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply('Введіть години', {reply_markup: {remove_keyboard: true}});
       await set('state')('ChangeTimeHourAndGetChangeMinute');
@@ -3485,9 +3402,7 @@ async function main() {
     }
   })
 
-  onTextMessage('ChangeTeacherAndSubmit', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('ChangeTeacherAndSubmit', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply("Який саме пункт тре змінити?", {
         reply_markup: {
@@ -3567,9 +3482,7 @@ async function main() {
   })
 
   //Personal Student Handler
-  onTextMessage('PeronalStudentHandler', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('PeronalStudentHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply("З поверненням, Меркель! :)", {
         parse_mode: "Markdown",
@@ -3746,9 +3659,8 @@ async function main() {
   })
 
   // Add Lessons Student
-  onTextMessage('AddLessonForStudent', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      results = (await dbProcess.ShowAllUsers()).map(result => result._id);
+  onTextMessage('AddLessonForStudent', async(ctx, user, set, data) => {
+    const results = (await dbProcess.ShowAllUsers()).map(result => result._id);
 
     if (CheckException.BackRoot(data)){
       ctx.reply('Виберіть, будь ласка, що вам потрібно', {
@@ -3771,18 +3683,14 @@ async function main() {
     }
   })
 
-  onTextMessage('CheckAvaibleActivePacketAndChangeCountLesson', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      // userID: ObjectId = (await dbProcess.ShowAllUsers()).map(item => item._id)[parseInt(user['AP_student_id'] ) - 1],
-      userIDWithoutProcessing = parseInt(user['AP_student_id']),
+  onTextMessage('CheckAvaibleActivePacketAndChangeCountLesson', async(ctx, user, set, data) => {
+    const userIDWithoutProcessing = parseInt(user['AP_student_id']),
       userIDChat: number = (await dbProcess.ShowAllUsers()).map(item => item.id)[userIDWithoutProcessing - 1],
-      // getCurrentUserCount = (await dbProcess.ShowAllUsers()).map(item => item.count)[userIDWithoutProcessing - 1],
       getUserActualName = (await dbProcess.ShowAllUsers()).map(item => item.name)[userIDWithoutProcessing - 1];
     
     if (CheckException.BackRoot(data)){
       const results = await dbProcess.ShowAllUsers();
     
-      //need_
       for (let i = 0; i < results.length; i++) {
         await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, 
           results[i].number, results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!), ConvertToPrice((await db.get(results[i].id)('club-typeclub'))!)!));
@@ -3800,7 +3708,6 @@ async function main() {
       await set('state')('AddLessonForStudent');
     }
     else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1){
-      // await set('AP_UserChangeCountLesson_Count')(getCurrentUserCount);
       await set('AP_UserChangeCountLesson_IDChat')(userIDChat.toString());
       await set('AP_UserChangeCountLesson_Name')(getUserActualName);
       await set('AP_UserChangeCountLesson_New')(data.text);
@@ -3831,28 +3738,14 @@ async function main() {
           }
         })
       }
-      // const toWrite: number = getCurrentUserCount + parseInt(data.text);
-      // await dbProcess.ChangeCountUser(userID, toWrite);
-
-      // await ctx.reply(`Успішно! На рахунку у студента ${getUserActualName}: ${toWrite} занять`, {
-      //   parse_mode: "Markdown",
-      //   reply_markup: {
-      //     one_time_keyboard: true,
-      //     keyboard: keyboards.personalStudentAdminPanel()
-      //   },
-      // })
-
-      // await set('state')('PeronalStudentHandler');
     }
     else{
       ctx.reply('Вам потрібно ввести число більше або рівне одиниці.');
     }
   })
 
-  onTextMessage('ChoosePacketHandlerCustomLesson', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      userID = await dbProcess.ShowOneUser(parseInt(user['AP_UserChangeCountLesson_IDChat'])),
-      // getCurrentUserCount = parseInt(user['AP_UserChangeCountLesson_Count']),
+  onTextMessage('ChoosePacketHandlerCustomLesson', async(ctx, user, set, data) => {
+    const userID = await dbProcess.ShowOneUser(parseInt(user['AP_UserChangeCountLesson_IDChat'])),
       getUserActualName = user['AP_UserChangeCountLesson_Name'],
       toWrite = parseInt(user['AP_UserChangeCountLesson_New'])
 
@@ -3901,10 +3794,8 @@ async function main() {
     }
   })
 
-  onTextMessage('ChangeCountUserLessonsAndPacket', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      userID = await dbProcess.ShowOneUser(parseInt(user['AP_UserChangeCountLesson_IDChat'])),
-      // getCurrentUserCount = parseInt(user['AP_UserChangeCountLesson_Count']),
+  onTextMessage('ChangeCountUserLessonsAndPacket', async(ctx, user, set, data) => {
+    const userID = await dbProcess.ShowOneUser(parseInt(user['AP_UserChangeCountLesson_IDChat'])),
       getUserActualName = user['AP_UserChangeCountLesson_Name'],
       toWrite = parseInt(user['AP_UserChangeCountLesson_New'])
 
@@ -3937,9 +3828,8 @@ async function main() {
   })
 
   // Delete Student Handler
-  onTextMessage('DeleteStudentAndCheckAction', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      results = await dbProcess.ShowAllUsers();
+  onTextMessage('DeleteStudentAndCheckAction', async(ctx, user, set, data) => {
+    const results = await dbProcess.ShowAllUsers();
 
     if (CheckException.BackRoot(data)){
       ctx.reply('Виберіть, будь ласка, що вам потрібно', {
@@ -3984,15 +3874,13 @@ async function main() {
     }
   })
 
-  onTextMessage('DeleteStudentHandlerAndReturn', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      results = await dbProcess.ShowAllUsers(),
+  onTextMessage('DeleteStudentHandlerAndReturn', async(ctx, user, set, data) => {
+    const results = await dbProcess.ShowAllUsers(),
       indexToDelete = user['AP_DeleteStudentHandler_deleteindex'];
 
     if (CheckException.BackRoot(data)){
       const results = await dbProcess.ShowAllUsers();
   
-      //need_
       for (let i = 0; i < results.length; i++) {
         await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, 
           results[i].number, results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!), ConvertToPrice((await db.get(results[i].id)('club-typeclub'))!)!));
@@ -4037,9 +3925,8 @@ async function main() {
   })
 
   // Change user role
-  onTextMessage('RespondUserToActionAndGetRole', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      results = await dbProcess.ShowAllUsers();
+  onTextMessage('RespondUserToActionAndGetRole', async(ctx, user, set, data) => {
+    const results = await dbProcess.ShowAllUsers();
 
     if (CheckException.BackRoot(data)){
       ctx.reply('Виберіть, будь ласка, що вам потрібно', {
@@ -4069,15 +3956,13 @@ async function main() {
     }
   })
 
-  onTextMessage('RespondRoleAndReturn', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      results = await dbProcess.ShowAllUsers(),
+  onTextMessage('RespondRoleAndReturn', async(ctx, user, set, data) => {
+    const results = await dbProcess.ShowAllUsers(),
       currentUserObjectID = results.map(item => item.id)[parseInt(user['AP_StudentHandler_idToChange']) - 1];
 
     if (CheckException.BackRoot(data)){
       const results = await dbProcess.ShowAllUsers();
       
-      //need_
       for (let i = 0; i < results.length; i++) {
         await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, 
           results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!), ConvertToPrice((await db.get(results[i].id)('club-typeclub'))!)!));
@@ -4116,11 +4001,9 @@ async function main() {
     }
   })
 
-  onTextMessage('ChangeUserNameAndProcessChange', async(ctx, user, data) => {
+  onTextMessage('ChangeUserNameAndProcessChange', async(ctx, user, set, data) => {
     const id = ctx?.chat?.id ?? -1,
-      set = db.set(id),
-      userInDB = await dbProcess.ShowOneUser(parseInt(data.text)),
-      userInGoogleSheet = await sheets.CheckHaveUser(parseInt(data.text));
+      userInDB = await dbProcess.ShowOneUser(parseInt(data.text));
 
     if (CheckException.BackRoot(data)){
       ctx.reply('Виберіть, будь ласка, що вам потрібно', {
@@ -4134,7 +4017,7 @@ async function main() {
     }
     else if (userInDB){
       await set('user_to_name_change')(data.text);
-      if (userInGoogleSheet){
+      if (false){
         await ctx.reply(`Користувач ${userInDB!.name} знайдений і також знайдений в таблиці Шпрах-клубів\n\nА тепер, будь ласка, напишіть нове імʼя для цього користувача`, {reply_markup: {remove_keyboard: true}});
       }
       else{
@@ -4148,12 +4031,10 @@ async function main() {
     }
   })
 
-  onTextMessage('ProcessChangeAndReturn', async(ctx, user, data) => {
+  onTextMessage('ProcessChangeAndReturn', async(ctx, user, set, data) => {
     const id = ctx?.chat?.id ?? -1,
-      set = db.set(id),
       userIDToChange = parseInt(user['user_to_name_change']),
-      userInDB = await dbProcess.ShowOneUser(userIDToChange),
-      userInGoogleSheet = await sheets.CheckHaveUser(userIDToChange);
+      userInDB = await dbProcess.ShowOneUser(userIDToChange);
 
     if (CheckException.BackRoot(data)){
       ctx.reply('Введіть id користувача, якому потрібно змінити імʼя', {reply_markup: {remove_keyboard: true}});
@@ -4161,8 +4042,8 @@ async function main() {
     }
     else if (CheckException.TextException(data)){
       await dbProcess.ChangeUserName(userInDB!._id, data.text);
-      if (userInGoogleSheet){
-        await sheets.ChangeUserNameInSheet(id, data.text);
+      if (false){
+        // await sheets.ChangeUserNameInSheet(id, data.text);
         await ctx.reply(`Успішно змінено імʼя для користувача ${userInDB!.name} і в таблияці також, тепер його імʼя ${data.text}`, {
           reply_markup: {
             one_time_keyboard: true,
@@ -4186,9 +4067,7 @@ async function main() {
     }
   })
 
-  onTextMessage('RespondIDAndShowCount&Packet', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('RespondIDAndShowCount&Packet', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply('Виберіть, будь ласка, що вам потрібно', {
         reply_markup: {
@@ -4228,9 +4107,7 @@ async function main() {
     }
   })
 
-  onTextMessage('ResondIDAndForceChangeAvaibleLessons', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('ResondIDAndForceChangeAvaibleLessons', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply('Прекрасно, над ким сьогодні будемо знущатись?)', {
         reply_markup: {
@@ -4266,9 +4143,8 @@ async function main() {
     }
   })
 
-  onTextMessage('ForceChangeAvaibleLessonsAndReturn', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1),
-      idUser = user['userid_for_forceChangeAvaibleLessons'];
+  onTextMessage('ForceChangeAvaibleLessonsAndReturn', async(ctx, user, set, data) => {
+    const idUser = user['userid_for_forceChangeAvaibleLessons'];
 
     if (CheckException.BackRoot(data)){
       ctx.reply('Введіть id студента, щоб змінити кількість його занять');
@@ -4292,9 +4168,7 @@ async function main() {
     }
   })
 
-  onTextMessage('ChangeActivePacket_GetID', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('ChangeActivePacket_GetID', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply('Прекрасно, над ким сьогодні будемо знущатись?)', {
         reply_markup: {
@@ -4335,9 +4209,7 @@ async function main() {
     }
   })
 
-  onTextMessage('ChangeActivePacket_Handler', async(ctx, user, data) => {
-    const set = db.set(ctx?.chat?.id ?? -1);
-
+  onTextMessage('ChangeActivePacket_Handler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply('Введіть id студента, якому потрібно змінити активний пакет', {reply_markup: {remove_keyboard: true}});
       await set('state')('ChangeActivePacket_GetID');
@@ -4357,31 +4229,9 @@ async function main() {
     }
   })
 
-  // const updatePaymentStatusInGoogleSheets = async (
-  //   id: number,
-  //   status: boolean
-  // ) => {
-  //   const idRows = await sheets.get("Sheet1!A:A");
-
-  //   const rowIndex = idRows.data.values?.findIndex((arr) => {
-  //     console.log(arr[0], id);
-  //     return arr[0] == id;
-  //   });
-
-  //   const rowNumberString = rowIndex ? `${rowIndex + 1}` : "";
-  //   sheets.updateRow(`Sheet1!H${rowNumberString}:H${rowNumberString}`, [status ? "Заплатив" : "Ні :C"]);
-  // };
-
-
   // Payment Main Bot Function Action
   bot.action(/^approvePayment:(\d+)$/, async (ctx) => {
     const id = Number.parseInt(ctx.match[1]);
-
-    // db.set(id)('paymentConfirmed')(`true`);
-    // try {
-    //   updatePaymentStatusInGoogleSheets(id, true);
-    // } catch (e) { console.log(e); }
-    // return ctx.answerCbQuery(`Param: ${id}`);
 
     try {
       // set up payment status "paid"
@@ -4399,13 +4249,6 @@ async function main() {
 
   bot.action(/^rejectPayment:(\d+)$/, async (ctx) => {
     const id = Number.parseInt(ctx.match[1]);
-
-    // db.set(id)('paymentConfirmed')('false');
-    // try {
-    //   updatePaymentStatusInGoogleSheets(id, false);
-    // } catch (e) { console.log(e); }
-
-    // return ctx.answerCbQuery(`Param: ${id}`);
 
     try {
       // set up payment status "no paid"
@@ -4482,8 +4325,8 @@ async function main() {
 
     await db.set(idUser)('SC_TrialLessonComplet_active')('true');
     ctx.answerCbQuery(`Запис даних в таблицю`);
-    await sheets.appendLessonToUser(idUser, currentUser!.name, currentUser!.number, 
-      currentUser!.username, currentUser!.email, dateRecord, idClub!.title, idClub!.teacher);
+    // await sheets.appendLessonToUser(idUser, currentUser!.name, currentUser!.number, 
+    //   currentUser!.username, currentUser!.email, dateRecord, idClub!.title, idClub!.teacher);
 
     try {
       // set up payment status "paid"
@@ -4584,7 +4427,7 @@ async function main() {
     await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedPacketPayment((await db.get(idUser)('name'))!.toString(), packetName));
     await db.set(idUser)('SC_TrialLessonComplet_active')('true');
     ctx.answerCbQuery(`Запис даних в таблицю.`);
-    await sheets.changeAvaibleLessonStatus(idUser, true);
+    // await sheets.changeAvaibleLessonStatus(idUser, true);
 
     try {
       // set up payment status "paid"
@@ -4653,8 +4496,8 @@ async function main() {
     await db.set(idUser)('SC_TrialLessonComplet_active')('true');
 
     ctx.answerCbQuery(`Запис даних в таблицю`);
-    await sheets.changeAvaibleLessonStatus(idUser, true);
-    await sheets.appendLessonToUser(idUser, currentUser!.name, currentUser!.number, currentUser!.username, currentUser!.email !== undefined ? currentUser!.email : 'пошта відсутня', dateRecord, idClub!.title, idClub!.teacher);
+    // await sheets.changeAvaibleLessonStatus(idUser, true);
+    // await sheets.appendLessonToUser(idUser, currentUser!.name, currentUser!.number, currentUser!.username, currentUser!.email !== undefined ? currentUser!.email : 'пошта відсутня', dateRecord, idClub!.title, idClub!.teacher);
 
     try {
       // set up payment status "paid"
@@ -4737,7 +4580,7 @@ async function main() {
             notEnoughLessons.name!, notEnoughLessons.username!, notEnoughLessons.number!, currentUser!.email !== undefined ? currentUser!.email : "Пошта відсутня", notEnoughLessons.typeClub!
           ));
             
-          await sheets.changeAvaibleLessonStatus(ctx?.chat?.id ?? -1, false);
+          // await sheets.changeAvaibleLessonStatus(ctx?.chat?.id ?? -1, false);
         }
         
         await ctx.reply(script.speakingClub.registrationLesson.acceptedRegistration(notEnoughLessons.name!, dbProcess.getDateClub(new Date(idClub!.date)), 
@@ -4752,8 +4595,8 @@ async function main() {
           caption: `ось файл із лексикою, яка допоможе Вам на шпрах-клубі ;)`}
         )
 
-        await sheets.appendLessonToUser(currentUser!.id, currentUser!.name, currentUser!.number, currentUser!.username, currentUser!.email !== undefined ? currentUser!.email : 'пошта відсутня',
-          DateRecord(), idClub!.title, idClub!.teacher);
+        // await sheets.appendLessonToUser(currentUser!.id, currentUser!.name, currentUser!.number, currentUser!.username, currentUser!.email !== undefined ? currentUser!.email : 'пошта відсутня',
+        //   DateRecord(), idClub!.title, idClub!.teacher);
       }
       else{
         ctx.reply('ви вже зареєстровані на цей шпрах!');
