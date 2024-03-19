@@ -1,4 +1,4 @@
-import { devChat, confirmationChat, supportChat, eugeneChat} from "../general/chats";
+import { devChat, confirmationChat, supportChat, eugeneChat } from "../general/chats";
 
 const devChatInt = parseInt(devChat),
   confirmationChatInt = parseInt(confirmationChat),

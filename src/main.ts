@@ -3511,12 +3511,25 @@ async function main() {
       const results = await dbProcess.ShowAllUsers();
     
       for (let i = 0; i < results.length; i++) {
-        await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()), {
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: keyboards.personalStudentAdminPanel()
-          }
-        });
+        if (i % 10 === 0 && i != 0){
+          const messageWaiting = ctx.reply("Почекайте маленько, підгружаю ще...");
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          ctx.telegram.deleteMessage(ctx?.chat?.id ?? -1, (await messageWaiting).message_id);
+          await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()), {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.personalStudentAdminPanel()
+            }
+          });
+        }
+        else{
+          await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()), {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.personalStudentAdminPanel()
+            }
+          });
+        }
       }
     }
     else if (data.text === 'Змінити імʼя користувачу'){
@@ -3529,16 +3542,29 @@ async function main() {
     }
     else if (data.text === 'Показати студентів'){
       const results = await dbProcess.ShowAllUsers();
-      //need_
       for (let i = 0; i < results.length; i++) {
         if (results[i].role === 'student'){
-          await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, 
-            results[i].number, results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!), ConvertToPrice((await db.get(results[i].id)('club-typeclub'))!)!), {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: keyboards.personalStudentAdminPanel()
-            }
-          });
+          if (i % 10 === 0 && i != 0){
+            const messageWaiting = ctx.reply("Почекайте маленько, підгружаю ще...");
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            ctx.telegram.deleteMessage(ctx?.chat?.id ?? -1, (await messageWaiting).message_id);
+            await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, 
+              results[i].number, results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!), ConvertToPrice((await db.get(results[i].id)('club-typeclub'))!)!), {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboards.personalStudentAdminPanel()
+              }
+            });
+          }
+          else{
+            await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, 
+              results[i].number, results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!), ConvertToPrice((await db.get(results[i].id)('club-typeclub'))!)!), {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboards.personalStudentAdminPanel()
+              }
+            });
+          }
         }
       }
     }
@@ -3581,7 +3607,6 @@ async function main() {
     else if (data.text === 'Додати заняття студенту'){
       const results = await dbProcess.ShowAllUsers();
     
-      //need_
       for (let i = 0; i < results.length; i++) {
         await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, 
           results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!), ConvertToPrice((await db.get(results[i].id)('club-typeclub'))!)!));
@@ -3601,7 +3626,6 @@ async function main() {
     else if (data.text === 'Видалити студента'){
       const results = await dbProcess.ShowAllUsers();
   
-      //need_
       for (let i = 0; i < results.length; i++) {
         await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, 
           results[i].number, results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!), ConvertToPrice((await db.get(results[i].id)('club-typeclub'))!)!));
