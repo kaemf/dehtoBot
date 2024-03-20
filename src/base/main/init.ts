@@ -39,7 +39,6 @@ export default async function init() {
 
   console.log("Connecting to mongodb...")
   const dbclub = await connectToClubDB();
-  console.log("Done");
 
   console.log("Creating telegraf bot instanse...");
   // prod

@@ -166,14 +166,18 @@ UA773220010000026004330103247
 👉🏽<b>Дата створення заявки</b>: ${date}`
   },
 
+  indivdual: {
+    entire: (role: string) => role === 'admin' || role === 'developer' || role === 'teacher' ? 'що цікавить' : 'оберіть, що вас цікавить :)'
+  },
+
   trialLesson: {
-    niceWhatATime: `супер!\n
-який у Вас графік та коли було б зручно провести пробне заняття?🤩`,
+    niceWhatATime: `супер!\nякий би графік занять ви хотіли мати? 🤩\n\n(вкажіть дні та години)`,
+
+    countOfLessonsRequest: `скільки занять на тиждень хочете мати?`,
 
     levelLanguageRequest: `напишіть, будь ласка, яким, приблизно, рівнем мови Ви володієте?`,
 
-    thanksAndGetQuestion: (name: string) => `дякуємо, ${name}!🌱\n
-чи є у Вас ще щось, що нам варто було б знати?`,
+    goalLearnRequest: `яка вашіа ціль вивчення мови? для чого її вчите?`,
 
     thanksPartTwo: (graphic: string) => `чудно!)\n
 👉🏽 отож, пробне заняття краще провести: ${graphic}\n

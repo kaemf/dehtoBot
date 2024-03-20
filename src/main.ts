@@ -54,7 +54,7 @@ async function main() {
       parse_mode: "Markdown",
       reply_markup: {
         one_time_keyboard: true,
-        keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role ?? 'student')
+        keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role ?? 'guest')
       }
     })
 
@@ -126,13 +126,13 @@ async function main() {
       if (userObject){
         await dbProcess.UpdateUserData(userObject._id, data.phone_number, user['username']);
       }
-      else dbProcess.AddUser({ id: ctx?.chat?.id ?? -1, name: user['name'], number: data.phone_number, username: user['username'], role: 'student', count: 0 });
+      else dbProcess.AddUser({ id: ctx?.chat?.id ?? -1, name: user['name'], number: data.phone_number, username: user['username'], role: 'guest', count: 0 });
 
       ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject && userObject!.role !== undefined && userObject!.role !== null ? userObject!.role : 'student')
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject && userObject!.role !== undefined && userObject!.role !== null ? userObject!.role : 'guest')
         }
       })
 
@@ -162,11 +162,11 @@ async function main() {
       });
       await set('state')('AskingForPhoneNumber');
     }
-    else if (data.text === 'Індивідуальні заняття'){
-      ctx.reply('оберіть, що вас цікавить :)', {
+    else if (data.text === 'Індивідуальні заняття' || data.text === 'Мої індивідуальні заняття'){
+      ctx.reply(script.indivdual.entire(userI!.role), {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.indiviualMenu()
+          keyboard: keyboards.indiviualMenu(userI!.role)
         }
       })
 
@@ -276,9 +276,9 @@ async function main() {
 
       await set('state')('FunctionRoot');
     }
-    else if (data.text === "Пробний урок"){
+    else if (data.text === "Пробне заняття" && userObject!.role === 'guest'){
       ctx.reply(script.trialLesson.niceWhatATime, {reply_markup: {remove_keyboard: true}});
-      await set('state')('GraphicRespondAndLevelRequest');
+      await set('state')('GraphicRespondAndCountRequest');
     }
     else if (data.text === "Оплата занять"){
       ctx.reply(script.payInvidualLesson.chooseLevelCourse, {
@@ -296,12 +296,11 @@ async function main() {
     }
     else if (data.text === 'В МЕНЮ'){
       console.log('FunctionRoot');
-      const userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
       ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject!.role)
         }
       })
       await set('state')('FunctionRoot');
@@ -310,13 +309,13 @@ async function main() {
       ctx.reply(script.errorException.chooseButtonError, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.indiviualMenu()
+          keyboard: keyboards.indiviualMenu(userObject!.role)
         }
       })
     }
   })
 
-  onTextMessage('GraphicRespondAndLevelRequest', async(ctx, user, set, data) => {
+  onTextMessage('GraphicRespondAndCountRequest', async(ctx, user, set, data) => {
     const userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
     if (CheckException.BackRoot(data)) {
@@ -331,6 +330,21 @@ async function main() {
     }
     else if (CheckException.TextException(data)){
       await set('graphic')(data.text);
+      ctx.reply(script.trialLesson.countOfLessonsRequest, {reply_markup: {remove_keyboard: true}})
+      await set('state')('CountRespondAndLevelRequest');
+    }
+    else{
+      ctx.reply(script.errorException.textGettingError.defaultException);
+    }
+  })
+
+  onTextMessage('CountRespondAndLevelRequest', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)) {
+      ctx.reply(script.trialLesson.niceWhatATime, {reply_markup: {remove_keyboard: true}});
+      await set('state')('GraphicRespondAndCountRequest');
+    }
+    else if (CheckException.TextException(data)){
+      await set('countOfLessons')(data.text);
       ctx.reply(script.trialLesson.levelLanguageRequest, {reply_markup: {remove_keyboard: true}});
       await set('state')('LevelRespondAndRequestQuestions');
     }
@@ -347,45 +361,21 @@ async function main() {
     else if (CheckException.TextException(data)){
       await set('languagelevel')(data.text);
   
-      ctx.reply(script.trialLesson.thanksAndGetQuestion(user['name']), {
-        parse_mode: "Markdown",
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "так, є",
-              },
-            ],[
-              {
-                text: "ні, немає",
-              }
-            ],
-          ],
-        },
-      });
-      await set('state')('TrialLessonQuestionsManager');
+      ctx.reply(script.trialLesson.goalLearnRequest);
+      await set('state')('RespondGoalAndSendData');
     }
     else{
       ctx.reply(script.errorException.textGettingError.defaultException);
     }
   })
 
-  onTextMessage('TrialLessonQuestionsManager', async(ctx, user, set, data) => {
+  onTextMessage('RespondGoalAndSendData', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply(script.trialLesson.levelLanguageRequest, {reply_markup: {remove_keyboard: true}});
       await set('state')('LevelRespondAndRequestQuestions');
     }
-    else if (data.text === 'так, є'){
-      await set('addquesttrial')('');
-      ctx.reply(script.trialLesson.question, {reply_markup: {remove_keyboard: true}});
-      await set('state')('GetQuestionsAndSendData');
-    }
-    else if (data.text === 'ні, немає'){
-      const id = ctx?.chat?.id ?? -1,
-        set = db.set(id);
-
-      await set('addquesttrial')(data.text);
+    else if (CheckException.TextException(data)){
+      const id = ctx?.chat?.id ?? -1;
 
       // For Developer
       // ctx.telegram.sendMessage(devChat,

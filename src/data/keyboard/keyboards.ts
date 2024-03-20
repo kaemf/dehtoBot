@@ -13,10 +13,7 @@ export function checkChats(currentChatId: number){
 }
 
 function CheckDeveloper(currentChatId: number){
-  if (currentChatId === devChatInt){
-    return true;
-  }
-  else return false;
+  return currentChatId === devChatInt ? true : false;
 }
 
 class Keyboard{
@@ -50,46 +47,21 @@ class Keyboard{
       return [
         [
           {
-            text: "Індивідуальні заняття"
+            text: "Мої індивідуальні заняття"
           }
         ],[
           {
-            text: "Шпрах-Клуби"
+            text: "деЗавдання"
           }
         ],[
           {
-            text: "Вчитель на годину",
-          },
-        ],[
-          {
-            text: "Мої Шпрах-клуби"
+            text: "Мої розмовні клуби"
           }
         ]
       ]
-    }
-      else if (checkChats(currentChatId)){
-          return [
-              [
-                {
-                  text: "Індивідуальні заняття"
-                }
-              ],[
-                {
-                  text: "Шпрах-Клуби"
-                }
-              ],[
-                {
-                  text: "Вчитель на годину",
-                },
-              ],[
-                {
-                  text: "Адмін Панель"
-                }
-              ]
-          ]
       }
-      else{
-          return [
+      else if (checkChats(currentChatId)){
+        return [
             [
               {
                 text: "Індивідуальні заняття"
@@ -102,7 +74,50 @@ class Keyboard{
               {
                 text: "Вчитель на годину",
               },
+            ],[
+              {
+                text: "Адмін Панель"
+              }
+            ]
+        ]
+      }
+      else if (role === 'student'){
+        return [
+          [
+            {
+              text: "Мої індивідуальні заняття"
+            }
+          ],[
+            {
+              text: "Розмовні клуби"
+            }
+          ],[
+            {
+              text: "Моя служба турботи"
+            }
+          ]
+        ]
+      }
+      else{
+          return [
+            [
+              {
+                text: "Індивідуальні заняття"
+              }
+            ],[
+              {
+                text: "Розмовні клуби"
+              }
+            ],[
+              {
+                text: "Вчитель на годину",
+              }
             ],
+            [
+              {
+                text: "Служба турботи"
+              }
+            ]
           ]
       }
   }
@@ -289,26 +304,85 @@ class Keyboard{
     ]
   }
 
-  indiviualMenu(){
-    return [
-      [
-        {
-          text: "Пробний урок",
-        },
-      ],[
-        {
-          text: "Оплата занять",
-        },
-      ],[
-        // {
-        //   text: "Запис на заняття"
-        // }
-      ],[
-        {
-          text: "В МЕНЮ"
-        }
-      ]
-    ]
+  indiviualMenu(role: string){
+    switch (role){
+      case "admin":
+        return [
+          [
+            {
+              text: "Знайти студента"
+            }
+          ],[
+            {
+              text: "Наші викладачі"
+            }
+          ],[
+            {
+              text: "Показати усіх наших студентів"
+            }
+          ]
+        ]
+
+      case "developer":
+        return [
+          [
+            {
+              text: "Знайти студента"
+            }
+          ],[
+            {
+              text: "Наші викладачі"
+            }
+          ],[
+            {
+              text: "Показати усіх наших студентів"
+            }
+          ]
+        ]
+
+      case "teacher":
+        return [
+          [
+            {
+              text: "Мій розклад"
+            }
+          ],[
+            {
+              text: "Мої студенти"
+            }
+          ]
+        ]
+
+      case "student":
+        return [
+          [
+            {
+              text: "Баланс моїх занять"
+            }
+          ],[
+            {
+              text: "деЗавдання"
+            }
+          ],[
+            {
+              text: "Мій розклад"
+            }
+          ],[
+            {
+              text: "Оплата занять"
+            }
+          ]
+        ]
+
+      default:
+        return [
+          [
+            {
+              text: "Пробне заняття"
+            }
+          ]
+        ]
+    }
   }
 
   payPacketLessons(){
