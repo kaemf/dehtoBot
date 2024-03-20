@@ -182,7 +182,7 @@ async function main() {
       });
       await set('state')('ChoosingCourses');
     }
-    else if (data.text === "Шпрах-Клуби"){
+    else if (data.text === "Розмовні клуби"){
       ctx.reply("Виберіть одну із запропонованих кнопок", {
         parse_mode: "Markdown",
         reply_markup: {
@@ -290,6 +290,27 @@ async function main() {
       });
       await set('state')('RespondCourseAndGetPacket');
     }
+    else if (data.text === 'Баланс моїх занять' && userObject!.role === 'student'){
+      const count = 1;
+      if (count > 0){
+        ctx.reply(`✅ Баланс ваших індивідуальних занять ${count} занять (${count * 60} хв)`, {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.indiviualMenu(userObject!.role)
+          }
+        })
+      }
+      else{
+        ctx.reply(`😢 ${user['name']} у вас немає проплачених занять, будемо продовжувати?`, {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.yesNo(true)
+          }
+        })
+
+        await set('state')('NotEnoughIndividualLessonsHandler');
+      }
+    }
     else if (data.text === "Запис на заняття"){
       ctx.reply(script.registrationLesson.niceWhatATime, {reply_markup: {remove_keyboard: true}});
       await set('state')('_GraphicRespondAndLevelRequest');
@@ -375,12 +396,10 @@ async function main() {
       await set('state')('LevelRespondAndRequestQuestions');
     }
     else if (CheckException.TextException(data)){
-      const id = ctx?.chat?.id ?? -1;
-
       // For Developer
-      // ctx.telegram.sendMessage(devChat,
-      //   script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()),
-      //   {parse_mode: 'HTML'})
+      ctx.telegram.sendMessage(devChat,
+        script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()),
+        {parse_mode: 'HTML'})
 
       ctx.telegram.sendMessage(confirmationChat,
         script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()),
@@ -432,73 +451,52 @@ async function main() {
     }
   })
 
-  onTextMessage('GetQuestionsAndSendData', async(ctx, user, set, data) => {
-    const id = ctx?.chat?.id ?? -1;
+  onTextMessage('NotEnoughIndividualLessonsHandler', async(ctx, user, set, data) => {
+    const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
     if (CheckException.BackRoot(data)){
-      ctx.reply(script.trialLesson.thanksAndGetQuestion(user['name']), {
+      ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "так, є",
-              },
-              {
-                text: "ні, не має",
-              },
-            ],
-          ],
-        },
-      });
-      await set('state')('TrialLessonQuestionsManager')
-    }
-    else if (CheckException.TextException(data)){
-      await set('addquesttrial')(user['addquesttrial'] ?? data.text);
-  
-      // For Developer
-      // ctx.telegram.sendMessage(devChat, 
-      //   script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()),
-      //   {parse_mode: 'HTML'}
-      // )
-  
-      ctx.telegram.sendMessage(confirmationChat, 
-        script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()),
-        {parse_mode: 'HTML'}
-      )
-  
-      ctx.telegram.sendMessage(supportChat,
-        script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()),
-        {parse_mode: 'HTML'}
-      )
-
-      ctx.telegram.sendMessage(eugeneChat,
-        script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()),
-        {parse_mode: 'HTML'}
-      )
-  
-      ctx.reply(script.trialLesson.thanksPartTwo(user['graphic']), {
-        parse_mode: "Markdown",
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "В МЕНЮ",
-              },
-              // {
-              //   text: '？Про Бота'
-              // }
-            ],
-          ],
-        },
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject!.role)
+        }
       })
-  
-      await set('state')('EndRootManager');
+
+      await set('state')('FunctionRoot');
     }
     else{
-      ctx.reply(script.errorException.textGettingError.defaultException);
+      switch(data.text){
+        case "Так":
+          ctx.reply(script.payInvidualLesson.chooseLevelCourse, {
+            parse_mode: "Markdown",
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.chooseLevelCourses()
+            },
+          });
+          await set('state')('RespondCourseAndGetPacket');
+          break;
+
+        case "Ні":
+          ctx.reply('тоді гарного дня!🌱', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.indiviualMenu(userObject!.role)
+            }
+          })
+          await set('state')('IndividualHandler');
+          break;
+
+        default:
+          ctx.reply(script.errorException.chooseButtonError, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.yesNo(true)
+            }
+          })
+          break;
+      }
     }
   })
 

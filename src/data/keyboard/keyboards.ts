@@ -385,6 +385,32 @@ class Keyboard{
     }
   }
 
+  yesNo(upper?: boolean){
+    return upper
+    ?
+    [
+      [
+        {
+          text: "Так"
+        },
+        {
+          text: "Ні"
+        }
+      ]
+    ]
+    :
+    [
+      [
+        {
+          text: "так"
+        },
+        {
+          text: "ні"
+        }
+      ]
+    ]
+  }
+
   payPacketLessons(){
     return [
       [

@@ -80,8 +80,7 @@ const script = {
   },
 
   payInvidualLesson: {
-    chooseLevelCourse: `дякуємо, що обрали dehto🌱
-оберіть свій рівень`,
+    chooseLevelCourse: `dehto дякує за довіру❤\nоберіть свій рівень`,
 
     choosePacket: (minimal: number, econom: number, popular: number, large: number) => `оберіть, будь ласка, пакет занять, який Вас цікавить:\n\n
 🔵 Мінімальний: 5 занять (${minimal}uah - 1 заняття) 
