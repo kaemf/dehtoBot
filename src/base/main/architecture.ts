@@ -510,7 +510,7 @@ export default async function arch() {
       return teacher!.my_students;
     }
 
-    async WriteNewDeTask(idTeacher: number, idStudent: number, content: string, files: string[], typeOfFiles: string[]){
+    async WriteNewDeTask(idTeacher: number, idStudent: number, content: string[], files: string[], typeOfFiles: string[]){
       let tasksIDsForStudent: ObjectId[],
         tasksIDsForTeacher: ObjectId[];
       const student = await this.ShowOneUser(idStudent),
@@ -540,6 +540,55 @@ export default async function arch() {
 
       await this.botdbUsers.updateOne({id: idStudent}, {$set : {detasks: tasksIDsForStudent}})
       await this.botdbUsers.updateOne({id: idTeacher}, {$set : {set_detasks: tasksIDsForTeacher}})
+    }
+
+    async WriteAnswerToDeTask(id: ObjectId, content: string[], files: string[], typeOfFiles: string[]){
+      const deTask = await this.deTaskDB.findOne({ _id: new ObjectId(id) });
+      let updateObjectDeTask = {};
+
+      if (deTask){
+        if (files && typeOfFiles){
+          updateObjectDeTask = {$set : {
+            answer: content ? content : false,
+            files: files,
+            typeOfFiles: typeOfFiles
+          }}
+        }
+        else{
+          updateObjectDeTask = {$set : {
+            answer: content ? content : false,
+            files: false,
+            typeOfFiles: false
+          }}
+        }
+
+        await this.deTaskDB.updateOne({_id: id}, updateObjectDeTask);
+      }
+      else throw new Error(`\n\nError: Can't find deTask with id (${id})`);
+    }
+
+    async GetStudentAnswerForDeTask(idStudent: number){
+      const student = await this.ShowOneUser(idStudent),
+        deTaskStudentID = student ? student.detasks : false;
+
+      if (student){
+        if (deTaskStudentID){
+          let answers = [];
+          for (let i = 0; i < deTaskStudentID.length; i++){
+            if (deTaskStudentID[i].answer || deTaskStudentID[i].files){
+              answers.push([ 
+                deTaskStudentID[i].answer || false, 
+                deTaskStudentID[i].files || false ,
+                deTaskStudentID[i].typeOfFiles || false 
+              ]);
+            }
+            else answers.push(false, false, false);
+          }
+          return answers;
+        }
+        else return [ 'no_tasks_available' ];
+      }
+      else throw new Error(`\n\nError: Can't find user for get task answer. User id: ${idStudent}`);
     }
   }
 
