@@ -1,0 +1,9 @@
+SpeakingClub (database) -> dehtoBDB
+availableLessons (collection) -> clubLessons
+
+new collection - 
+                |
+                v
+individualLessons (collection)
+supportActiveChannels (collection)
+deTask (collection)

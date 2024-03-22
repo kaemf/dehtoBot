@@ -1,7 +1,7 @@
 // DehtoBot for dehto German Course
 // Developed by Yaroslav Volkivskyi (TheLaidSon)
 
-// Actual v4.13.0
+// Actual v2.0 Rebirth
 
 // Initialization File
 
@@ -38,7 +38,7 @@ export default async function init() {
   console.log("Done");
 
   console.log("Connecting to mongodb...")
-  const dbclub = await connectToClubDB();
+  const botdb = await connectToClubDB();
 
   console.log("Creating telegraf bot instanse...");
   // prod
@@ -57,5 +57,5 @@ export default async function init() {
     set: (id: number) => (property: string) => async (new_value: string) => await redis.hSet(`${id}`, property, new_value)
   })
 
-  return [bot, wRedis, dbclub] as const;
+  return [bot, wRedis, botdb] as const;
 }

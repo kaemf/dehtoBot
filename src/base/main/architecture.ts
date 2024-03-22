@@ -6,7 +6,7 @@ import { ObjectId } from 'mongodb';
 type ActionType<T> = (ctx: Context<Update>, user: {[x: string]: string}, set: (key: string) => (value: string) => Promise<number>, additionalData: T) => void;
 
 export default async function arch() {
-  const [ bot, db, clubdb ] = await init();
+  const [ bot, db, botdb ] = await init();
 
   const onContactMessage = (startState: UserScriptState, action: ActionType<{ phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number, polls: string, voice: string, audio: string, video_circle: string }>) => 
   bot.on('message', async (ctx, next) => {
@@ -245,56 +245,57 @@ export default async function arch() {
   });
 
   class DBProcess {
-    private clubdb = clubdb.db('SpeakingClub').collection('avaibleLessons');
-    private clubdbUsers = clubdb.db('SpeakingClub').collection('dataUsers');
+    private clubdbLessons = botdb.db('dehtoBDB').collection('clubLessons');
+    private botdbUsers = botdb.db('dehtoBDB').collection('dataUsers');
+    private deTaskDB = botdb.db('dehtoBDB').collection('deTask');
 
     async ShowAll() {
-      return await this.clubdb.find({}).toArray();
+      return await this.clubdbLessons.find({}).toArray();
     }
 
     async AddData(data: {title: string, teacher: string, date: string, time: string, count: number, link: string}) {
-      return await this.clubdb.insertOne(data);
+      return await this.clubdbLessons.insertOne(data);
     }
 
     async DeleteData(id: ObjectId) {
-      await this.clubdb.deleteOne({ _id: new ObjectId(id) });
+      await this.clubdbLessons.deleteOne({ _id: new ObjectId(id) });
     }
 
     async ChangeKeyData(id: Object, key: string, value: string | number){
       const updateObject = { $set: {} } as { $set: { [key: string]: string | number } };
       updateObject.$set[key] = value;
 
-      await this.clubdb.updateOne(id, updateObject);
+      await this.clubdbLessons.updateOne(id, updateObject);
     }
 
     async ShowData(id: ObjectId) {
-      return await this.clubdb.findOne({ _id: new ObjectId(id) });
+      return await this.clubdbLessons.findOne({ _id: new ObjectId(id) });
     }
 
     async GetObject(id: ObjectId) {
-      return this.clubdb.find({ _id: new ObjectId(id) });
+      return this.clubdbLessons.find({ _id: new ObjectId(id) });
     }
 
     async ShowAllUsers() {
-      return await this.clubdbUsers.find({}).toArray();
+      return await this.botdbUsers.find({}).toArray();
     }
 
     async AddUser(data : {id: number, name: string, number: string, username: string, role: string, count: number}) {
-      await this.clubdbUsers.insertOne(data);
+      await this.botdbUsers.insertOne(data);
     }
 
     async DeleteUser(id: string) {
-      await this.clubdbUsers.deleteOne({ id: id });
+      await this.botdbUsers.deleteOne({ id: id });
     }
 
     async ShowOneUser(id: number) {
-      return await this.clubdbUsers.findOne({ id: id });
+      return await this.botdbUsers.findOne({ id: id });
     }
 
     async ChangeCountUser(id: ObjectId, newValue: number){
       const updateObject = {$set: {count: newValue}};
 
-      await this.clubdbUsers.updateOne({_id: id}, updateObject);
+      await this.botdbUsers.updateOne({_id: id}, updateObject);
     }
 
     async ChangeUserName(id: ObjectId, name: string){
@@ -302,7 +303,7 @@ export default async function arch() {
         name : name
       }}
 
-      await this.clubdbUsers.updateOne({_id: id}, updateObject);
+      await this.botdbUsers.updateOne({_id: id}, updateObject);
     }
 
     async UpdateUserData(id: ObjectId, number: string, username: string){
@@ -311,7 +312,7 @@ export default async function arch() {
         username: username
       }}
 
-      await this.clubdbUsers.updateOne({_id: id}, updateObject);
+      await this.botdbUsers.updateOne({_id: id}, updateObject);
     }
 
     async WriteNewClubToUser(idUser: number, idClub: ObjectId){
@@ -328,7 +329,7 @@ export default async function arch() {
             recordClubs: dataContain.join(',')
           }}
   
-          await this.clubdbUsers.updateOne({_id: user!._id}, updateObject);
+          await this.botdbUsers.updateOne({_id: user!._id}, updateObject);
         }
         else return false;
       }
@@ -337,7 +338,7 @@ export default async function arch() {
           recordClubs: idClub
         }}
 
-        await this.clubdbUsers.updateOne({_id: user?._id}, updateObject);
+        await this.botdbUsers.updateOne({_id: user?._id}, updateObject);
       }
     }
 
@@ -370,7 +371,7 @@ export default async function arch() {
             recordClubs: data.join(',')
           }}
 
-          await this.clubdbUsers.updateOne({_id: user?._id}, updateObject);
+          await this.botdbUsers.updateOne({_id: user?._id}, updateObject);
         }
       }
     }
@@ -384,7 +385,7 @@ export default async function arch() {
           email: mail
         }}
 
-        await this.clubdbUsers.updateOne({_id: user?._id}, updateObject); 
+        await this.botdbUsers.updateOne({_id: user?._id}, updateObject); 
         return true;
       }
       else return false;
@@ -397,7 +398,7 @@ export default async function arch() {
         haveTrialLessonClub: haveTrialLessonClub
       }}
       
-      await this.clubdbUsers.updateOne({_id: user?._id}, updateObject);
+      await this.botdbUsers.updateOne({_id: user?._id}, updateObject);
     }
 
     async ChangeUserRole(idUser: number, newRole: string){
@@ -408,7 +409,7 @@ export default async function arch() {
           role: newRole
         }}
 
-        await this.clubdbUsers.updateOne({_id: user?._id}, updateObject);
+        await this.botdbUsers.updateOne({_id: user?._id}, updateObject);
 
         return true;
       }
@@ -431,11 +432,11 @@ export default async function arch() {
         activeOnClub: 'true'
       }}
 
-      await this.clubdbUsers.updateOne({_id: user?._id}, updateObject);
+      await this.botdbUsers.updateOne({_id: user?._id}, updateObject);
     }
 
     async GetTeacherBool(name: string){
-      const haveTeacher = await this.clubdbUsers.findOne({ name: name });
+      const haveTeacher = await this.botdbUsers.findOne({ name: name });
 
       if (haveTeacher){
         return true;
@@ -444,7 +445,7 @@ export default async function arch() {
     }
 
     async GetTeacherNameAndID(name: string, choose: boolean){
-      const teacher = await this.clubdbUsers.findOne({ name: name });
+      const teacher = await this.botdbUsers.findOne({ name: name });
 
       if (choose){
         return [teacher!.name, teacher!.id]
@@ -501,6 +502,44 @@ export default async function arch() {
         data = user!.recordClubs !== undefined ? user!.recordClubs.toString() : false;
 
       return data ? data.split(',') : false;
+    }
+
+    async GetTeacherStudents(id: number){
+      const teacher = await this.ShowOneUser(id);
+
+      return teacher!.my_students;
+    }
+
+    async WriteNewDeTask(idTeacher: number, idStudent: number, content: string, files: string[], typeOfFiles: string[]){
+      let tasksIDsForStudent: ObjectId[],
+        tasksIDsForTeacher: ObjectId[];
+      const student = await this.ShowOneUser(idStudent),
+        teacher = await this.ShowOneUser(idTeacher),
+        document = await this.deTaskDB.insertOne({
+        idTeacher: idTeacher,
+        idStudent: idStudent,
+        content: content,
+        files: files,
+        typeOfFiles: typeOfFiles,
+        answer: false,
+        answerFiles: false,
+        answerTypeOfFiles: false
+      })
+
+      if (student && student.detasks){
+        tasksIDsForStudent = student.detasks;
+        tasksIDsForStudent.push(document.insertedId);
+      }
+      else tasksIDsForStudent = [ document.insertedId ];
+
+      if (teacher && teacher.set_detasks){
+        tasksIDsForTeacher = teacher.set_detasks;
+        tasksIDsForTeacher.push(document.insertedId);
+      }
+      else tasksIDsForTeacher = [ document.insertedId ];
+
+      await this.botdbUsers.updateOne({id: idStudent}, {$set : {detasks: tasksIDsForStudent}})
+      await this.botdbUsers.updateOne({id: idTeacher}, {$set : {set_detasks: tasksIDsForTeacher}})
     }
   }
 

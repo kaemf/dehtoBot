@@ -1,7 +1,7 @@
 // DehtoBot for dehto German Course
 // Developed by Yaroslav Volkivskyi (TheLaidSon)
 
-// Actual v4.13.0
+// Actual v2.0 Rebirth
 
 // Main File
 import script from "./data/general/script";
