@@ -311,6 +311,15 @@ async function main() {
         await set('state')('NotEnoughIndividualLessonsHandler');
       }
     }
+    else if (data.text === 'деЗавдання' && userObject!.role === 'teacher'){
+      if (userObject!.set_detasks){
+
+      }
+      else{
+        ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання')
+        await set('state')('TeachersSetTasksHandler')
+      }
+    }
     else if (data.text === "Запис на заняття"){
       ctx.reply(script.registrationLesson.niceWhatATime, {reply_markup: {remove_keyboard: true}});
       await set('state')('_GraphicRespondAndLevelRequest');
@@ -4238,6 +4247,172 @@ async function main() {
           keyboard: keyboards.payPacketLessons()
         }
       });
+    }
+  })
+
+  onTextMessage('TeachersSetTasksHandler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else if (data.text === 'ОБРАТИ СТУДЕНТА'){
+      const teacher = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+        teacherStudents = teacher!.registered_students;
+      if (teacherStudents){
+        let students = []
+        for(let i = 0; i < teacherStudents.length; i++){
+          students.push([{text: teacherStudents[i].name}]);
+        }
+
+        ctx.reply('виберіть стундента, котрому адресоване дане завдання', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: students
+          }
+        })
+
+        await set('state')('TeachersChooseStudentHandler');
+      }
+      else{
+        ctx.reply('нажаль... у вас немає активних студентів :(');
+      }
+    }
+    else if (CheckException.TextException(data)){
+      await set('teacher_content_detask')(`${user['teacher_content_detask']}${data.text},`);
+      await ctx.reply('добренько, що далі? чи вже готово?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+        }
+      })
+    }
+    else if (CheckException.FileException(data)){
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask']}${data.file},`);
+      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask']}file,`);
+      await ctx.reply('добренько, що далі? чи вже готово?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+        }
+      })
+    }
+    else if (CheckException.LocationException(data)){
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask']}${data.location[0]};${data.location[1]},`);
+      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask']}location,`);
+      await ctx.reply('добренько, що далі? чи вже готово?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+        }
+      })
+    }
+    else if (CheckException.PhoneException(data)){
+      await set('teacher_content_detask')(`${user['teacher_content_detask']}${data.phone_number},`)
+      await ctx.reply('добренько, що далі? чи вже готово?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+        }
+      })
+    }
+    else if (CheckException.PhotoException(data)){
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask']}${data.photo},`);
+      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask']}photo,`);
+      await ctx.reply('добренько, що далі? чи вже готово?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+        }
+      })
+    }
+    else if (CheckException.StickerException(data)){
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask']}${data.stickers},`);
+      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask']}sticker,`);
+      await ctx.reply('добренько, що далі? чи вже готово?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+        }
+      })
+    }
+    else if (CheckException.VideoException(data)){
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask']}${data.video},`);
+      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask']}video,`);
+      await ctx.reply('добренько, що далі? чи вже готово?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+        }
+      })
+    }
+    else if (CheckException.AudioException(data)){
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask']}${data.audio},`);
+      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask']}audio,`);
+      await ctx.reply('добренько, що далі? чи вже готово?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+        }
+      })
+    }
+    else if (CheckException.VideoNoteException(data)){
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask']}${data.video_circle},`);
+      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask']}video_circle,`);
+      await ctx.reply('добренько, що далі? чи вже готово?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+        }
+      })
+    }
+    else{
+      ctx.reply('помилка(\n\nсхоже ви надіслали не підтримуваний тип повідомлення або ж тицьнули не туди')
+    }
+  })
+
+  onTextMessage('TeachersChooseStudentHandler', async(ctx, user, set, data) => {
+    const teacher = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+      teacherStudents = teacher!.registered_students;
+    let students = [],
+     studentsKeyboard = [];
+
+    for(let i = 0; i < teacherStudents.length; i++){
+      students.push(teacherStudents[i].name);
+      studentsKeyboard.push([{ text: teacherStudents[i].name }])
+    }
+    if (students.includes(data.text)){
+      const userID = await dbProcess.GetUserIDByName(data.text);
+      if (userID){
+        const textContent = user['teacher_content_detask'].split(','),
+          filesContent = user['teacher_filecontent_detask'].split(','),
+          typeOfFilesContent = user['teacher_typeofcontent_detask'].split(',');
+        
+        await dbProcess.WriteNewDeTask(ctx?.chat?.id ?? -1, userID, textContent, filesContent, typeOfFilesContent);
+
+        ctx.reply('завдання успішно додано студенту!', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: [[{text: "В МЕНЮ"}]]
+          }
+        });
+        ctx.telegram.sendMessage(userID, "у вас нове деЗавдання!");
+        await set('state')('EndRootManager');
+      }
+      else{
+        ctx.reply('нажаль, цього студента не знайдено в базі данних, тому операція неможлива. спробуйте обрати іншого', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: studentsKeyboard
+          }
+        });
+      }
+    }
+    else{
+      ctx.reply(script.errorException.chooseButtonError, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: studentsKeyboard
+        }
+      })
     }
   })
 

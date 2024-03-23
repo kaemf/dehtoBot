@@ -75,3 +75,5 @@ export type UserScriptState =
   | "ChangeActivePacket_Handler"
   | "ChoosePacketHandlerCustomLesson"
   | "ChangeCountUserLessonsAndPacket"
+  | "TeachersSetTasksHandler"
+  | "TeachersChooseStudentHandler"

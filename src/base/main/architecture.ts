@@ -8,7 +8,7 @@ type ActionType<T> = (ctx: Context<Update>, user: {[x: string]: string}, set: (k
 export default async function arch() {
   const [ bot, db, botdb ] = await init();
 
-  const onContactMessage = (startState: UserScriptState, action: ActionType<{ phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number, polls: string, voice: string, audio: string, video_circle: string }>) => 
+  const onContactMessage = (startState: UserScriptState, action: ActionType<{ phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number[], polls: string, voice: string, audio: string, video_circle: string }>) => 
   bot.on('message', async (ctx, next) => {
     const id = ctx.chat.id,
       user = (await db.getAll(id)()),
@@ -18,54 +18,54 @@ export default async function arch() {
     if (user.state === startState) {
       console.log(user['state']);
       if ('contact' in message) {
-        action(ctx, user, set, { phone_number: message.contact.phone_number, text: '', photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: message.contact.phone_number, text: '', photo: '', file: '', stickers: '', video: '', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`TYPE: ONCONTACTMESSAGE, TEXT&PHOTO = UNDEFINED, NUMBER: ${message.contact.phone_number}, CODE: 0\n`);
       } 
       else if ('text' in message) {
-        action(ctx, user, set, { phone_number: '', text: message.text, photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: message.text, photo: '', file: '', stickers: '', video: '', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&PHOTO = UNDEFINED, TEXT: ${message.text}, CODE: 1\n`);
       } 
       else if ('photo' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: message.photo[0].file_id, file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: message.photo[0].file_id, file: '', stickers: '', video: '', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, PHOTO GET, CODE: 2\n`);
       }
       else if ('document' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: message.document.file_id, stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: message.document.file_id, stickers: '', video: '', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, FILE GET, CODE: 3\n`);
       }
       else if ('sticker' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: message.sticker.file_id, video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: message.sticker.file_id, video: '', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, STICKER GET, CODE: 4\n`);
       }
       else if ('video' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: message.video.file_id, location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: message.video.file_id, location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VIDEO GET, CODE: 5\n`);
       }
       else if ('location' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: message.location.longitude, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ message.location.latitude, message.location.longitude ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, LOCATION GET, CODE: 6\n`);
       }
       else if ('poll' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: message.poll.question, voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ -1 ], polls: message.poll.question, voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, POLL GET, CODE: 7\n`);
       }
       else if ('voice' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: message.voice.file_id, audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ -1 ], polls: '', voice: message.voice.file_id, audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
       }
       else if ('audio' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ -1 ], polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
       }
       else if ('video_note' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, CIRCLE VIDEO GET, CODE: 9\n`);
       }
     }
     else return next();
   });
   
-  const onTextMessage = (startState: UserScriptState, action: ActionType<{ phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number, polls: string, voice: string, audio: string, video_circle: string }>) => 
+  const onTextMessage = (startState: UserScriptState, action: ActionType<{ phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number[], polls: string, voice: string, audio: string, video_circle: string }>) => 
   bot.on('message', async (ctx, next) => {
     const id = ctx.chat.id,
       user = (await db.getAll(id)()),
@@ -74,43 +74,43 @@ export default async function arch() {
   
     if (user.state === startState) {
       if ('text' in message) {
-        action(ctx, user, set, { phone_number: '', text: message.text, photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: message.text, photo: '', file: '', stickers: '', video: '', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\nTYPE: ONTEXTMESSAGE, OTHERDATA = UNDEFINED, TEXT = ${message.text}, CODE: 2\nstate: ${startState}, message: ${message.text}`);
       } 
       else if ('photo' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: message.photo[0].file_id, file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: message.photo[0].file_id, file: '', stickers: '', video: '', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONTEXTMESSAGE, NUMBER&TEXT = UNDEFINED, PHOTO GET, CODE: 2\n`);
       }
       else if ('document' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: message.document.file_id, stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: message.document.file_id, stickers: '', video: '', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONTEXTMESSAGE, NUMBER&TEXT = UNDEFINED, FILE GET, CODE: 3\n`);
       }
       else if ('sticker' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: message.sticker.file_id, video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: message.sticker.file_id, video: '', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONTEXTMESSAGE, NUMBER&TEXT = UNDEFINED, STICKER GET, CODE: 4\n`);
       }
       else if ('video' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: message.video.file_id, location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: message.video.file_id, location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONTEXTMESSAGE, NUMBER&TEXT = UNDEFINED, VIDEO GET, CODE: 5\n`);
       }
       else if ('location' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: message.location.longitude, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ message.location.latitude, message.location.longitude ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, LOCATION GET, CODE: 6\n`);
       }
       else if ('poll' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: message.poll.question, voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ -1 ], polls: message.poll.question, voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, POLL GET, CODE: 7\n`);
       }
       else if ('voice' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: message.voice.file_id, audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ -1 ], polls: '', voice: message.voice.file_id, audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
       }
       else if ('audio' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ -1 ], polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
       }
       else if ('video_note' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, CIRCLE VIDEO GET, CODE: 9\n`);
       }
     }
@@ -118,7 +118,7 @@ export default async function arch() {
     console.log(user['name'], '( @', user['username'], ')', '( id:', id, ')', user);
   });
   
-  const onPhotoMessage = (startState: UserScriptState, action: ActionType<{ phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number, polls: string, voice: string, audio: string, video_circle: string }>) => 
+  const onPhotoMessage = (startState: UserScriptState, action: ActionType<{ phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number[], polls: string, voice: string, audio: string, video_circle: string }>) => 
   bot.on('message', async (ctx, next) => {
     const id = ctx.chat.id,
       user = (await db.getAll(id)()),
@@ -129,58 +129,58 @@ export default async function arch() {
     if (user.state === startState) {
       console.log(user['state']);
       if ('text' in message) {
-        action(ctx, user, set, { phone_number: '', text: message.text, photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: message.text, photo: '', file: '', stickers: '', video: '', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&PHOTO = UNDEFINED, TEXT: ${message.text}, CODE: 1\n`);
       } 
       else if ('photo' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: message.photo[0].file_id, file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: message.photo[0].file_id, file: '', stickers: '', video: '', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, PHOTO GET, CODE: 2\n`);
       }
       else if ('document' in message) {
         const fileExtension = message.document.file_name!.substr(message.document.file_name!.lastIndexOf('.')).toLowerCase() || '';
 
         if (supportedFormats.includes(fileExtension)){
-          action(ctx, user, set, { phone_number: '', text: '', photo: '', file: message.document.file_id, stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+          action(ctx, user, set, { phone_number: '', text: '', photo: '', file: message.document.file_id, stickers: '', video: '', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
           console.log(`TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, FILE GET (${fileExtension}), CODE: 3\n`);
         }
         else{
-          action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+          action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: '', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
           console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, UNSUPPORTED FILE GET (${fileExtension}), CODE: 3\n`);
         }
       }
       else if ('sticker' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: message.sticker.file_id, video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: message.sticker.file_id, video: '', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, STICKER GET, CODE: 4\n`);
       }
       else if ('video' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: message.video.file_id, location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: message.video.file_id, location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, VIDEO GET, CODE: 5\n`);
       }
       else if ('location' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: message.location.longitude, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ message.location.latitude, message.location.longitude ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, LOCATION GET, CODE: 6\n`);
       }
       else if ('poll' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: message.poll.question, voice: '', audio: '', video_circle: ''});
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ -1 ], polls: message.poll.question, voice: '', audio: '', video_circle: ''});
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, POLL GET, CODE: 7\n`);
       }
       else if ('voice' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: message.voice.file_id, audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ -1 ], polls: '', voice: message.voice.file_id, audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
       }
       else if ('audio' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ -1 ], polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
       }
       else if ('video_note' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, CIRCLE VIDEO GET, CODE: 9\n`);
       }
     }
     else return next();
   });
 
-  const onDocumentationMessage = (startState: UserScriptState, action: ActionType<{ phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number, polls: string, voice: string, audio: string, video_circle: string }>) => 
+  const onDocumentationMessage = (startState: UserScriptState, action: ActionType<{ phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number[], polls: string, voice: string, audio: string, video_circle: string }>) => 
   bot.on('message', async (ctx, next) => {
     const id = ctx.chat.id,
       user = (await db.getAll(id)()),
@@ -191,11 +191,11 @@ export default async function arch() {
     if (user.state === startState) {
       console.log(user['state']);
       if ('text' in message) {
-        action(ctx, user, set, { phone_number: '', text: message.text, photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: message.text, photo: '', file: '', stickers: '', video: '', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&PHOTO = UNDEFINED, TEXT: ${message.text}, CODE: 1\n`);
       } 
       else if ('photo' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: message.photo[0].file_id, file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: message.photo[0].file_id, file: '', stickers: '', video: '', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, PHOTO GET, CODE: 2\n`);
       }
       else if ('document' in message) {
@@ -204,40 +204,40 @@ export default async function arch() {
         const fileExtension = fileExtension0 + fileExtension1;
 
         if (supportedFormats.includes(fileExtension0) || supportedFormats.includes(fileExtension1)){
-          action(ctx, user, set, { phone_number: '', text: '', photo: '', file: message.document.file_id, stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+          action(ctx, user, set, { phone_number: '', text: '', photo: '', file: message.document.file_id, stickers: '', video: '', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
           console.log(`TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, FILE GET (${fileExtension}), CODE: 3\n`);
         }
         else{
-          action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+          action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: '', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
           console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, UNSUPPORTED FILE GET (${fileExtension}), CODE: 3\n`);
         }
       }
       else if ('sticker' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: message.sticker.file_id, video: '', location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: message.sticker.file_id, video: '', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, STICKER GET, CODE: 4\n`);
       }
       else if ('video' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: message.video.file_id, location: -1, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video: message.video.file_id, location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, VIDEO GET, CODE: 5\n`);
       }
       else if ('location' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: message.location.longitude, polls: '', voice: '', audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ message.location.latitude, message.location.longitude ], polls: '', voice: '', audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, LOCATION GET, CODE: 6\n`);
       }
       else if ('poll' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: message.poll.question, voice: '', audio: '', video_circle: ''});
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ -1 ], polls: message.poll.question, voice: '', audio: '', video_circle: ''});
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, POLL GET, CODE: 7\n`);
       }
       else if ('voice' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: message.voice.file_id, audio: '', video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ -1 ], polls: '', voice: message.voice.file_id, audio: '', video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
       }
       else if ('audio' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ -1 ], polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
       }
       else if ('video_note' in message) {
-        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: -1, polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
+        action(ctx, user, set, { phone_number: '', text: '', photo: '', file: '', stickers: '', video:'', location: [ -1 ], polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
         console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, CIRCLE VIDEO GET, CODE: 9\n`);
       }
     }
@@ -511,8 +511,9 @@ export default async function arch() {
     }
 
     async WriteNewDeTask(idTeacher: number, idStudent: number, content: string[], files: string[], typeOfFiles: string[]){
-      let tasksIDsForStudent: ObjectId[],
-        tasksIDsForTeacher: ObjectId[];
+      let tasksIDsForStudent: ObjectId,
+        tasksIDsForTeacher: ObjectId[],
+        system_message = '';
       const student = await this.ShowOneUser(idStudent),
         teacher = await this.ShowOneUser(idTeacher),
         document = await this.deTaskDB.insertOne({
@@ -526,11 +527,14 @@ export default async function arch() {
         answerTypeOfFiles: false
       })
 
-      if (student && student.detasks){
-        tasksIDsForStudent = student.detasks;
-        tasksIDsForStudent.push(document.insertedId);
+      if (student && student.detask){
+        tasksIDsForStudent = document.insertedId;
+        system_message = 'student_task_rewrited';
       }
-      else tasksIDsForStudent = [ document.insertedId ];
+      else{
+        tasksIDsForStudent = document.insertedId;
+        system_message = 'student_task_writed';
+      }
 
       if (teacher && teacher.set_detasks){
         tasksIDsForTeacher = teacher.set_detasks;
@@ -538,8 +542,9 @@ export default async function arch() {
       }
       else tasksIDsForTeacher = [ document.insertedId ];
 
-      await this.botdbUsers.updateOne({id: idStudent}, {$set : {detasks: tasksIDsForStudent}})
+      await this.botdbUsers.updateOne({id: idStudent}, {$set : {detask: tasksIDsForStudent}})
       await this.botdbUsers.updateOne({id: idTeacher}, {$set : {set_detasks: tasksIDsForTeacher}})
+      return system_message;
     }
 
     async WriteAnswerToDeTask(id: ObjectId, content: string[], files: string[], typeOfFiles: string[]){
@@ -573,22 +578,24 @@ export default async function arch() {
 
       if (student){
         if (deTaskStudentID){
-          let answers = [];
-          for (let i = 0; i < deTaskStudentID.length; i++){
-            if (deTaskStudentID[i].answer || deTaskStudentID[i].files){
-              answers.push([ 
-                deTaskStudentID[i].answer || false, 
-                deTaskStudentID[i].files || false ,
-                deTaskStudentID[i].typeOfFiles || false 
-              ]);
-            }
-            else answers.push(false, false, false);
+          if (deTaskStudentID.answer || (deTaskStudentID.files && deTaskStudentID.typeOfFiles)){
+            return [ 
+              deTaskStudentID.answer || false, 
+              deTaskStudentID.files || false,
+              deTaskStudentID.typeOfFiles || false 
+            ];
           }
-          return answers;
+          else return [ 'no_answer_available' ];
         }
-        else return [ 'no_tasks_available' ];
+        else return [ 'no_task_available' ];
       }
       else throw new Error(`\n\nError: Can't find user for get task answer. User id: ${idStudent}`);
+    }
+
+    async GetUserIDByName(name: string){
+      const user = await this.botdbUsers.findOne({ name: name });
+
+      return user ? user.id : false;
     }
   }
 
