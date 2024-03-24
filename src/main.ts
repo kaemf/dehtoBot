@@ -119,14 +119,14 @@ async function main() {
       });
     }
     else{
-      set('phone_number')(data.phone_number);
+      set('phone_number')(data.phone_number[0]);
 
       const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
       if (userObject){
-        await dbProcess.UpdateUserData(userObject._id, data.phone_number, user['username']);
+        await dbProcess.UpdateUserData(userObject._id, data.phone_number[0], user['username']);
       }
-      else dbProcess.AddUser({ id: ctx?.chat?.id ?? -1, name: user['name'], number: data.phone_number, username: user['username'], role: 'guest', count: 0 });
+      else dbProcess.AddUser({ id: ctx?.chat?.id ?? -1, name: user['name'], number: data.phone_number[0], username: user['username'], role: 'guest', count: 0 });
 
       ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
@@ -340,13 +340,15 @@ async function main() {
             const files = task.files,
               idAddress = ctx?.chat?.id ?? -1;
             for (let i = 0; i < files.length; i++){
-              switch (task.typeOfFiles) {
+              switch (task.typeOfFiles[i]) {
                 case "file":
-                  await ctx.telegram.sendDocument(idAddress, files[i]);
+                  const file = files[i].split(';');
+                  await ctx.telegram.sendDocument(idAddress, file[0], {caption: file[1] ? file[1] : ''});
                   break;
 
                 case "photo":
-                  await ctx.telegram.sendPhoto(idAddress, files[i]);
+                  const photo = files[i].split(';');
+                  await ctx.telegram.sendPhoto(idAddress, photo[0], {caption: photo[1] ? photo[1] : ''});
                   break;
 
                 case "audio":
@@ -362,15 +364,26 @@ async function main() {
                   await ctx.telegram.sendVideoNote(idAddress, files[i]);
                   break;
 
+                case "voice":
+                  await ctx.telegram.sendVoice(idAddress, files[i]);
+                  break;
+
+                case "contact":
+                  const phone = files[i].split(';');
+                  await ctx.telegram.sendContact(idAddress, phone[0], phone[1]);
+                  break;
+
                 default:
                   ctx.reply('нам прикро, але надісланий викладачем тип файлу наразі не підтримується, вибачте за труднощі...');
 
-                }
               }
+            }
             await ctx.reply('*можна надсилати усі види файлів (фото, відео, кружечки, войси і тд)');
           }
+          await set('state')('RespondStudentDeTaskHandler');
         }
       }
+      else ctx.reply('вибачте, але у вас немає активних деЗавдань :(');
     }
     else if (data.text === "Запис на заняття"){
       ctx.reply(script.registrationLesson.niceWhatATime, {reply_markup: {remove_keyboard: true}});
@@ -797,7 +810,7 @@ async function main() {
       const paymentStatus: string = await get('paymentStatus') ?? 'unknown',
         name = get("name") ?? "учень",
         inline = inlineApprovePayment(id, paymentStatus),
-        unique_file_id = data.photo;
+        unique_file_id = data.photo[0];
   
       // For Developer
       // ctx.telegram.sendPhoto(devChat, unique_file_id, {
@@ -851,7 +864,7 @@ async function main() {
       const paymentStatus: string = await get('paymentStatus') ?? 'unknown',
         name = get("name") ?? "учень",
         inline = inlineApprovePayment(id, paymentStatus),
-        unique_file_id = data.file;
+        unique_file_id = data.file[0];
   
       // For Developer
       // ctx.telegram.sendDocument(devChat, unique_file_id, {
@@ -1121,7 +1134,7 @@ async function main() {
       const paymentStatus: string = await get('paymentStatus') ?? 'unknown',
         name = get("name") ?? "учень",
         inline = inlineApprovePayment(id, paymentStatus),
-        unique_file_id = data.photo;
+        unique_file_id = data.photo[0];
       
       // For Developer
       // ctx.telegram.sendPhoto(devChat, unique_file_id, {
@@ -1181,7 +1194,7 @@ async function main() {
       const paymentStatus: string = await get('paymentStatus') ?? 'unknown',
         name = get("name") ?? "учень",
         inline = inlineApprovePayment(id, paymentStatus),
-        unique_file_id = data.file;
+        unique_file_id = data.file[0];
       
       // For Developer
       // ctx.telegram.sendDocument(devChat, unique_file_id, {
@@ -1746,7 +1759,7 @@ async function main() {
     else if (CheckException.PhotoException(data)){
       await set('paymentStatusClubOrPacket')('unknown');
       const paymentStatus = await get('paymentStatusClubOrPacket') ?? 'unknown',
-        unique_file_id = data.photo;
+        unique_file_id = data.photo[0];
   
       if (user['club-typeclub'] === 'РазовеЗаняття'){
         const date = DateRecord();
@@ -1863,7 +1876,7 @@ async function main() {
         await set('state')('EndRootManager');
       }
       else if (user['club-typeclub'] === 'Шпрах-Клуб+PLUS'){
-        await set('sc_clubplus_proof')(data.photo);
+        await set('sc_clubplus_proof')(data.photo[0]);
         await set('sc_clubplus_typeproof')('photo');
         ctx.reply(script.speakingClub.thanksType.typePlus, {
           parse_mode: "Markdown",
@@ -1894,7 +1907,7 @@ async function main() {
           //   ...Markup.inlineKeyboard(inline)
           // })
 
-          await ctx.telegram.sendDocument(supportChat, data.file, {
+          await ctx.telegram.sendDocument(supportChat, data.file[0], {
             parse_mode: "HTML",
             caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
@@ -1910,7 +1923,7 @@ async function main() {
           //   ...Markup.inlineKeyboard(inline)
           // })
 
-          await ctx.telegram.sendDocument(supportChat, data.file, {
+          await ctx.telegram.sendDocument(supportChat, data.file[0], {
             parse_mode: "HTML",
             caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
@@ -1929,7 +1942,7 @@ async function main() {
           //   ...Markup.inlineKeyboard(inline)
           // })
 
-          ctx.telegram.sendDocument(supportChat, data.file, {
+          ctx.telegram.sendDocument(supportChat, data.file[0], {
             parse_mode: "HTML",
             caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
@@ -1945,7 +1958,7 @@ async function main() {
           //   ...Markup.inlineKeyboard(inline)
           // })
 
-          ctx.telegram.sendDocument(supportChat, data.file, {
+          ctx.telegram.sendDocument(supportChat, data.file[0], {
             parse_mode: "HTML",
             caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
@@ -1974,7 +1987,7 @@ async function main() {
         await set('state')('EndRootManager');
       }
       else if (user['club-typeclub'] === 'Шпрах-Клуб+PLUS'){
-        await set('sc_clubplus_proof')(data.file);
+        await set('sc_clubplus_proof')(data.file[0]);
         await set('sc_clubplus_typeproof')('file');
         ctx.reply(script.speakingClub.thanksType.typePlus, {
           parse_mode: "Markdown",
@@ -2810,7 +2823,7 @@ async function main() {
       await set('state')('ADD_RespondCountAndGetLink');
     }
     else if (CheckException.FileException(data)){
-      await set('AP_documentation')(data.file);
+      await set('AP_documentation')(data.file[0]);
 
       ctx.reply('Посилання:');
       await set('state')('ADD_RespondLinkAndCheckRight');
@@ -3274,11 +3287,11 @@ async function main() {
         console.log(object.title);
 
       await set('AP_keydatatochange')(data.text);
-      await dbProcess.ChangeKeyData(object, keyForChange, data.file);
-      ctx.telegram.sendDocument(object.teacher_id, data.file, {caption: `Хей!\n\n🤝🏽 Хочемо повідомити, що у клуба ${object.title}, котрий на ${dbProcess.getDateClub(new Date(object.date))} о ${object.time} було змінено документ із лексикою\n\nПросимо ознайомитись❤️`});
+      await dbProcess.ChangeKeyData(object, keyForChange, data.file[0]);
+      ctx.telegram.sendDocument(object.teacher_id, data.file[0], {caption: `Хей!\n\n🤝🏽 Хочемо повідомити, що у клуба ${object.title}, котрий на ${dbProcess.getDateClub(new Date(object.date))} о ${object.time} було змінено документ із лексикою\n\nПросимо ознайомитись❤️`});
       for (let i = 0; i < users.length; i++){
         if (await dbProcess.HasThisClubUser(users[i].id, object!._id)){
-          await ctx.telegram.sendDocument(users[i].id, data.file, {caption: `Хей!\n\n🤝🏽 Хочемо повідомити, що у клуба ${object.title}, котрий на ${dbProcess.getDateClub(new Date(object.date))} о ${object.time} було змінено документ із лексикою\n\nПросимо ознайомитись❤️`});
+          await ctx.telegram.sendDocument(users[i].id, data.file[0], {caption: `Хей!\n\n🤝🏽 Хочемо повідомити, що у клуба ${object.title}, котрий на ${dbProcess.getDateClub(new Date(object.date))} о ${object.time} було змінено документ із лексикою\n\nПросимо ознайомитись❤️`});
         }
       }
       ctx.reply('Успішно виконана операція!', {
@@ -4329,7 +4342,7 @@ async function main() {
       }
     }
     else if (CheckException.TextException(data)){
-      await set('teacher_content_detask')(`${user['teacher_content_detask'] ?? ''}${data.text},`);
+      await set('teacher_content_detask')(`${user['teacher_content_detask'] ? `${user['teacher_content_detask']},` : ''}${data.text}`);
       await ctx.reply('добренько, що далі? чи вже готово?', {
         reply_markup: {
           one_time_keyboard: true,
@@ -4338,8 +4351,8 @@ async function main() {
       })
     }
     else if (CheckException.FileException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ?? ''}${data.file},`);
-      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ?? ''}file,`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.file[0]};${data.file[1]}`);
+      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}file`);
       await ctx.reply('добренько, що далі? чи вже готово?', {
         reply_markup: {
           one_time_keyboard: true,
@@ -4348,8 +4361,8 @@ async function main() {
       })
     }
     else if (CheckException.LocationException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ?? ''}${data.location[0]};${data.location[1]},`);
-      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ?? ''}location,`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.location[0]};${data.location[1]}`);
+      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}location`);
       await ctx.reply('добренько, що далі? чи вже готово?', {
         reply_markup: {
           one_time_keyboard: true,
@@ -4358,7 +4371,7 @@ async function main() {
       })
     }
     else if (CheckException.PhoneException(data)){
-      await set('teacher_content_detask')(`${user['teacher_content_detask'] ?? ''}${data.phone_number},`)
+      await set('teacher_content_detask')(`${user['teacher_content_detask'] ? `${user['teacher_content_detask']},` : ''}${data.phone_number[0]};${data.phone_number[1]}`)
       await ctx.reply('добренько, що далі? чи вже готово?', {
         reply_markup: {
           one_time_keyboard: true,
@@ -4367,8 +4380,8 @@ async function main() {
       })
     }
     else if (CheckException.PhotoException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ?? ''}${data.photo},`);
-      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ?? ''}photo,`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.photo[0]};${data.photo[1]}`);
+      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}photo`);
       await ctx.reply('добренько, що далі? чи вже готово?', {
         reply_markup: {
           one_time_keyboard: true,
@@ -4377,8 +4390,8 @@ async function main() {
       })
     }
     else if (CheckException.StickerException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ?? ''}${data.stickers},`);
-      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ?? ''}sticker,`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.stickers}`);
+      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}sticker`);
       await ctx.reply('добренько, що далі? чи вже готово?', {
         reply_markup: {
           one_time_keyboard: true,
@@ -4387,8 +4400,8 @@ async function main() {
       })
     }
     else if (CheckException.VideoException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ?? ''}${data.video},`);
-      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ?? ''}video,`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.video[0]};${data.video[1]}`);
+      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']}` : ''}video`);
       await ctx.reply('добренько, що далі? чи вже готово?', {
         reply_markup: {
           one_time_keyboard: true,
@@ -4397,8 +4410,8 @@ async function main() {
       })
     }
     else if (CheckException.AudioException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ?? ''}${data.audio},`);
-      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ?? ''}audio,`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.audio}`);
+      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}audio`);
       await ctx.reply('добренько, що далі? чи вже готово?', {
         reply_markup: {
           one_time_keyboard: true,
@@ -4407,8 +4420,8 @@ async function main() {
       })
     }
     else if (CheckException.VideoNoteException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ?? ''}${data.video_circle},`);
-      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ?? ''}video_circle,`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.video_circle}`);
+      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}video_circle`);
       await ctx.reply('добренько, що далі? чи вже готово?', {
         reply_markup: {
           one_time_keyboard: true,
@@ -4445,7 +4458,10 @@ async function main() {
             keyboard: [[{text: "В МЕНЮ"}]]
           }
         });
-        ctx.telegram.sendMessage(userID, "знаю шо заєбав, але нове деЗавданнячко!!");
+        ctx.telegram.sendMessage(userID, "егей! у вас нове деЗавдання!");
+        await set('teacher_content_detask')('');
+        await set('teacher_filecontent_detask')('');
+        await set('teacher_typeofcontent_detask')('');
         await set('state')('EndRootManager');
       }
       else{
@@ -4464,6 +4480,116 @@ async function main() {
           keyboard: studentsKeyboard
         }
       })
+    }
+  })
+
+  onTextMessage('RespondStudentDeTaskHandler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else if (data.text === 'ВІДПРАВИТИ ВІДПОВІДЬ'){
+      const student = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+
+      await dbProcess.WriteAnswerToDeTask(student!.detask, user['student_content_detask'].split(','), user['student_filecontent_detask'].split(','), user['student_typeofcontent_detask'].split(','));
+      ctx.reply('завдання успішно здані!', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{ text: "В МЕНЮ" }]]
+        }
+      })
+
+      await set('state')('EndRootManager');
+    }
+    else if (CheckException.TextException(data)){
+      await set('student_content_detask')(`${user['student_content_detask'] ? `${user['student_content_detask']},` : ''}${data.text}`);
+      await ctx.reply('добренько, що далі? чи вже готово?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
+        }
+      })
+    }
+    else if (CheckException.FileException(data)){
+      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.file[0]};${data.file[1]}`);
+      await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}file`);
+      await ctx.reply('добренько, що далі? чи вже готово?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
+        }
+      })
+    }
+    else if (CheckException.LocationException(data)){
+      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.location[0]};${data.location[1]}`);
+      await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}location`);
+      await ctx.reply('добренько, що далі? чи вже готово?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
+        }
+      })
+    }
+    else if (CheckException.PhoneException(data)){
+      await set('student_content_detask')(`${user['student_content_detask'] ? `${user['student_content_detask']},` : ''}${data.phone_number[0]};${data.phone_number[1]}`)
+      await ctx.reply('добренько, що далі? чи вже готово?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
+        }
+      })
+    }
+    else if (CheckException.PhotoException(data)){
+      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.photo[0]};${data.photo[1]}`);
+      await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}photo`);
+      await ctx.reply('добренько, що далі? чи вже готово?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
+        }
+      })
+    }
+    else if (CheckException.StickerException(data)){
+      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.stickers}`);
+      await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}sticker`);
+      await ctx.reply('добренько, що далі? чи вже готово?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
+        }
+      })
+    }
+    else if (CheckException.VideoException(data)){
+      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.video[0]};${data.video[1]}`);
+      await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']}` : ''}video`);
+      await ctx.reply('добренько, що далі? чи вже готово?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
+        }
+      })
+    }
+    else if (CheckException.AudioException(data)){
+      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.audio}`);
+      await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}audio`);
+      await ctx.reply('добренько, що далі? чи вже готово?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
+        }
+      })
+    }
+    else if (CheckException.VideoNoteException(data)){
+      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.video_circle}`);
+      await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}video_circle`);
+      await ctx.reply('добренько, що далі? чи вже готово?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
+        }
+      })
+    }
+    else{
+      ctx.reply('помилка(\n\nсхоже ви надіслали не підтримуваний тип повідомлення або ж тицьнули не туди')
     }
   })
 

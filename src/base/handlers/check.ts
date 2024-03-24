@@ -1,55 +1,43 @@
-interface dataType{
-  phone_number: string; 
-  text: string, 
-  photo: string, 
-  file: string, 
-  stickers: string, 
-  video: string, 
-  location: number[], 
-  polls: string;
-  voice: string; 
-  audio: string;
-  video_circle: string;
-}
+import Operation from "../../data/general/operation";
 
 class StandartCheckException{
-  public VideoException(data: { phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number[], polls: string, voice: string, audio: string, video_circle: string }): boolean {
-    if (data.phone_number === '' && data.photo === '' && 
-    data.text === '' && data.file === '' && 
+  public VideoException(data: Operation): boolean {
+    if (data.phone_number[0] === '' && data.photo[0] === '' && 
+    data.text === '' && data.file[0] === '' && 
     data.stickers === '' && data.location[0] === -1 && 
-    data.polls === '' && data.video !== '' &&
+    data.polls === '' && data.video[0] !== '' &&
     data.voice === '' && data.audio === '' && data.video_circle === ''){
       return true;
     }
     else return false;
   }
 
-  public PhotoException(data: { phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number[], polls: string, voice: string, audio: string, video_circle: string }): boolean {
-    if (data.phone_number === '' && data.text === '' && 
-    data.file === '' && data.stickers === '' && 
-    data.video === '' && data.polls === '' &&
-    data.location[0] === -1 && data.photo !== '' &&
+  public PhotoException(data: Operation): boolean {
+    if (data.phone_number[0] === '' && data.text === '' && 
+    data.file[0] === '' && data.stickers === '' && 
+    data.video[0] === '' && data.polls === '' &&
+    data.location[0] === -1 && data.photo[0] !== '' &&
     data.voice === '' && data.audio === '' && data.video_circle === ''){
       return true;
     }
     else return false;
   }
 
-  public FileException(data: { phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number[], polls: string, voice: string, audio: string, video_circle: string }): boolean {
-    if (data.phone_number === '' && data.photo === '' && 
+  public FileException(data: Operation): boolean {
+    if (data.phone_number[0] === '' && data.photo[0] === '' && 
     data.text === '' && data.stickers === '' && 
-    data.video === '' && data.location[0] === -1 &&
-    data.polls === '' && data.file !== '' &&
+    data.video[0] === '' && data.location[0] === -1 &&
+    data.polls === '' && data.file[0] !== '' &&
     data.voice === '' && data.audio === '' && data.video_circle === ''){
       return true;
     }
     else return false;
   }
 
-  public TextException(data: { phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number[], polls: string, voice: string, audio: string, video_circle: string }): boolean {
-    if (data.phone_number === '' && data.photo === '' && 
-    data.file === '' && data.stickers === '' && 
-    data.video === '' && data.location[0] === -1 &&
+  public TextException(data: Operation): boolean {
+    if (data.phone_number[0] === '' && data.photo[0] === '' && 
+    data.file[0] === '' && data.stickers === '' && 
+    data.video[0] === '' && data.location[0] === -1 &&
     data.polls === '' && data.text !== '' &&
     data.voice === '' && data.audio === '' && data.video_circle === ''){
       return true;
@@ -57,10 +45,10 @@ class StandartCheckException{
     else return false;
   }
 
-  public StickerException(data: { phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number[], polls: string, voice: string, audio: string, video_circle: string }): boolean {
-    if (data.phone_number === '' && data.photo === '' && 
-    data.text === '' && data.file === '' && 
-    data.video === '' && data.location[0] === -1 &&
+  public StickerException(data: Operation): boolean {
+    if (data.phone_number[0] === '' && data.photo[0] === '' && 
+    data.text === '' && data.file[0] === '' && 
+    data.video[0] === '' && data.location[0] === -1 &&
     data.polls === '' && data.stickers !== '' &&
     data.voice === '' && data.audio === '' && data.video_circle === ''){
       return true;
@@ -68,10 +56,10 @@ class StandartCheckException{
     else return false;
   }
 
-  public LocationException(data: { phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number[], polls: string, voice: string, audio: string, video_circle: string }): boolean {
-    if (data.phone_number === '' && data.photo === '' && 
-    data.text === '' && data.file === '' && 
-    data.video === '' && data.stickers === '' &&
+  public LocationException(data: Operation): boolean {
+    if (data.phone_number[0] === '' && data.photo[0] === '' && 
+    data.text === '' && data.file[0] === '' && 
+    data.video[0] === '' && data.stickers === '' &&
     data.polls === '' && data.location[0] !== -1 &&
     data.voice === '' && data.audio === '' && data.video_circle === ''){
       return true;
@@ -79,10 +67,10 @@ class StandartCheckException{
     else return false;
   }
 
-  public PollsException(data: { phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number[], polls: string, voice: string, audio: string, video_circle: string }): boolean {
-    if (data.phone_number === '' && data.photo === '' && 
-    data.text === '' && data.file === '' && 
-    data.video === '' && data.location[0] === -1 &&
+  public PollsException(data: Operation): boolean {
+    if (data.phone_number[0] === '' && data.photo[0] === '' && 
+    data.text === '' && data.file[0] === '' && 
+    data.video[0] === '' && data.location[0] === -1 &&
     data.stickers === '' && data.polls !== '' &&
     data.voice === '' && data.audio === '' && data.video_circle === ''){
       return true;
@@ -90,10 +78,10 @@ class StandartCheckException{
     else return false;
   }
 
-  public PhoneException(data: { phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number[], polls: string, voice: string, audio: string, video_circle: string }): boolean {
-    if (data.phone_number !== '' && data.photo === '' && 
-    data.text === '' && data.file === '' && 
-    data.video === '' && data.location[0] === -1 &&
+  public PhoneException(data: Operation): boolean {
+    if (data.phone_number[0] !== '' && data.photo[0] === '' && 
+    data.text === '' && data.file[0] === '' && 
+    data.video[0] === '' && data.location[0] === -1 &&
     data.stickers === '' && data.polls === '' &&
     data.voice === '' && data.audio === '' && data.video_circle === ''){
       return true;
@@ -101,10 +89,10 @@ class StandartCheckException{
     else return false;
   }
 
-  public AudioException(data: { phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number[], polls: string, voice: string, audio: string, video_circle: string }): boolean {
-    if (data.phone_number === '' && data.photo === '' && 
-    data.text === '' && data.file === '' && 
-    data.video === '' && data.location[0] === -1 &&
+  public AudioException(data: Operation): boolean {
+    if (data.phone_number[0] === '' && data.photo[0] === '' && 
+    data.text === '' && data.file[0] === '' && 
+    data.video[0] === '' && data.location[0] === -1 &&
     data.stickers === '' && data.polls === '' &&
     data.voice === '' && data.audio !== '' && data.video_circle === ''){
       return true;
@@ -112,10 +100,10 @@ class StandartCheckException{
     else return false;
   }
 
-  public VideoNoteException(data: { phone_number: string; text: string, photo: string, file: string, stickers: string, video: string, location: number[], polls: string, voice: string, audio: string, video_circle: string }): boolean {
-    if (data.phone_number === '' && data.photo === '' && 
-    data.text === '' && data.file === '' && 
-    data.video === '' && data.location[0] === -1 &&
+  public VideoNoteException(data: Operation): boolean {
+    if (data.phone_number[0] === '' && data.photo[0] === '' && 
+    data.text === '' && data.file[0] === '' && 
+    data.video[0] === '' && data.location[0] === -1 &&
     data.stickers === '' && data.polls === '' &&
     data.voice === '' && data.audio === '' && data.video_circle !== ''){
       return true;
@@ -123,7 +111,18 @@ class StandartCheckException{
     else return false;
   }
 
-  public BackRoot(data: dataType){
+  public VoiceException(data: Operation): boolean {
+    if (data.phone_number[0] === '' && data.photo[0] === '' && 
+    data.text === '' && data.file[0] === '' && 
+    data.video[0] === '' && data.location[0] === -1 &&
+    data.stickers === '' && data.polls === '' &&
+    data.voice !== '' && data.audio === '' && data.video_circle === ''){
+      return true;
+    }
+    else return false;
+  }
+
+  public BackRoot(data: Operation){
     if (this.TextException(data) && data.text === '/back'){
       return true;
     }
