@@ -78,3 +78,5 @@ export type UserScriptState =
   | "TeachersSetTasksHandler"
   | "TeachersChooseStudentHandler"
   | "RespondStudentDeTaskHandler"
+  | "TeacherDeTaskHandler"
+  | "GetStudentForTeacherDeTaskHandler"

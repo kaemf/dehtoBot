@@ -588,15 +588,16 @@ export default async function arch() {
 
     async GetStudentAnswerForDeTask(idStudent: number){
       const student = await this.ShowOneUser(idStudent),
-        deTaskStudentID = student ? student.detasks : false;
+        deTaskStudentID = student ? student.detask : false,
+        deTask = await this.GetDeTaskForStudent(deTaskStudentID);
 
       if (student){
-        if (deTaskStudentID){
-          if (deTaskStudentID.answer || (deTaskStudentID.files && deTaskStudentID.typeOfFiles)){
+        if (deTask){
+          if (deTask.answer || (deTask.answerFiles && deTask.answerTypeOfFiles)){
             return [ 
-              deTaskStudentID.answer || false, 
-              deTaskStudentID.files || false,
-              deTaskStudentID.typeOfFiles || false 
+              deTask.answer || false, 
+              deTask.answerFiles || false,
+              deTask.answerTypeOfFiles || false 
             ];
           }
           else return [ 'no_answer_available' ];

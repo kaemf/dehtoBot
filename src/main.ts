@@ -174,8 +174,13 @@ async function main() {
     }
     else if (data.text === 'деЗавдання' && userI!.role === 'teacher'){
       if (userI!.set_detasks){
-        ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання')
-        await set('state')('TeachersSetTasksHandler')
+        ctx.reply('вітаю в деЗавданнях, що саме вас цікавить?', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.deTaskMenu()
+          }
+        })
+        await set('state')('TeacherDeTaskHandler');
       }
       else{
         ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання')
@@ -4488,9 +4493,22 @@ async function main() {
       //back
     }
     else if (data.text === 'ВІДПРАВИТИ ВІДПОВІДЬ'){
-      const student = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+      const student = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+        deTask = await dbProcess.GetDeTaskForStudent(student!.detask);
 
-      await dbProcess.WriteAnswerToDeTask(student!.detask, user['student_content_detask'].split(','), user['student_filecontent_detask'].split(','), user['student_typeofcontent_detask'].split(','));
+      await dbProcess.WriteAnswerToDeTask(
+        deTask!._id, 
+        user['student_content_detask'].split(','), 
+        user['student_filecontent_detask'].split(','), 
+        user['student_typeofcontent_detask'].split(',')
+      );
+
+      await set('student_content_detask')('');
+      await set('student_filecontent_detask')('');
+      await set('student_typeofcontent_detask')('');
+
+      ctx.telegram.sendMessage(deTask!.idTeacher, `студент ${student!.name} дав відповідь на ваше деЗавдання!`);
+
       ctx.reply('завдання успішно здані!', {
         reply_markup: {
           one_time_keyboard: true,
@@ -4591,6 +4609,205 @@ async function main() {
     else{
       ctx.reply('помилка(\n\nсхоже ви надіслали не підтримуваний тип повідомлення або ж тицьнули не туди')
     }
+  })
+
+  onTextMessage('TeacherDeTaskHandler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+
+    }
+    else{
+      const teacher = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+        teachersStudents = teacher!.registered_students,
+        teacherTasks = teacher!.set_detasks;
+      let keyboard = [];
+      switch(data.text){
+        case "Мої студенти":
+          for (let i = 0; i < teachersStudents.length; i++){
+            keyboard.push([{ text: teachersStudents[i]}])
+          }
+          ctx.reply('добренько, тепер виберіть студента, котрий вам потрібен', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboard
+            }
+          })
+          await set('state')('GetStudentForTeacherDeTaskHandler');
+          break;
+
+        case "Студенти, котрі виконали":
+          for (let i = 0; i < teachersStudents.length; i++){
+            const studentID = await dbProcess.GetUserIDByName(teachersStudents[i]),
+              userObject = await dbProcess.ShowOneUser(studentID),
+              task = await dbProcess.GetStudentAnswerForDeTask(studentID);
+
+            if (task){
+              for (let j = 0; j < teacherTasks.length; j++){
+                if (teacherTasks[j].toString() === userObject!.detask.toString() && task[0] !== 'no_answer_available'){
+                  keyboard.push([{ text: teachersStudents[i]}])
+                }
+              }
+            }
+          }
+
+          if (!keyboard.length){
+            ctx.reply('нажаль... ви не маєте студентів, котрі виконали ваші завдання :(', {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboards.deTaskMenu()
+              }
+            });
+          }
+          else{
+            ctx.reply('ось всі студенти, які виконали доручені вами завдання', {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboard
+              }
+            })
+            await set('state')('GetStudentForTeacherDeTaskHandler');
+          }
+          break;
+
+        case "Студенти, котрі не виконали":
+          for (let i = 0; i < teachersStudents.length; i++){
+            const studentID = await dbProcess.GetUserIDByName(teachersStudents[i]),
+              userObject = await dbProcess.ShowOneUser(studentID),
+              task = await dbProcess.GetStudentAnswerForDeTask(studentID);
+            
+              if (task){
+                for (let j = 0; j < teacherTasks.length; j++){
+                  if (teacherTasks[j].toString() === userObject!.detask.toString() && task[0] === 'no_answer_available'){
+                    keyboard.push([{ text: teachersStudents[i]}])
+                  }
+                }
+              }
+            }
+
+          if (!keyboard.length){
+            ctx.reply('на привелике задоволення у вас відсутні студенти, котрі не виконали ваші завдання!', {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboards.deTaskMenu()
+              }
+            });
+          }
+          else{
+            ctx.reply('ось всі студенти, котрі не виконали доручені вами завдання', {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboard
+              }
+            })
+            await set('state')('GetStudentForTeacherDeTaskHandler');
+          }
+          break;
+
+        default:
+          ctx.reply(script.errorException.chooseButtonError, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.deTaskMenu() // TODO
+            }
+          })
+      }
+    }
+  })
+
+  onTextMessage('GetStudentForTeacherDeTaskHandler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+
+    }
+    else if (CheckException.TextException(data)){
+      const studentID = await dbProcess.GetUserIDByName(data.text),
+        student = await dbProcess.ShowOneUser(studentID),
+        teacher = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+        teacherTasks = teacher ? teacher.set_detasks : false;
+      let teacherHaveThisTask = false;
+      
+      for (let i = 0; i < teacherTasks.length; i++){
+        if (teacherTasks[i].toString() === student!.detask.toString()){
+          teacherHaveThisTask = true;
+          break;
+        }
+      }
+
+      if (student && teacherTasks){
+        const answer = await dbProcess.GetStudentAnswerForDeTask(studentID);
+
+        if (teacherHaveThisTask){
+          console.log(answer[0])
+          if (answer[0] !== 'no_answer_available'){
+            await ctx.reply('чудова новина! з радістю повідомляємо, що студент дав відповідь на ваше завдання!');
+            new Promise(resolve => setTimeout(() => resolve, 2000));
+            if (answer){
+              if (answer[0]){
+                const content = answer[0];
+                for (let i = 0; i < content.length; i++){
+                  await ctx.reply(content[i]);
+                }
+              }
+              if (answer[1] && answer[2]){
+                const files = answer[1],
+                  idAddress = ctx?.chat?.id ?? -1;
+                for (let i = 0; i < files.length; i++){
+                  switch (answer[2][i]) {
+                    case "file":
+                      const file = files[i].split(';');
+                      await ctx.telegram.sendDocument(idAddress, file[0], {caption: file[1] ? file[1] : ''});
+                      break;
+    
+                    case "photo":
+                      const photo = files[i].split(';');
+                      await ctx.telegram.sendPhoto(idAddress, photo[0], {caption: photo[1] ? photo[1] : ''});
+                      break;
+    
+                    case "audio":
+                      await ctx.telegram.sendAudio(idAddress, files[i]);
+                      break;
+    
+                    case "location":
+                      const loc = files[i].split(';');
+                      await ctx.telegram.sendLocation(idAddress, loc[0], loc[1]);
+                      break;
+    
+                    case "video_circle":
+                      await ctx.telegram.sendVideoNote(idAddress, files[i]);
+                      break;
+    
+                    case "voice":
+                      await ctx.telegram.sendVoice(idAddress, files[i]);
+                      break;
+    
+                    case "contact":
+                      const phone = files[i].split(';');
+                      await ctx.telegram.sendContact(idAddress, phone[0], phone[1]);
+                      break;
+    
+                    default:
+                      ctx.reply('нам прикро, але надісланий викладачем тип файлу наразі не підтримується, вибачте за труднощі...');
+    
+                  }
+                }
+                await ctx.reply('*можна надсилати усі види файлів (фото, відео, кружечки, войси і тд)');
+              }
+            }
+          }
+          else ctx.reply('нажаль, студент ще не дав відповіді на ваше завдання :(', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.deTaskMenu()
+            }
+          });
+        }
+        else{
+          ctx.reply('вибачте, але ви не давали цьому студенту деЗавдання...');
+          ctx.telegram.sendMessage(devChat, `ERROR:\n\nTeacher ${user['name']} (id: ${ctx?.chat?.id ?? -1}, tg: @${user['username']}) has a student who did not give the assignment\n\nвибачте, але ви не давали цьому студенту деЗавдання...`)
+        }
+      }
+      else{
+        ctx.reply(script.errorException.chooseButtonError);
+    }
+  }
   })
 
   // Payment Main Bot Function Action
