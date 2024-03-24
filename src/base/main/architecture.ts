@@ -597,6 +597,10 @@ export default async function arch() {
 
       return user ? user.id : false;
     }
+
+    async GetDeTaskForStudent(taskID: ObjectId){
+      return await this.deTaskDB.findOne({_id: taskID});
+    }
   }
 
   const dbProcess : DBProcess = new DBProcess();

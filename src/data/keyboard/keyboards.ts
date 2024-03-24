@@ -18,32 +18,32 @@ function CheckDeveloper(currentChatId: number){
 
 class Keyboard{
   mainMenu(currentChatId: number, role: string){
-    if (CheckDeveloper(currentChatId)){
-      return [
-        [
-          {
-            text: "Індивідуальні заняття"
-          }
-        ],[
-          {
-            text: "Шпрах-Клуби"
-          }
-        ],[
-          {
-            text: "Вчитель на годину",
-          },
-        ],[
-          {
-            text: "Мої Шпрах-клуби"
-          }  
-        ],[
-          {
-            text: "Адмін Панель"
-          }
-        ]
-    ]
-    }
-    else if (role === 'teacher'){
+    // if (CheckDeveloper(currentChatId)){
+    //   return [
+    //     [
+    //       {
+    //         text: "Індивідуальні заняття"
+    //       }
+    //     ],[
+    //       {
+    //         text: "Шпрах-Клуби"
+    //       }
+    //     ],[
+    //       {
+    //         text: "Вчитель на годину",
+    //       },
+    //     ],[
+    //       {
+    //         text: "Мої Шпрах-клуби"
+    //       }  
+    //     ],[
+    //       {
+    //         text: "Адмін Панель"
+    //       }
+    //     ]
+    // ]
+    // }
+    if (role === 'teacher'){
       return [
         [
           {
@@ -59,6 +59,23 @@ class Keyboard{
           }
         ]
       ]
+      }
+      else if (role === 'student'){
+        return [
+          [
+            {
+              text: "Мої індивідуальні заняття"
+            }
+          ],[
+            {
+              text: "Розмовні клуби"
+            }
+          ],[
+            {
+              text: "Моя служба турботи"
+            }
+          ]
+        ]
       }
       else if (checkChats(currentChatId)){
         return [
@@ -79,23 +96,6 @@ class Keyboard{
                 text: "Адмін Панель"
               }
             ]
-        ]
-      }
-      else if (role === 'student'){
-        return [
-          [
-            {
-              text: "Мої індивідуальні заняття"
-            }
-          ],[
-            {
-              text: "Розмовні клуби"
-            }
-          ],[
-            {
-              text: "Моя служба турботи"
-            }
-          ]
         ]
       }
       else{
