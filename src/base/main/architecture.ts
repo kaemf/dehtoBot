@@ -452,19 +452,13 @@ export default async function arch() {
     async GetTeacherBool(name: string){
       const haveTeacher = await this.botdbUsers.findOne({ name: name });
 
-      if (haveTeacher){
-        return true;
-      }
-      else return false;
+      return haveTeacher ? true : false;
     }
 
     async GetTeacherNameAndID(name: string, choose: boolean){
       const teacher = await this.botdbUsers.findOne({ name: name });
 
-      if (choose){
-        return [teacher!.name, teacher!.id]
-      }
-      else return teacher!.id;
+      return choose ? [teacher!.name, teacher!.id] : teacher!.id;
     }
 
     private isTimeExpired(deleteAt: Date): boolean {
@@ -615,6 +609,18 @@ export default async function arch() {
 
     async GetDeTaskForStudent(taskID: ObjectId){
       return await this.deTaskDB.findOne({_id: taskID});
+    }
+
+    async DeleteDeTask(taskID: ObjectId){
+      const deTask = await this.GetDeTaskForStudent(taskID),
+        userWithTask = await this.ShowOneUser(deTask ? deTask.idStudent : ''),
+        teacherWithTask = await this.ShowOneUser(deTask ? deTask.idTeacher : '');
+
+        const updateObject = {$set : {
+          detask: []
+        }}
+  
+        await this.botdbUsers.updateOne({_id: userWithTask?._id}, updateObject);
     }
   }
 

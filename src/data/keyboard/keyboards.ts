@@ -429,8 +429,38 @@ class Keyboard{
     ]
   }
 
-  deTaskMenu(){
-    return [
+  deTaskMenu(end?: string){
+    return end === 'have_task'
+    ?
+    [
+      [
+        {
+          text: "Дати інше завдання"
+        }
+      ],
+      [
+        {
+          text: "В МЕНЮ"
+        }
+      ]
+    ]
+    :
+    (end === 'not_have_task'
+    ?
+    [
+      [
+        {
+          text: "Дати завдання"
+        }
+      ],
+      [
+        {
+          text: "В МЕНЮ"
+        }
+      ]
+    ]
+    :
+    [
       [
         {
           text: "Мої студенти"
@@ -447,6 +477,7 @@ class Keyboard{
         }
       ]
     ]
+    )
   }
 }
 
