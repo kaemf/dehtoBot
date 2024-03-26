@@ -510,11 +510,17 @@ export default async function dbProcess(botdb: MongoClient){
         }
 
         async DeleteTeacherFromPost(idTeacher: number){
-            const teacherObject = await dbProcess.ShowOneUser(idTeacher);
+            const teacherObject = await dbProcess.ShowOneUser(idTeacher),
+                teacherDetasks = teacherObject?.set_detasks;
 
             if (teacherObject){
-                await this.botdbUsers.updateMany({teacher: idTeacher}, {$set: {teacher: false}});
+                await this.botdbUsers.updateMany({teacher: idTeacher}, {$set: {teacher: false, detask: false}});
                 await this.botdbUsers.updateOne({id: teacherObject!.idTeacher}, {$set : {registered_students: [], role: 'guest', set_detasks: []}});
+                if (teacherDetasks){
+                    for (let i = 0; i < teacherDetasks.length; i++){
+                        await this.deTaskDB.deleteOne({_id: teacherDetasks[i]})
+                    }
+                }
                 return true;
             }
             else return false;

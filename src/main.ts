@@ -197,7 +197,7 @@ async function main() {
       });
       await set('state')('ChoosingCourses');
     }
-    else if (data.text === "Розмовні клуби"){
+    else if (data.text === "Розмовні клуби" && (userI!.role === 'student' || userI!.role === 'guest')){
       ctx.reply("Виберіть одну із запропонованих кнопок", {
         parse_mode: "Markdown",
         reply_markup: {
@@ -241,7 +241,7 @@ async function main() {
 
       await set('state')('AdminRootHandler');
     }
-    else if (data.text === 'Мої Шпрах-клуби'){
+    else if (data.text === 'Мої Розмовні клуби' && userI!.role === 'teacher'){
       const results = await dbProcess.ShowAll(),
         users = await dbProcess.ShowAllUsers();
 
@@ -426,6 +426,38 @@ async function main() {
         }
       });
       await set('state')('AdminTeachersOperationHandler')
+    }
+    else if (data.text === 'Показати усіх наших студентів' && (userObject!.role === 'admin' || userObject!.role === 'developer')){
+      const users = await dbProcess.ShowAllUsers();
+      let students = [], sortedStudents = [];
+
+      for (let i = 0; i < users.length; i++){
+        if (users[i].role === 'student'){
+          students.push(users[i]);
+        }
+      }
+
+      sortedStudents = students.slice().sort((a: any, b: any) => a.name.localeCompare(b.name));
+
+      for (let i = 0; i < sortedStudents.length; i++){
+        const teacher = await dbProcess.ShowOneUser(sortedStudents[i]!.teacher);
+        await ctx.reply(script.studentFind.generalFind(
+          sortedStudents[i].name,
+          sortedStudents[i].id,
+          sortedStudents[i].role,
+          sortedStudents[i].username,
+          sortedStudents[i].number,
+          sortedStudents[i].typeOfLessons ?? "Індивідуальні",
+          teacher?.name ?? "Відсутній",
+          sortedStudents[i].individual_count ?? 0,
+          sortedStudents[i].miro_link ?? "Відсутнє"
+        ), {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.indiviualMenu(userObject!.role)
+          }
+        })
+      }
     }
     else if (data.text === "Запис на заняття"){
       ctx.reply(script.registrationLesson.niceWhatATime, {reply_markup: {remove_keyboard: true}});
@@ -1400,168 +1432,135 @@ async function main() {
         },
       });
     }
-    else if (data.text === 'Реєстрація на клуб'){
-      if (userA!.role !== 'teacher'){
-        const results = await dbProcess.ShowAll();
-      
-        for (let i = 0; i < results.length; i++) {
-          let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
-  
-          await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString), {
-            parse_mode: "HTML"
-          });
-        }
-  
-        await ctx.reply('виберіть номер клуба для запису:', {
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
-              return [{ text: `${index + 1}` }];
-            })
-          }
-        })
-  
-        await set('state')('GetClubToRegistrationAndCheckPayment');
-      }
-      else{
-        ctx.reply('викладачі не можуть записатись.')
-      }
-    }
-    else if (data.text === 'Залишок моїх занять'){
-      if (userA!.role !== 'teacher'){
-        if (userA!.count > 0){
-          ctx.reply(script.speakingClub.lessLessons(userA!.count), {
-            parse_mode: "HTML",
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: [
-                [
-                  {
-                    text: "В МЕНЮ"
-                  },
-                ]
-              ],
-            },
-          });
-          await set('state')('EndRootManager');
-        }
-        else{
-          ctx.reply(script.speakingClub.lessLessons(userA!.count), {
-            parse_mode: "HTML",
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: [
-                [
-                  {
-                    text: "так"
-                  },
-                  {
-                    text: "ні"
-                  }
-                ]
-              ],
-            },
-          });
-          await set('state')('RespondCheckLessonsAndGetLessons');
-        }
-      }
-      else{
-        ctx.reply('викладач немає занять');
-      }
-    }
-    else if (data.text === 'Оплатити заняття'){
-      const user = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
-      if (user!.role !== 'teacher'){
-        ctx.reply(script.speakingClub.payPacketLesson, {
-          parse_mode: "HTML",
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: keyboards.payPacketLessons()
-          },
-        });
-        await set('temp-prev-state')('menu-state');
-        await set('state')('RespondTypePacketAndGetPayment');
-      }
-      else{
-        ctx.reply('викладачі не можуть оплачувати заняття.')
-      }
-    }
-    else if (data.text === 'Мої Шпрах-клуби'){
-      const userActiveClubs = await dbProcess.getUserActiveClubs(ctx?.chat?.id ?? -1);
-
-      if (userActiveClubs){
-        await ctx.reply(script.speakingClub.report.mySpeackingClub.ifTrue);
-        for (let i = 0; i < userActiveClubs.length; i++){
-          const actualClubData = await dbProcess.ShowData(new ObjectId(userActiveClubs[i]))
-
-          await ctx.telegram.sendDocument(ctx?.chat?.id ?? -1,
-            actualClubData!.documentation,
-            {caption: script.speakingClub.report.showOwnClubToUser(i + 1, actualClubData!.title, actualClubData!.teacher,
-              dbProcess.getDateClub(new Date(actualClubData!.date)), actualClubData!.time, actualClubData!.link)}
-          );
-        }
-
-        ctx.reply('це всі ваші клаби :)', {
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: [
-              [
-                {
-                  text: "В МЕНЮ"
-                }
-              ]
-            ]
-          }
-        });
-
-        await set('state')('EndRootManager');
-      }
-      else{
-        await ctx.reply(script.speakingClub.report.mySpeackingClub.ifFalse, {
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: [
-              [
-                {
-                  text: 'так'
-                },
-                {
-                  text: 'ні'
-                }
-              ]
-            ]
-          }
-        })
-
-        await set('state')('MyClubEmptyHandler');
-      }
-    }
-    else if (data.text === 'Про шпрах-клуб'){
-      ctx.reply(script.speakingClub.about, {
-        parse_mode: "HTML",
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "В МЕНЮ"
-              },
-            ]
-          ],
-        },
-      })
-
-      await set('state')('EndRootManager');
-    }
     else{
-      ctx.reply(script.errorException.chooseButtonError, {
-        parse_mode: "Markdown",
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: await keyboards.speakingClubMenu()
-        },
-      });
+      switch(data.text){
+        case "Реєстрація на клуб":
+          if (userA!.role !== 'teacher'){
+            const results = await dbProcess.ShowAll();
+          
+            for (let i = 0; i < results.length; i++) {
+              let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
+      
+              await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString), {
+                parse_mode: "HTML"
+              });
+            }
+      
+            await ctx.reply('виберіть номер клуба для запису:', {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+                  return [{ text: `${index + 1}` }];
+                })
+              }
+            })
+      
+            await set('state')('GetClubToRegistrationAndCheckPayment');
+          }
+          else{
+            ctx.reply('викладачі не можуть записатись.')
+          }
+          break;
+
+        case "Баланс моїх занять":
+          if (userA!.count > 0){
+            ctx.reply(script.speakingClub.lessLessons(userA!.count), {
+              parse_mode: "HTML",
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: [[{ text: "В МЕНЮ" }]]
+              },
+            });
+            await set('state')('EndRootManager');
+          }
+          else{
+            ctx.reply(script.speakingClub.lessLessons(userA!.count), {
+              parse_mode: "HTML",
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboards.yesNo()
+              }
+            });
+            await set('state')('RespondCheckLessonsAndGetLessons');
+          }
+          break;
+
+        case "Мої реєстрації":
+          const userActiveClubs = await dbProcess.getUserActiveClubs(ctx?.chat?.id ?? -1);
+
+          if (userActiveClubs){
+            await ctx.reply(script.speakingClub.report.mySpeackingClub.ifTrue(user['name']));
+            for (let i = 0; i < userActiveClubs.length; i++){
+              const actualClubData = await dbProcess.ShowData(new ObjectId(userActiveClubs[i]))
+
+              await ctx.telegram.sendDocument(ctx?.chat?.id ?? -1,
+                actualClubData!.documentation,
+                {caption: script.speakingClub.report.showOwnClubToUser(i + 1, actualClubData!.title, actualClubData!.teacher,
+                  dbProcess.getDateClub(new Date(actualClubData!.date)), actualClubData!.time, actualClubData!.link)}
+              );
+            }
+
+            ctx.reply('це всі ваші клаби :)', {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: [[{ text: "В МЕНЮ" }]]
+              }
+            });
+
+            await set('state')('EndRootManager');
+          }
+          else{
+            await ctx.reply(script.speakingClub.report.mySpeackingClub.ifFalse(user['name']), {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboards.yesNo()
+              }
+            })
+
+            await set('state')('MyClubEmptyHandler');
+          }
+          break;
+
+        case "Про розмовні клуби":
+          ctx.reply(script.speakingClub.about, {
+            parse_mode: "HTML",
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: [[{ text: "В МЕНЮ" }]]
+            }
+          })
+    
+          await set('state')('EndRootManager');
+          break;
+
+        default:
+          ctx.reply(script.errorException.chooseButtonError, {
+            parse_mode: "Markdown",
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: await keyboards.speakingClubMenu()
+            },
+          });
+          break;
+      }
     }
+    // if (data.text === 'Оплатити заняття'){
+    //   const user = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+    //   if (user!.role !== 'teacher'){
+    //     ctx.reply(script.speakingClub.payPacketLesson, {
+    //       parse_mode: "HTML",
+    //       reply_markup: {
+    //         one_time_keyboard: true,
+    //         keyboard: keyboards.payPacketLessons()
+    //       },
+    //     });
+    //     await set('temp-prev-state')('menu-state');
+    //     await set('state')('RespondTypePacketAndGetPayment');
+    //   }
+    //   else{
+    //     ctx.reply('викладачі не можуть оплачувати заняття.')
+    //   }
+    // }
   })
 
   // My Club Empty Handler

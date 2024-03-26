@@ -475,8 +475,8 @@ ${count === 0 ? '' : `кількість доступних місць: ${count}
       },
 
       mySpeackingClub: {
-        ifTrue: `ось клуби, на які Ви зареєстровані:`,
-        ifFalse: `Ви не зареєстровані на жоден клаб😳\nбажаєте зареєструватися?)`
+        ifTrue: (name: string) => `✅ ${name}}, ви зареєстровані на такі клуби: `,
+        ifFalse: (name: string) => `${name}, у вас немає реєстрацій на розмовні клуби😳\n\nхочете зареєструватися?)`
       },
 
       announcementClub: (title: string, teacher: string, date: string, time: string) => `🔥dehto має новий Шпрах-Клуб🔥 \n
@@ -515,7 +515,7 @@ ${name}
 посилання на дошку Miro студента: ${miro}`,
 
     showTeacher: (name: string, id: number, role: string, username: string, phone: string, countOfStudents: number) =>
-    `👉 ${role} (ID: ${id})
+    `👉 ${ConvertRole(role)} (ID: ${id})
 ${name}
 (@${username}); ${phone}\n
 ✅ К-ть студентів: ${countOfStudents}`,
