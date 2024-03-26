@@ -87,3 +87,5 @@ export type UserScriptState =
   | "IndividualChangeUserDataHandler"
   | "DeleteStudentFromTeacherIndividualHandler"
   | "AdminTeachersOperationHandler"
+  | "AdminOurTeachersHandler"
+  | "AdminTeacherDeleteFromPost"

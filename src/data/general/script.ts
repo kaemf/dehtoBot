@@ -518,7 +518,14 @@ ${name}
     `👉 ${role} (ID: ${id})
 ${name}
 (@${username}); ${phone}\n
-✅ К-ть студентів: ${countOfStudents}`
+✅ К-ть студентів: ${countOfStudents}`,
+
+    individualFind: (name: string, id: number, role: string, username: string, phone: string, count: number, miro: string) =>
+    `👉 ${ConvertRole(role)} (ID: ${id})
+${name}
+(@${username}); ${phone}\n
+✅ Залишок: ${count} занять (${count * 60}хв)\n
+посилання на дошку Miro студента: ${miro}`
   }
 
 }

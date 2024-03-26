@@ -22,7 +22,7 @@ import formattedName from "./data/process/nameFormatt";
 import DateRecord from "./base/handlers/getTime";
 import MongoDBReturnType from "./data/general/mongoDBType";
 import { Markup, TelegramError } from "telegraf";
-import { ObjectId } from 'mongodb';
+import { Db, ObjectId } from 'mongodb';
 
 async function main() {
   const [ onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, db, dbProcess ] = await arch();
@@ -415,7 +415,7 @@ async function main() {
       let teachersKeyboard = [];
 
       for (let i = 0; i < teachers.length; i++){
-        if (teachers[i].role === 'teachers'){
+        if (teachers[i].role === 'developer'){
           teachersKeyboard.push([{ text: teachers[i].name }]);
         }
       }
@@ -5234,9 +5234,185 @@ async function main() {
       //back
     }
     else if (CheckException.TextException(data)){
-      const teacher = await dbProcess.ShowOneUser(await dbProcess.GetUserIDByName(data.text))
+      const teacher = await dbProcess.ShowOneUser(await dbProcess.GetUserIDByName(data.text));
+
       if (teacher && teacher.role === 'teacher'){
-        
+        await set('admin_teachersoperation_idone')(teacher.id);
+        ctx.reply(script.studentFind.showTeacher(
+          teacher.name,
+          teacher.id,
+          teacher.role,
+          teacher.username,
+          teacher.number,
+          teacher.registered_students.length
+        ), {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.ourTeachersMenu()
+          }
+        })
+
+        await set('state')('AdminOurTeachersHandler');
+      }
+      else{
+        const teachers = await dbProcess.ShowAllUsers();
+        let teachersKeyboard = [];
+
+        for (let i = 0; i < teachers.length; i++){
+          if (teachers[i].role === 'teacher'){
+            teachersKeyboard.push([{ text: teachers[i].name }]);
+          }
+        }
+
+        ctx.reply(script.errorException.chooseButtonError, {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: teachersKeyboard
+          }
+        });
+      }
+    }
+    else{
+      const teachers = await dbProcess.ShowAllUsers();
+      let teachersKeyboard = [];
+
+      for (let i = 0; i < teachers.length; i++){
+        if (teachers[i].role === 'teacher'){
+          teachersKeyboard.push([{ text: teachers[i].name }]);
+        }
+      }
+
+      ctx.reply(script.errorException.chooseButtonError, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: teachersKeyboard
+        }
+      })
+    }
+  })
+
+  onTextMessage('AdminOurTeachersHandler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else{
+      switch(data.text){
+        case "Переглянути розклад викладача":
+          ctx.reply('Temporary unavailable', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.ourTeachersMenu()
+            }
+          })
+          break;
+
+        case "Показати усіх студентів викладача":
+          const teacher = await dbProcess.ShowOneUser(parseInt(user['admin_teachersoperation_idone'])),
+            teacherStudents = teacher!.registered_students;
+          let teachersStudentsObjects = [],
+            teachersStudentsObjectsKeyboard = [];
+
+          for (let i = 0; i < teacherStudents.length; i++){
+            teachersStudentsObjects.push(await dbProcess.ShowOneUser(await dbProcess.GetUserIDByName(teacherStudents[i])));
+          }
+
+          const sortedStudents = teachersStudentsObjects.slice().sort((a: any, b: any) => a.name.localeCompare(b.name));
+          
+          if (sortedStudents){
+            for (let i = 0; i < sortedStudents.length; i++){
+              teachersStudentsObjectsKeyboard.push([{ text: sortedStudents[i]!.name }])
+            }
+
+            for (let i = 0; i < sortedStudents.length; i++){
+              await ctx.reply(script.studentFind.individualFind(
+                sortedStudents[i]!.name,
+                sortedStudents[i]!.id,
+                sortedStudents[i]!.role,
+                sortedStudents[i]!.username,
+                sortedStudents[i]!.number,
+                sortedStudents[i]!.individual_count ?? 0,
+                sortedStudents[i]!.miro_link ?? "Відсутнє"
+              ))
+            }
+            await ctx.reply('оберіть студента, який вас цікавить:', {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: teachersStudentsObjectsKeyboard
+              }
+            })
+          }
+          else ctx.reply('у викладача немає студентів');
+          await set('state')('StudentFindHandler');
+          break;
+
+        case "Видалити викладача":
+          ctx.reply('ви впевнені, що хочете видалити викладача?', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.yesNo(true)
+            }
+          })
+          await set('state')('AdminTeacherDeleteFromPost');
+          break;
+
+        default:
+          break;
+      }
+    }
+  })
+
+  onTextMessage('AdminTeacherDeleteFromPost', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else{
+      const teacher = await dbProcess.ShowOneUser(parseInt(user['admin_teachersoperation_idone']));
+      switch(data.text){
+        case "Так":
+          await dbProcess.DeleteTeacherFromPost(parseInt(user['admin_teachersoperation_idone']))
+          ?
+          ctx.reply('✅ викладача Мякишева катерина було успішно видалено', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: [[{ text: "В МЕНЮ"} ]]
+            }
+          })
+          :
+          ctx.reply('✅ помилка при видаленні викладача', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: [[{ text: "В МЕНЮ"} ]]
+            }
+          })
+          await set('state')('EndFunctionManager')
+          break;
+
+        case "Ні":
+          await ctx.reply('фухх, а то думаємо якась помилка вже..');
+          await ctx.reply(script.studentFind.showTeacher(
+            teacher!.name,
+            teacher!.id,
+            teacher!.role,
+            teacher!.username,
+            teacher!.number,
+            teacher!.registered_students.length
+          ), {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.ourTeachersMenu()
+            }
+          })
+          await set('state')('AdminOurTeachersHandler');
+          break;
+
+        default:
+          ctx.reply(script.errorException.chooseButtonError, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.yesNo(true)
+            }
+          })
+          break;
       }
     }
   })

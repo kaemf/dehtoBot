@@ -508,6 +508,17 @@ export default async function dbProcess(botdb: MongoClient){
             }
             else throw new Error('\n\nUser not found in IndividualChangeUserData()');
         }
+
+        async DeleteTeacherFromPost(idTeacher: number){
+            const teacherObject = await dbProcess.ShowOneUser(idTeacher);
+
+            if (teacherObject){
+                await this.botdbUsers.updateMany({teacher: idTeacher}, {$set: {teacher: false}});
+                await this.botdbUsers.updateOne({id: teacherObject!.idTeacher}, {$set : {registered_students: [], role: 'guest', set_detasks: []}});
+                return true;
+            }
+            else return false;
+        }
     }
 
     const dbProcess : DBProcess = new DBProcess();

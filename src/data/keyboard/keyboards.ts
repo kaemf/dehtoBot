@@ -496,6 +496,24 @@ class Keyboard{
       ]
     ]
   }
+
+  ourTeachersMenu(){
+    return [
+      [
+        {
+          text: "Переглянути розклад викладача"
+        }
+      ],[
+        {
+          text: "Показати усіх студентів викладача"
+        }
+      ],[
+        {
+          text: "Видалити викладача"
+        }
+      ]
+    ]
+  }
 }
 
 const keyboards : Keyboard = new Keyboard();
