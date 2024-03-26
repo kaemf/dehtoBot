@@ -57,11 +57,11 @@ export default async function arch() {
       }
       else if ('audio' in message) {
         action(ctx, user, set, { phone_number: [ '' ], text: '', photo: [ '' ], file: [ '' ], stickers: '', video: [ '' ], location: [ -1 ], polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
-        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
+        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, AUDIO GET, CODE: 9\n`);
       }
       else if ('video_note' in message) {
         action(ctx, user, set, { phone_number: [ '' ], text: '', photo: [ '' ], file: [ '' ], stickers: '', video: [ '' ], location: [ -1 ], polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
-        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, CIRCLE VIDEO GET, CODE: 9\n`);
+        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, CIRCLE VIDEO GET, CODE: 10\n`);
       }
       console.log(message);
     }
@@ -78,11 +78,11 @@ export default async function arch() {
     if (user.state === startState) {
       if ('text' in message) {
         action(ctx, user, set, { phone_number: [ '' ], text: message.text, photo: [ '' ], file: [ '' ], stickers: '', video: [ '' ], location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
-        console.log(`\nTYPE: ONTEXTMESSAGE, OTHERDATA = UNDEFINED, TEXT = ${message.text}, CODE: 2\nstate: ${startState}, message: ${message.text}`);
+        console.log(`\nTYPE: ONTEXTMESSAGE, OTHERDATA = UNDEFINED, TEXT = ${message.text}, CODE: 1\nstate: ${startState}, message: ${message.text}`);
       }
       else if ('contact' in message){
         action(ctx, user, set, { phone_number: [ message.contact.phone_number, message.contact.first_name ], text: '', photo: [ '' ], file: [ '' ], stickers: '', video: [ '' ], location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
-        console.log(`\nTYPE: ONTEXTMESSAGE, NUMBER&TEXT = UNDEFINED, NUMBER GET = ${message.contact.phone_number} by ${message.contact.first_name}, CODE: 2\nstate: ${startState}, message: ${message.contact.phone_number}`);
+        console.log(`\nTYPE: ONTEXTMESSAGE, NUMBER&TEXT = UNDEFINED, NUMBER GET = ${message.contact.phone_number} by ${message.contact.first_name}, CODE: 0\nstate: ${startState}, message: ${message.contact.phone_number}`);
       }
       else if ('photo' in message) {
         action(ctx, user, set, { phone_number: [ '' ], text: '', photo: [ message.photo[0].file_id, message?.caption ?? '' ], file: [ '' ], stickers: '', video: [ '' ], location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
@@ -114,11 +114,11 @@ export default async function arch() {
       }
       else if ('audio' in message) {
         action(ctx, user, set, { phone_number: [ '' ], text: '', photo: [ '' ], file: [ '' ], stickers: '', video: [ '' ], location: [ -1 ], polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
-        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
+        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, AUDIO GET, CODE: 9\n`);
       }
       else if ('video_note' in message) {
         action(ctx, user, set, { phone_number: [ '' ], text: '', photo: [ '' ], file: [ '' ], stickers: '', video: [ '' ], location: [ -1 ], polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
-        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, CIRCLE VIDEO GET, CODE: 9\n`);
+        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, CIRCLE VIDEO GET, CODE: 10\n`);
       }
     }
     else return next();
@@ -181,11 +181,11 @@ export default async function arch() {
       }
       else if ('audio' in message) {
         action(ctx, user, set, { phone_number: [ '' ], text: '', photo: [ '' ], file: [ '' ], stickers: '', video: [ '' ], location: [ -1 ], polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
-        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
+        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, AUDIO GET, CODE: 9\n`);
       }
       else if ('video_note' in message) {
         action(ctx, user, set, { phone_number: [ '' ], text: '', photo: [ '' ], file: [ '' ], stickers: '', video: [ '' ], location: [ -1 ], polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
-        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, CIRCLE VIDEO GET, CODE: 9\n`);
+        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, CIRCLE VIDEO GET, CODE: 10\n`);
       }
     }
     else return next();
@@ -207,7 +207,7 @@ export default async function arch() {
       }
       else if ('contact' in message){
         action(ctx, user, set, { phone_number: [ message.contact.phone_number, message.contact.first_name ], text: '', photo: [ '' ], file: [ '' ], stickers: '', video: [ '' ], location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
-        console.log(`\nTYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, NUMBER GET = ${message.contact.phone_number} by ${message.contact.first_name}, CODE: 2\nstate: ${startState}, message: ${message.contact.phone_number}`);
+        console.log(`\nTYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, NUMBER GET = ${message.contact.phone_number} by ${message.contact.first_name}, CODE: 0\nstate: ${startState}, message: ${message.contact.phone_number}`);
       }
       else if ('photo' in message) {
         action(ctx, user, set, { phone_number: [ '' ], text: '', photo: [ message.photo[0].file_id, message?.caption ?? '' ], file: [ '' ], stickers: '', video: [ '' ], location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
@@ -224,7 +224,7 @@ export default async function arch() {
         }
         else{
           action(ctx, user, set, { phone_number: [ '' ], text: '', photo: [ '' ], file: [ '' ], stickers: '', video: [ '' ], location: [ -1 ], polls: '', voice: '', audio: '', video_circle: '' });
-          console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, UNSUPPORTED FILE GET (${fileExtension}), CODE: 3\n`);
+          console.log(`(!)TYPE: ONPHOTOMESSAGE, NUMBER&TEXT = UNDEFINED, UNSUPPORTED FILE GET (${fileExtension}), CODE: 3_1\n`);
         }
       }
       else if ('sticker' in message) {
@@ -249,11 +249,11 @@ export default async function arch() {
       }
       else if ('audio' in message) {
         action(ctx, user, set, { phone_number: [ '' ], text: '', photo: [ '' ], file: [ '' ], stickers: '', video: [ '' ], location: [ -1 ], polls: '', voice: '', audio: message.audio.file_id, video_circle: '' });
-        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, VOICE GET, CODE: 8\n`);
+        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, AUDIO GET, CODE: 9\n`);
       }
       else if ('video_note' in message) {
         action(ctx, user, set, { phone_number: [ '' ], text: '', photo: [ '' ], file: [ '' ], stickers: '', video: [ '' ], location: [ -1 ], polls: '', voice: '', audio: '', video_circle: message.video_note.file_id });
-        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, CIRCLE VIDEO GET, CODE: 9\n`);
+        console.log(`\n(!)TYPE: ONCONTACTMESSAGE, NUMBER&TEXT = UNDEFINED, CIRCLE VIDEO GET, CODE: 10\n`);
       }
     }
     else return next();

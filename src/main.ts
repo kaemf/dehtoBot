@@ -390,6 +390,26 @@ async function main() {
       }
       else ctx.reply('вибачте, але у вас немає активних деЗавдань :(');
     }
+    else if (data.text === 'Мій розклад'){
+      if (userObject!.role === 'student'){
+
+      }
+      else if (userObject!.role === 'teacher'){
+
+      }
+      else{
+        ctx.reply(script.errorException.chooseButtonError, {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.indiviualMenu(userObject!.role)
+          }
+        })
+      }
+    }
+    else if (data.text === 'Знайти студента' && (userObject!.role === 'admin' || userObject!.role === 'developer')){
+      ctx.reply('введіть його ID / повне ім’я / номер телефону / нік в телеграмі');
+      await set('state')('')
+    }
     else if (data.text === "Запис на заняття"){
       ctx.reply(script.registrationLesson.niceWhatATime, {reply_markup: {remove_keyboard: true}});
       await set('state')('_GraphicRespondAndLevelRequest');
@@ -4342,9 +4362,7 @@ async function main() {
 
         await set('state')('TeachersChooseStudentHandler');
       }
-      else{
-        ctx.reply('нажаль... у вас немає активних студентів :(');
-      }
+      else ctx.reply('нажаль... у вас немає активних студентів :(');
     }
     else if (CheckException.TextException(data)){
       await set('teacher_content_detask')(`${user['teacher_content_detask'] ? `${user['teacher_content_detask']},` : ''}${data.text}`);
@@ -4444,9 +4462,7 @@ async function main() {
         }
       })
     }
-    else{
-      ctx.reply('помилка(\n\nсхоже ви надіслали не підтримуваний тип повідомлення або ж тицьнули не туди')
-    }
+    else ctx.reply('помилка(\n\nсхоже ви надіслали не підтримуваний тип повідомлення або ж тицьнули не туди')
   })
 
   onTextMessage('TeachersChooseStudentHandler', async(ctx, user, set, data) => {
@@ -4462,10 +4478,15 @@ async function main() {
     if (students.includes(data.text)){
       const userID = await dbProcess.GetUserIDByName(data.text);
       if (userID){
-        const textContent = user['teacher_content_detask'].split(','),
-          filesContent = user['teacher_filecontent_detask'].split(','),
-          typeOfFilesContent = user['teacher_typeofcontent_detask'].split(','),
-          message_operation = await dbProcess.WriteNewDeTask(ctx?.chat?.id ?? -1, userID, textContent, filesContent, typeOfFilesContent);
+        const userObject = await dbProcess.ShowOneUser(userID),
+          previousTask = userObject!.detask ? userObject!.detask : false,
+          message_operation = await dbProcess.WriteNewDeTask(
+          ctx?.chat?.id ?? -1, 
+          userID, 
+          user['teacher_content_detask'] ? user['teacher_content_detask'].split(',') : false,
+          user['teacher_filecontent_detask'] ? user['teacher_filecontent_detask'].split(',') : false,
+          user['teacher_typeofcontent_detask'] ? user['teacher_typeofcontent_detask'].split(',') : false
+        );
 
         ctx.reply(`${message_operation === 'student_task_rewrited' ? 'попереднє деЗавдання було видалено у студента, та додане нове успішно!' : 'завдання успішно додано студенту!'}`, {
           reply_markup: {
@@ -4477,6 +4498,7 @@ async function main() {
         await set('teacher_content_detask')('');
         await set('teacher_filecontent_detask')('');
         await set('teacher_typeofcontent_detask')('');
+        if (previousTask) await dbProcess.DeleteDeTask(userObject!.detask);
         await set('state')('EndRootManager');
       }
       else{
@@ -4641,20 +4663,12 @@ async function main() {
         teacherTasks = teacher!.set_detasks;
       let keyboard = [];
       switch(data.text){
-        case "Мої студенти":
-          for (let i = 0; i < teachersStudents.length; i++){
-            keyboard.push([{ text: teachersStudents[i]}])
-          }
-          ctx.reply('добренько, тепер виберіть студента, котрий вам потрібен', {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: keyboard
-            }
-          })
-          await set('state')('GetStudentForTeacherDeTaskHandler');
+        case "Дати завдання":
+          ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання')
+          await set('state')('TeachersSetTasksHandler')
           break;
 
-        case "Студенти, котрі виконали":
+        case "Перевірити завдання":
           for (let i = 0; i < teachersStudents.length; i++){
             const studentID = await dbProcess.GetUserIDByName(teachersStudents[i]),
               userObject = await dbProcess.ShowOneUser(studentID),
@@ -4662,7 +4676,7 @@ async function main() {
 
             if (task){
               for (let j = 0; j < teacherTasks.length; j++){
-                if (teacherTasks[j].toString() === userObject!.detask.toString() && task[0] !== 'no_answer_available'){
+                if (teacherTasks[j].toString() === userObject!.detask.toString()){
                   keyboard.push([{ text: teachersStudents[i]}])
                 }
               }
@@ -4670,7 +4684,7 @@ async function main() {
           }
 
           if (!keyboard.length){
-            ctx.reply('нажаль... ви не маєте студентів, котрі виконали ваші завдання :(', {
+            ctx.reply('нажаль... ви не маєте студентів, яким давали завдання, але ви можете це виправити :)', {
               reply_markup: {
                 one_time_keyboard: true,
                 keyboard: keyboards.deTaskMenu()
@@ -4678,41 +4692,7 @@ async function main() {
             });
           }
           else{
-            ctx.reply('ось всі студенти, які виконали доручені вами завдання', {
-              reply_markup: {
-                one_time_keyboard: true,
-                keyboard: keyboard
-              }
-            })
-            await set('state')('GetStudentForTeacherDeTaskHandler');
-          }
-          break;
-
-        case "Студенти, котрі не виконали":
-          for (let i = 0; i < teachersStudents.length; i++){
-            const studentID = await dbProcess.GetUserIDByName(teachersStudents[i]),
-              userObject = await dbProcess.ShowOneUser(studentID),
-              task = await dbProcess.GetStudentAnswerForDeTask(studentID);
-            
-              if (task){
-                for (let j = 0; j < teacherTasks.length; j++){
-                  if (teacherTasks[j].toString() === userObject!.detask.toString() && task[0] === 'no_answer_available'){
-                    keyboard.push([{ text: teachersStudents[i]}])
-                  }
-                }
-              }
-            }
-
-          if (!keyboard.length){
-            ctx.reply('на привелике задоволення у вас відсутні студенти, котрі не виконали ваші завдання!', {
-              reply_markup: {
-                one_time_keyboard: true,
-                keyboard: keyboards.deTaskMenu()
-              }
-            });
-          }
-          else{
-            ctx.reply('ось всі студенти, котрі не виконали доручені вами завдання', {
+            ctx.reply('добренько, тепер виберіть студента, котрий вам потрібен', {
               reply_markup: {
                 one_time_keyboard: true,
                 keyboard: keyboard
@@ -4931,9 +4911,9 @@ async function main() {
           message_operation = await dbProcess.WriteNewDeTask(
             ctx?.chat?.id ?? -1, 
             userID, 
-            user['teacher_content_detask'] !== '' ? user['teacher_content_detask'].split(',') : false, 
-            user['teacher_filecontent_detask'] !== '' ? user['teacher_filecontent_detask'].split(',') : false,
-            user['teacher_typeofcontent_detask'] !== '' ? user['teacher_typeofcontent_detask'].split(',') : false
+            user['teacher_content_detask'] ? user['teacher_content_detask'].split(',') : false, 
+            user['teacher_filecontent_detask'] ? user['teacher_filecontent_detask'].split(',') : false,
+            user['teacher_typeofcontent_detask'] ? user['teacher_typeofcontent_detask'].split(',') : false
           );
 
         ctx.reply(`${message_operation === 'student_task_rewrited' ? 'попереднє деЗавдання було видалено у студента, та додане нове успішно!' : 'завдання успішно додано студенту!'}`, {
