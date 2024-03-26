@@ -1,3 +1,5 @@
+import { ConvertRole } from "../../base/handlersdb/changeRoleValue";
+
 const script = {
   errorException: {
     chooseFunctionError: `трясця..
@@ -166,7 +168,8 @@ UA773220010000026004330103247
   },
 
   indivdual: {
-    entire: (role: string) => role === 'admin' || role === 'developer' || role === 'teacher' ? 'що цікавить' : 'оберіть, що вас цікавить :)'
+    entire: (role: string) => role === 'admin' || role === 'developer' || role === 'teacher' ? 'що цікавить' : 'оберіть, що вас цікавить :)',
+    studentDeleteFromTeacher: (teacher: string, student: string) => `✅ студента ${student} було успішно видалено від викладача ${teacher}`
   },
 
   trialLesson: {
@@ -500,6 +503,23 @@ ${date} о ${time} 🇺🇦 за ось цим посиланням:\n\n${link}\
       noAvaibleActivePacket: (name: string) => `У користувача ${name} немає активного пакету, який оберемо?`
     },  
   },
+
+  studentFind: {
+    generalFind: (name: string, id: number, role: string, username: string, phone: string, typeOfLessons: string, teacher: string, count: number, miro: string) => 
+    `👉 ${ConvertRole(role)} (ID: ${id})
+${name}
+(@${username}); ${phone}\n
+Тип занять: ${typeOfLessons}
+Викладач: ${teacher}
+✅ Залишок: ${count} занять (${count * 60}хв)\n
+посилання на дошку Miro студента: ${miro}`,
+
+    showTeacher: (name: string, id: number, role: string, username: string, phone: string, countOfStudents: number) =>
+    `👉 ${role} (ID: ${id})
+${name}
+(@${username}); ${phone}\n
+✅ К-ть студентів: ${countOfStudents}`
+  }
 
 }
 

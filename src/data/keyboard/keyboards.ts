@@ -474,6 +474,28 @@ class Keyboard{
     ]
     )
   }
+  
+  individualFindUser(){
+    return [
+      [
+        {
+          text: "Редагувати кількість занять"
+        }
+      ],[
+        {
+          text: "Редагувати лінк"
+        }
+      ],[
+        {
+          text: "Перевести до іншого викладача"
+        }
+      ],[
+        {
+          text: "Видалити студента"
+        }
+      ]
+    ]
+  }
 }
 
 const keyboards : Keyboard = new Keyboard();

@@ -330,9 +330,53 @@ export default async function dbProcess(botdb: MongoClient){
 
             return user ? user.id : false;
         }
-
+        
         async GetDeTaskForStudent(taskID: ObjectId){
             return await this.deTaskDB.findOne({_id: taskID});
+        }
+        
+        private async GetUserIDByPhoneNumber(number: string){
+            const user = await this.botdbUsers.findOne({number: number});
+
+            return user ? user.id : false;
+        }
+
+        private async GetUserIDByTG(tg: string){
+            const user = await this.botdbUsers.findOne({username: tg});
+
+            return user ? user.id : false;
+        }
+
+        async FindUser(answer: string): Promise<any>{
+            const idCheck = parseInt(answer[0]) ? parseInt(answer) : false,
+                userIDByName = await this.GetUserIDByName(answer),
+                userIDByTG = await this.GetUserIDByTG(answer.slice(1));
+
+            let userObjectByID, userObjectByName, userObjectByNumber, userObjectByTG, userIDByNumber;
+
+            if (answer[0] === '+'){
+                userIDByNumber = await this.GetUserIDByPhoneNumber(answer) ? await this.GetUserIDByPhoneNumber(answer) : await this.GetUserIDByPhoneNumber(answer.slice(1));
+            }
+            else userIDByNumber = await this.GetUserIDByPhoneNumber(answer) ? await this.GetUserIDByPhoneNumber(answer) : await this.GetUserIDByPhoneNumber(`+${answer}`);
+            
+            userObjectByID = idCheck ? await this.ShowOneUser(idCheck) : false;
+            userObjectByName = userIDByName ? await this.ShowOneUser(userIDByName) : false;
+            userObjectByNumber = userIDByNumber ? await this.ShowOneUser(userIDByNumber) : false;
+            userObjectByTG = userIDByTG ? await this.ShowOneUser(userIDByTG) : false;
+
+            if (userObjectByID){
+                return userObjectByID;
+            }
+            else if (userObjectByName){
+                return userObjectByName;
+            }
+            else if (userObjectByNumber){
+                return userObjectByNumber;
+            }
+            else if (userObjectByTG){
+                return userObjectByTG;
+            }
+            else return false;
         }
 
         async DeleteDeTask(taskID: ObjectId){
@@ -343,18 +387,10 @@ export default async function dbProcess(botdb: MongoClient){
 
             let teacherTasksStringVersion = [];
 
-            // const updateObjectStudent = {$set : {
-            //   detask: ''
-            // }}
-
             if (teacherTasks){
                 for (let i = 0; i < teacherTasks.length; i++){
                     teacherTasksStringVersion.push(teacherTasks[i].toString());
                 }
-
-                console.log(teacherTasksStringVersion);
-                console.log(taskID.toString())
-                console.log(teacherTasksStringVersion.indexOf(taskID.toString()))
 
                 const indexInMassive = teacherTasksStringVersion.indexOf(taskID.toString());
 
@@ -368,10 +404,109 @@ export default async function dbProcess(botdb: MongoClient){
                     await this.botdbUsers.updateOne({_id: userWithTask?._id}, updateObjectTeacher);
                     await this.deTaskDB.deleteOne({_id: taskID});
                 }
-                else console.log('\nмисье, вы обосрались, переводим каждый элемент массива в строку и чекаем, а после снова в обьект айди бляц.\n')
+                else throw new Error('\n\ndeTask Not Found to Delete and to Delete for User');
             }
+        }
 
-            // await this.botdbUsers.updateOne({_id: teacherWithTask?._id}, updateObjectStudent);
+        async IndividualChangeUserData(idStudent: number, parametr: string, value: string | number){
+            const user = await this.ShowOneUser(idStudent);
+            let updateObject = {}
+
+            if (user){
+                switch (parametr) {
+                    case "individual_count":
+                        updateObject = {$set :{
+                            individual_count: value
+                        }}
+                        await this.botdbUsers.updateOne({_id: user._id}, updateObject)
+                        break;
+                    
+                    case "miro_link":
+                        updateObject = {$set :{
+                            miro_link: value
+                        }}
+                        await this.botdbUsers.updateOne({_id: user._id}, updateObject)
+                        break;
+
+                    case "translate_to_another_teacher":
+                        const usersTeacher = await this.ShowOneUser(user.teacher),
+                            newTeacher = await this.ShowOneUser(await this.GetUserIDByName(value.toString()));
+
+                        if (usersTeacher && newTeacher){
+                            const oldTeacherStudents = usersTeacher.registered_students,
+                                newTeacherStudents = newTeacher.registered_students,
+                                indexInMassiveOld = oldTeacherStudents.indexOf(user.name),
+                                indexInMassiveNew = newTeacherStudents.indexOf(user.name);
+
+                            if (indexInMassiveOld !== -1){
+                                oldTeacherStudents.splice(indexInMassiveOld, 1);
+
+                                const updateObjectTeacher = {$set : {
+                                    registered_students: oldTeacherStudents
+                                }}
+
+                                await this.botdbUsers.updateOne({_id: usersTeacher._id}, updateObjectTeacher);
+                            }
+                            else throw new Error('\n\nUser not found in old Teacher');
+
+                            if (indexInMassiveNew === -1){
+                                newTeacherStudents.push(user!.name);
+
+                                const updateObjectTeacher = {$set : {
+                                    registered_students: newTeacherStudents
+                                }}
+
+                                await this.botdbUsers.updateOne({_id: newTeacher._id}, updateObjectTeacher);
+                                await this.botdbUsers.updateOne({_id: user._id}, {$set: {teacher: newTeacher.id}})
+                            }
+                            else throw new Error('\n\nNew Teacher already have this student');
+                        }
+                        else{
+                            const newTeacher = await this.ShowOneUser(await this.GetUserIDByName(value.toString())),
+                                newTeacherStudents = newTeacher!.registered_students,
+                                indexInMassiveNew = newTeacherStudents.indexOf(user.name);
+
+                            if (indexInMassiveNew === -1 && newTeacher){
+                                let ifEmpty = [];
+                                newTeacherStudents ? newTeacherStudents.push(user!.name) : ifEmpty.push(user!.name);
+
+                                const updateObjectTeacher = {$set : {
+                                    registered_students: !newTeacherStudents ? ifEmpty : newTeacherStudents
+                                }}
+
+                                await this.botdbUsers.updateOne({_id: newTeacher._id}, updateObjectTeacher);
+                                await this.botdbUsers.updateOne({_id: user._id}, {$set: {teacher: newTeacher.id}})
+                            }
+                            else throw new Error('\n\nNew Teacher already have this student');
+                        }
+                        break;
+
+                    case "delete_student":
+                        const currentTeacher = await this.ShowOneUser(user.teacher);
+
+                        if (currentTeacher){
+                            const currentStudents = currentTeacher.registered_students,
+                                indexInMassiveOld = currentStudents.indexOf(user.name);
+
+                            if (indexInMassiveOld !== -1){
+                                currentStudents.splice(indexInMassiveOld, 1);
+
+                                const updateObjectTeacher = {$set : {
+                                    registered_students: currentStudents
+                                }}
+
+                                await this.botdbUsers.updateOne({_id: currentTeacher._id}, updateObjectTeacher);
+                                await this.botdbUsers.updateOne({_id: user._id}, {$set: {teacher: false, role: 'guest'}})
+                            }
+                            else throw new Error('\n\nUser not found in Teacher');
+                        }
+                        break;
+
+                    default:
+                        throw new Error('\n\nUncorrect parametr in IndividualChangeUserData()');
+                }
+            }
+            else throw new Error('\n\nUser not found in IndividualChangeUserData()');
         }
     }
 

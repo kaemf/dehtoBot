@@ -316,7 +316,7 @@ async function main() {
         })
       }
       else{
-        ctx.reply(`😢 ${user['name']} у вас немає проплачених занять, будемо продовжувати?`, {
+        ctx.reply(`😢 ${user['name']} у вас немає проплачених занять, ${userObject!.role === 'guest' ? 'почнімо?' : 'будемо продовжувати?'}`, {
           reply_markup: {
             one_time_keyboard: true,
             keyboard: keyboards.yesNo(true)
@@ -408,7 +408,24 @@ async function main() {
     }
     else if (data.text === 'Знайти студента' && (userObject!.role === 'admin' || userObject!.role === 'developer')){
       ctx.reply('введіть його ID / повне ім’я / номер телефону / нік в телеграмі');
-      await set('state')('')
+      await set('state')('StudentFindHandler')
+    }
+    else if (data.text === 'Наші викладачі' && (userObject!.role === 'admin' || userObject!.role === 'developer')){
+      const teachers = await dbProcess.ShowAllUsers();
+      let teachersKeyboard = [];
+
+      for (let i = 0; i < teachers.length; i++){
+        if (teachers[i].role === 'teachers'){
+          teachersKeyboard.push([{ text: teachers[i].name }]);
+        }
+      }
+      ctx.reply('оберіть зі списку викладача з яким ви хочете щось зробити:', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: teachersKeyboard
+        }
+      });
+      await set('state')('AdminTeachersOperationHandler')
     }
     else if (data.text === "Запис на заняття"){
       ctx.reply(script.registrationLesson.niceWhatATime, {reply_markup: {remove_keyboard: true}});
@@ -5037,6 +5054,191 @@ async function main() {
       })
     }
     else ctx.reply('помилка(\n\nсхоже ви надіслали не підтримуваний тип повідомлення або ж тицьнули не туди')
+  })
+
+  onTextMessage('StudentFindHandler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else if (CheckException.TextException(data)){
+      const User = await dbProcess.FindUser(data.text);
+      if (User){
+        const teacher = await dbProcess.ShowOneUser(User.teacher);
+        await set('user_to_change_individual_id')(User.id);
+        ctx.reply(script.studentFind.generalFind(
+          User.name,
+          User.id,
+          User.role,
+          User.username,
+          User.number,
+          User.typeOfLessons ?? "Індивідуальні",
+          teacher?.name ?? "Відсутній",
+          User.individual_count ?? 0,
+          User.miro_link ?? "Відсутня"
+        ), {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.individualFindUser()
+          }
+        })
+
+        await set('state')('IndividualUserChangehandler');
+      }
+      else ctx.reply('такого студента в базі даних немає, спробуйте ще раз');
+    }
+  })
+
+  onTextMessage('IndividualUserChangehandler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+
+    }
+    else{
+      const User = await dbProcess.ShowOneUser(parseInt(user['user_to_change_individual_id']));
+      switch(data.text){
+        case "Редагувати кількість занять":
+          ctx.reply(`введіть число занять, яке має бути у студента (наразі є: ${User!.individual_count ?? 0} занять)`);
+          await set('admin_parametr_to_change_individual')('individual_count');
+          await set('state')('IndividualChangeUserDataHandler');
+          break;
+
+        case "Редагувати лінк":
+          ctx.reply('вкажіть новий лінк на дошку студента')
+          await set('admin_parametr_to_change_individual')('miro_link');
+          await set('state')('IndividualChangeUserDataHandler');
+          break;
+        
+        case "Перевести до іншого викладача":
+          ctx.reply('оберіть викладача, до якого ви хочете перевести студента:')
+          await set('admin_parametr_to_change_individual')('translate_to_another_teacher');
+          await set('state')('IndividualChangeUserDataHandler');
+          break;
+
+        case "Видалити студента":
+          await set('admin_parametr_to_change_individual')('delete_student');
+          ctx.reply('ви впевнені, що хочете видалити студента від викладача?', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.yesNo(true)
+            }
+          })
+          await set('state')('DeleteStudentFromTeacherIndividualHandler');
+          break;
+
+        default:
+          break;
+      }
+    }
+  })
+
+  onTextMessage('IndividualChangeUserDataHandler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else if (CheckException.TextException(data)){
+      switch(user['admin_parametr_to_change_individual']){
+        case "individual_count":
+          if (!isNaN(parseInt(data.text)) && parseInt(data.text) >= 0){
+            await dbProcess.IndividualChangeUserData(
+              parseInt(user['user_to_change_individual_id']),
+              user['admin_parametr_to_change_individual'],
+              parseInt(data.text)
+            );
+          }
+          else{
+            ctx.reply('введіть будь ласка цифру рівну або більше 0-ля');
+          }
+          break;
+
+        default:
+          await dbProcess.IndividualChangeUserData(
+            parseInt(user['user_to_change_individual_id']),
+            user['admin_parametr_to_change_individual'],
+            data.text
+          );
+          const User = await dbProcess.FindUser(user['user_to_change_individual_id']),
+            teacher = await dbProcess.ShowOneUser(User.teacher);
+          ctx.reply('успішно!');
+          ctx.reply(script.studentFind.generalFind(
+            User!.name,
+            User!.id,
+            User!.role,
+            User!.username,
+            User!.number,
+            User!.typeOfLessons ?? "Індивідуальні",
+            teacher?.name ?? "Відсутній",
+            User!.individual_count ?? 0,
+            User!.miro_link ?? "Відсутня"
+          ))
+          break;
+      }
+    }
+  })
+
+  onTextMessage('DeleteStudentFromTeacherIndividualHandler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else{
+      const User = await dbProcess.FindUser(user['user_to_change_individual_id']),
+        teacher = await dbProcess.ShowOneUser(User!.teacher);
+      switch(data.text){
+        case "Так":
+          await dbProcess.IndividualChangeUserData(
+            parseInt(user['user_to_change_individual_id']),
+            user['admin_parametr_to_change_individual'],
+            data.text
+          );
+          ctx.reply(script.indivdual.studentDeleteFromTeacher(teacher!.name, User!.name), {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: [[{ text: "В МЕНЮ" }]]
+            }
+          });
+          await set('state')('EndRootManager');
+          break;
+
+        case "Ні":
+          await ctx.reply('фухх, а то думаємо якась помилка вже..');
+          await ctx.reply(script.studentFind.generalFind(
+            User!.name,
+            User!.id,
+            User!.role,
+            User!.username,
+            User!.number,
+            User!.typeOfLessons ?? "Індивідуальні",
+            teacher!.name ?? "Відсутній",
+            User!.individual_count ?? 0,
+            User!.miro_link ?? "Відсутня"
+            ), {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: [[{ text: "В МЕНЮ" }]]
+              }
+            })
+            await set('state')('EndRootManager');
+          break;
+
+        default:
+          ctx.reply(script.errorException.chooseButtonError, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.yesNo(true)
+            }
+          })
+      }
+    }
+  })
+
+  onTextMessage('AdminTeachersOperationHandler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else if (CheckException.TextException(data)){
+      const teacher = await dbProcess.ShowOneUser(await dbProcess.GetUserIDByName(data.text))
+      if (teacher && teacher.role === 'teacher'){
+        
+      }
+    }
   })
 
   // Payment Main Bot Function Action

@@ -82,3 +82,8 @@ export type UserScriptState =
   | "GetStudentForTeacherDeTaskHandler"
   | "EndTeacherDeTaskHandler"
   | "AnotherTeachersSetTasksHandler"
+  | "StudentFindHandler"
+  | "IndividualUserChangehandler"
+  | "IndividualChangeUserDataHandler"
+  | "DeleteStudentFromTeacherIndividualHandler"
+  | "AdminTeachersOperationHandler"
