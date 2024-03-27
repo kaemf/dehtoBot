@@ -1,4 +1,5 @@
 import { ConvertRole } from "../../base/handlersdb/changeRoleValue";
+import { ConvertToPrice } from "../process/convertPaymentPerLesson";
 
 const script = {
   errorException: {
@@ -527,7 +528,42 @@ ${name}
 ✅ Залишок: ${count} занять (${count * 60}хв)\n
 посилання на дошку Miro студента: ${miro}`,
 
-    userFind: (id: number, name: string, username: string, number: number, role: string, ) => ``
+    userFind: (position: number, id: number, name: string, username: string, number: number, role: string, teacher: string, individual_count: number, count: number, miro_link: string, clubPacket: string | boolean) => 
+    `${position? `✅${position}\n`: ''}ID: ${id}
+Ім'я: ${name}
+(@${username})
+${number}
+Роль: ${ConvertRole(role)}\n
+${role !== 'guest'? `👉 Кількість індивід. занять: ${individual_count} (${individual_count * 60}хв)
+Викладач: ${teacher}
+Лінк на дошку: ${miro_link? `${miro_link}\n` : 'Відсутня\n'}` : ''}
+👉 Кількість розм. клубів: ${count} (${clubPacket ? `${ConvertToPrice(clubPacket.toString())}uah` : 'Користувач не брав участі в клубах'})`,
+
+    diffUserFind: (role: string, id: number, name: string, username: string, number: number, teacher: string, individual_count: number, count: number, miro_link: string, clubPacket: string | boolean) => {
+      switch(role){
+        case "guest":
+          return `👉 Користувач (ID: ${id})\n${name}\n(@${username}); ${number}\n\nТип занять: -`
+
+        case "student":
+          return `Ім'я: ${name}
+(@${username})
+${number}
+Роль: Студент\n
+👉 Кількість індивід. занять: ${individual_count} (${individual_count * 60}хв)
+Викладач: ${teacher}
+Лінк на дошку: ${miro_link? `${miro_link}\n` : 'Відсутня\n'}
+👉 Кількість розм. клубів: ${count} (${clubPacket ? `${ConvertToPrice(clubPacket.toString())}uah` : 'Користувач не брав участі в клубах'})`
+
+        case "admin":
+          return `👉 Адмін (ID: ${id})\n${name}\n(@${username}); ${number}`
+
+        case "developer":
+          return `👉 Адмін\n${name}\n(@${username}); ${number}`
+
+        default:
+          throw new Error('\n\nUser role undefined. Can`t continue work while this issue not fixed.')
+      }
+    }
   }
 
 }

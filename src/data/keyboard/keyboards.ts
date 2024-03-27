@@ -524,6 +524,42 @@ class Keyboard{
       ]
     ]
   }
+
+  usersOperations(role: string){
+    return role === 'guest'
+    ?
+    [
+      [
+        {
+          text: "Змінити роль користувачу"
+        }
+      ],[
+        {
+          text: "Змінити ім’я користувачу"
+        }
+      ],[
+        {
+          text: "Додати на пробне"
+        }
+      ],[
+        {
+          text: "Додати викладачеві"
+        }
+      ]
+    ]
+    :
+    [
+      [
+        {
+          text: "Змінити роль користувачу"
+        }
+      ],[
+        {
+          text: "Змінити ім’я користувачу"
+        }
+      ]
+    ]
+  }
 }
 
 const keyboards : Keyboard = new Keyboard();

@@ -5433,10 +5433,43 @@ async function main() {
     else{
       switch(data.text){
         case "Знайти користувача за даними":
-          pointer
+          ctx.reply('введіть його ID / повне ім’я / номер телефону / нік в телеграмі');
+          await set('state')('FindUserAndGoToOperationWithHim');
           break;
 
         case "Показати усіх користувачів":
+          const users = await dbProcess.ShowAllUsers();
+          let userNumber = 1;
+
+          for (let i = 0; i < users.length; i++){
+            if (users[i].individual_count > 0 || users[i].count > 0){
+              if (i % 10 === 0){
+                const messageDelay = await ctx.reply('зачекайте, підгружаємо ще студентів...');
+                new Promise((resolve: any, reject) => setTimeout(() => resolve(42), 2000));
+                ctx.telegram.deleteMessage(ctx?.chat?.id ?? -1, messageDelay.message_id);
+              }
+              const teacher = await dbProcess.ShowOneUser(users[i].teacher) ? await dbProcess.ShowOneUser(users[i].teacher) : false;
+              await ctx.reply(script.studentFind.userFind(
+                userNumber,
+                users[i].id,
+                users[i].name,
+                users[i].username,
+                users[i].number,
+                users[i].role,
+                teacher? teacher.name: "відсутній",
+                users[i].individual_count ?? 0,
+                users[i].count ?? 0,
+                users[i].miro_link,
+                await db.get(users[i].id)('club-typeclub') ?? false
+              ), {
+                reply_markup: {
+                  one_time_keyboard: true,
+                  keyboard: keyboards.usersMenu()
+                }
+              })
+              userNumber++;
+            }
+          }
           break;
 
         default:
@@ -5447,6 +5480,79 @@ async function main() {
             }
           })
           break;
+      }
+    }
+  })
+
+  onTextMessage('FindUserAndGoToOperationWithHim', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else if (CheckException.TextException(data)){
+      const User = await dbProcess.FindUser(data.text);
+
+      if (User){
+        const teacher = await dbProcess.ShowOneUser(User.teacher);
+
+        await set('admin_tmp_usersoperation_user_role')(User.role);
+
+        ctx.reply(script.studentFind.diffUserFind(
+          User.role,
+          User.id,
+          User.name,
+          User.username,
+          User.number,
+          teacher? teacher.name: "відсутній",
+          User.individual_count ?? 0,
+          User.count ?? 0,
+          User.miro_link ?? "відсутнє",
+          await db.get(User.id)('club-typeclub') ?? false
+        ), {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.usersOperations(User.role)
+          }
+        })
+
+        await set('state')('OperationWithUserHandler')
+      }
+      else ctx.reply('такого користувача в базі даних немає, або ви неправильно ввели дані, спробуйте ще раз');
+    }
+  })
+
+  onTextMessage('OperationWithUserHandler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else{
+      switch(data.text){
+        case "Змінити роль користувачу":
+          ctx.reply('оберіть нову роль користувача:', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.roleChange()
+            }
+          })
+          break;
+
+        case "Змінити ім’я користувачу":
+          ctx.reply('введіть нове ім’я');
+          pointer
+          break;
+
+        case "Додати на пробне":
+          break;
+
+        case "Додати викладачеві":
+          break;
+
+        default:
+          ctx.reply(script.errorException.chooseButtonError, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.usersOperations(user['admin_tmp_usersoperation_user_role'])
+            }
+          })
       }
     }
   })

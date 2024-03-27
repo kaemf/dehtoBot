@@ -1,28 +1,37 @@
 export default function Role(data: string){
-    if (data === 'Студент'){
-        return 'student';
+    switch(data){
+        case "Студент":
+            return 'student';
+
+        case "Викладач":
+            return 'teacher';
+
+        case "Адмін":
+            return 'admin';
+        
+        default:
+            return false;
     }
-    else if (data === 'Викладач'){
-        return 'teacher';
-    }
-    else if (data === 'Адмін'){
-        return 'admin';
-    }
-    else return false;
 }
 
 export function ConvertRole(data: string){
-    if (data === 'student'){
-        return 'Студент';
+    switch(data){
+        case "student":
+            return 'Студент';
+
+        case "teacher":
+            return 'Викладач';
+
+        case "admin":
+            return 'Адмін';
+
+        case "developer":
+            return 'Розробник'
+
+        case "guest":
+            return 'Користувач';
+
+        default:
+            return false;
     }
-    else if (data === 'teacher'){
-        return 'Викладач';
-    }
-    else if (data === 'admin'){
-        return 'Адмін';
-    }
-    else if (data === 'developer'){
-        return 'Розробник'
-    }
-    else return false;
 }
