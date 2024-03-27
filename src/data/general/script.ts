@@ -525,7 +525,9 @@ ${name}
 ${name}
 (@${username}); ${phone}\n
 ✅ Залишок: ${count} занять (${count * 60}хв)\n
-посилання на дошку Miro студента: ${miro}`
+посилання на дошку Miro студента: ${miro}`,
+
+    userFind: (id: number, name: string, username: string, number: number, role: string, ) => ``
   }
 
 }

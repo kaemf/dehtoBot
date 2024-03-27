@@ -89,3 +89,4 @@ export type UserScriptState =
   | "AdminTeachersOperationHandler"
   | "AdminOurTeachersHandler"
   | "AdminTeacherDeleteFromPost"
+  | "AdminUsersOperationHandler"

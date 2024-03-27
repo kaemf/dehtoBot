@@ -187,7 +187,7 @@ async function main() {
         await set('state')('TeachersSetTasksHandler')
       }
     }
-    else if (data.text === "Вчитель на годину"){
+    else if (data.text === "Вчитель на годину" && userI!.role === 'guest'){
       ctx.reply(script.teacherOnHour.whatsTheProblem, {
         parse_mode: "Markdown",
         reply_markup: {
@@ -216,6 +216,16 @@ async function main() {
           keyboard: [[{text: 'В МЕНЮ'}]]
         }
       })
+    }
+    else if (data.text === 'Користувачі' && (userI!.role === 'developer' || userI!.role === 'admin')){
+      ctx.reply('оберіть одну із кнопок нижче:', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.usersMenu()
+        }
+      })
+
+      await set('state')('AdminUsersOperationHandler');
     }
     else if (data.text === "Адмін Панель" && checkChats(ctx?.chat?.id ?? -1)){
       ctx.reply("З поверненням, Меркель! :)", {
@@ -5409,6 +5419,31 @@ async function main() {
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.yesNo(true)
+            }
+          })
+          break;
+      }
+    }
+  })
+
+  onTextMessage('AdminUsersOperationHandler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else{
+      switch(data.text){
+        case "Знайти користувача за даними":
+          pointer
+          break;
+
+        case "Показати усіх користувачів":
+          break;
+
+        default:
+          ctx.reply(script.errorException.chooseButtonError, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.usersMenu()
             }
           })
           break;

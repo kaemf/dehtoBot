@@ -14,7 +14,7 @@ export function ConvertToPacket(source: string){
     if (source === 'РазовеЗаняття'){
         return 'Разове заняття';
     }
-    else if (source === undefined || source === null || source === ''){
+    else if (!source){
         return 'Відсутній';
     }
     else{
