@@ -3817,7 +3817,7 @@ async function main() {
     else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length){
       await set('AP_student_id')(data.text);
 
-      await ctx.reply('Скільки додамо?');
+      await ctx.reply(`введіть число занять, яке має бути у користуваача  (наразі є: 3 занять по 280uah)`);
       await set('state')('CheckAvaibleActivePacketAndChangeCountLesson');
     }
     else{
@@ -3854,19 +3854,13 @@ async function main() {
       await set('AP_UserChangeCountLesson_Name')(getUserActualName);
       await set('AP_UserChangeCountLesson_New')(data.text);
       if (await db.get(userIDChat)('club-typeclub')){
-        ctx.reply(script.speakingClub.activePacketCheck.ifAvaibleActivePacket(getUserActualName, (await db.get(userIDChat)('club-typeclub'))!, ConvertToPrice((await db.get(userIDChat)('club-typeclub'))!)!), {
+        ctx.reply(script.speakingClub.activePacketCheck.ifAvaibleActivePacket(
+          getUserActualName, 
+          (await db.get(userIDChat)('club-typeclub'))!, 
+          ConvertToPrice((await db.get(userIDChat)('club-typeclub'))!)!), {
           reply_markup: {
             one_time_keyboard: true,
-            keyboard: [
-              [
-                {
-                  text: 'так'
-                },
-                {
-                  text: 'ні'
-                }
-              ]
-            ]
+            keyboard: keyboards.yesNo()
           }
         })
 
@@ -3878,12 +3872,11 @@ async function main() {
             one_time_keyboard: true,
             keyboard: keyboards.payPacketLessons()
           }
-        })
+        });
+        await set('state')('ChangeCountUserLessonsAndPacket');
       }
     }
-    else{
-      ctx.reply('Вам потрібно ввести число більше або рівне одиниці.');
-    }
+    else ctx.reply('Вам потрібно ввести число більше або рівне одиниці.');
   })
 
   onTextMessage('ChoosePacketHandlerCustomLesson', async(ctx, user, set, data) => {
@@ -3892,47 +3885,44 @@ async function main() {
       toWrite = parseInt(user['AP_UserChangeCountLesson_New'])
 
     if (CheckException.BackRoot(data)){
-      await ctx.reply('Скільки додамо?', {reply_markup: {remove_keyboard: true}});
+      await ctx.reply(`введіть число занять, яке має бути у користуваача  (наразі є: ${userID!.count} занять по ${ConvertToPrice(await db.get(userID!.id)('club-typeclub') ?? '')}uah)`, {reply_markup: {remove_keyboard: true}});
       await set('state')('CheckAvaibleActivePacketAndChangeCountLesson');
     }
-    else if (data.text === 'так'){
-      await dbProcess.ChangeCountUser(userID!._id, toWrite);  
-
-      await ctx.reply(`Успішно! На рахунку у студента ${getUserActualName}: ${toWrite} занять`, {
-        parse_mode: "Markdown",
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: keyboards.personalStudentAdminPanel()
-        },
-      })
-
-      await set('state')('PeronalStudentHandler');
-    }
-    else if (data.text === 'ні'){
-      ctx.reply(script.speakingClub.activePacketCheck.ifChooseActivePacket, {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: keyboards.payPacketLessons()
-        }
-      })
-      await set('state')('ChangeCountUserLessonsAndPacket');
-    }
     else{
-      ctx.reply(script.errorException.chooseButtonError, {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: 'так'
-              },
-              {
-                text: 'ні'
-              }
-            ]
-          ]
-        }
-      })
+      switch(data.text){
+        case "так":
+          await dbProcess.ChangeCountUser(userID!._id, toWrite);
+
+          await ctx.reply(`Успішно! На рахунку у студента ${getUserActualName}: ${toWrite} занять`, {
+            parse_mode: "Markdown",
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.personalStudentAdminPanel()
+            },
+          })
+
+          await set('state')('PeronalStudentHandler');
+          break;
+
+        case "ні":
+          ctx.reply(script.speakingClub.activePacketCheck.ifChooseActivePacket, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.payPacketLessons()
+            }
+          })
+          await set('state')('ChangeCountUserLessonsAndPacket');
+          break
+
+        default:
+          ctx.reply(script.errorException.chooseButtonError, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.yesNo()
+            }
+          })
+          break;
+      }
     }
   })
 
