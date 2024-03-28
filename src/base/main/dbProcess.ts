@@ -42,7 +42,7 @@ export default async function dbProcess(botdb: MongoClient){
         }
 
         async DeleteUser(id: string) {
-            await this.botdbUsers.deleteOne({ id: id });
+            await this.botdbUsers.updateOne({ id: id }, {$set: {teacher: false, role: 'guest'}});
         }
 
         async ShowOneUser(id: number) {
@@ -524,6 +524,32 @@ export default async function dbProcess(botdb: MongoClient){
                 return true;
             }
             else return false;
+        }
+
+        async UsersOperationWithGuest(idStudent: number, idTeacher: number, miro_link: string, parametr: string){
+            const student = await this.ShowOneUser(idStudent),
+                teacher = await this.ShowOneUser(idTeacher);
+
+            if (student && teacher){
+                const teachersStudents = teacher.registered_students;
+                switch(parametr){
+                    case "trial_teacher":
+                        await this.ChangeKeyData(student, 'teacher', teacher.id);
+                        await this.ChangeKeyData(student, 'miro_link', miro_link);
+                        await this.ChangeKeyData(teacher, 'registered_students', teachersStudents.push(student.name));
+                        // TO DO: REGISTER STUDENT TO INDIVIDUAL LESSON AND CREATE IT
+                        break;
+
+                    case "just_teacher":
+                        await this.ChangeKeyData(student, 'teacher', teacher.id);
+                        await this.ChangeKeyData(student, 'miro_link', miro_link);
+                        await this.ChangeKeyData(teacher, 'registered_students', teachersStudents.push(student.name));
+                        break;
+
+                    default:
+                        throw new Error('\n\nUncorrect parametr in UsersOperationWithGuest()');
+                }
+            }
         }
     }
 

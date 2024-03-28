@@ -558,13 +558,16 @@ ${number}
           return `👉 Адмін (ID: ${id})\n${name}\n(@${username}); ${number}`
 
         case "developer":
-          return `👉 Адмін\n${name}\n(@${username}); ${number}`
+          return `👉 Розробник\n${name}\n(@${username}); ${number}`
 
         default:
           throw new Error('\n\nUser role undefined. Can`t continue work while this issue not fixed.')
       }
     }
-  }
+  },
+
+  operationWithGuest: (name: string, teacher: string, miro_link: string, addToTrial?: boolean) => 
+  `✅ користувача ${name} успішно додано ${addToTrial? 'на пробне': ''} до викладача ${teacher}\n\nпосилання на дошку Miro студента: ${miro_link}`
 
 }
 

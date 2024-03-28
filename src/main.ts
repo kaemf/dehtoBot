@@ -227,7 +227,7 @@ async function main() {
 
       await set('state')('AdminUsersOperationHandler');
     }
-    else if (data.text === "Адмін Панель" && checkChats(ctx?.chat?.id ?? -1)){
+    else if (data.text === "Розмовні клуби" && checkChats(ctx?.chat?.id ?? -1)){
       ctx.reply("З поверненням, Меркель! :)", {
         parse_mode: "Markdown",
         reply_markup: {
@@ -235,7 +235,7 @@ async function main() {
           keyboard: [
             [
               {
-                text: "Шпрах-Клуби"
+                text: "Клуби"
               },
               {
                 text: "Особові справи"
@@ -2444,7 +2444,7 @@ async function main() {
 
       await set('state')('FunctionRoot');
     }
-    else if (data.text === 'Шпрах-Клуби'){
+    else if (data.text === 'Клуби'){
       ctx.reply("Добренько, і що на цей раз?)", {
         parse_mode: "Markdown",
         reply_markup: {
@@ -3620,28 +3620,33 @@ async function main() {
 
       await set('state')('AdminRootHandler');
     }
-    else if (data.text === 'Показати всіх користувачів'){
+    else if (data.text === 'Показати усіх користувачів'){
       const results = await dbProcess.ShowAllUsers();
+      let userNumber = 1
     
       for (let i = 0; i < results.length; i++) {
-        if (i % 10 === 0 && i != 0){
-          const messageWaiting = ctx.reply("Почекайте маленько, підгружаю ще...");
-          await new Promise(resolve => setTimeout(resolve, 3000));
-          ctx.telegram.deleteMessage(ctx?.chat?.id ?? -1, (await messageWaiting).message_id);
-          await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()), {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: keyboards.personalStudentAdminPanel()
-            }
-          });
-        }
-        else{
-          await ctx.reply(script.speakingClub.report.showUser(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()), {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: keyboards.personalStudentAdminPanel()
-            }
-          });
+        if (results[i].count > 0){
+          if (i % 10 === 0 && i != 0){
+            const messageWaiting = ctx.reply("Почекайте маленько, підгружаю ще...");
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            ctx.telegram.deleteMessage(ctx?.chat?.id ?? -1, (await messageWaiting).message_id);
+            await ctx.reply(script.speakingClub.report.showUser(userNumber, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()), {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboards.personalStudentAdminPanel()
+              }
+            });
+            userNumber++;
+          }
+          else{
+            await ctx.reply(script.speakingClub.report.showUser(userNumber, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()), {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboards.personalStudentAdminPanel()
+              }
+            });
+            userNumber++;
+          }
         }
       }
     }
@@ -3984,16 +3989,7 @@ async function main() {
       ctx.reply(`Ви впевнені, що хочете видалити користувача №${data.text}`, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "так"
-              },
-              {
-                text: "ні"
-              }
-            ]
-          ]
+          keyboard: keyboards.yesNo()
         }
       })
 
@@ -4035,9 +4031,10 @@ async function main() {
       await set('state')('DeleteStudentAndCheckAction');
     }
     else if (data.text === 'так'){
-      await dbProcess.DeleteUser(results.map(item => item.id)[parseInt(indexToDelete) - 1]);
+      const User = await dbProcess.ShowOneUser(results.map(item => item.id)[parseInt(indexToDelete) - 1]);
+      await dbProcess.DeleteUser(User!.id);
 
-      ctx.reply(`Успішно видалено студента №${indexToDelete}`, {
+      ctx.reply(`✅ користувача ${User!.name} було успішно видалено!`, {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.personalStudentAdminPanel()
@@ -4047,7 +4044,21 @@ async function main() {
       await set('state')('PeronalStudentHandler');
     }
     else if (data.text === 'ні'){
-      ctx.reply(`Поточну операцію відмінено.`, {
+      const User = await dbProcess.ShowOneUser(results.map(item => item.id)[parseInt(indexToDelete) - 1]),
+        teacher = await dbProcess.ShowOneUser(User!.teacher);
+      await ctx.reply('фухх, а то думаємо якась помилка вже..')
+      ctx.reply(script.studentFind.diffUserFind(
+        User!.role,
+        User!.id,
+        User!.name,
+        User!.username,
+        User!.number,
+        teacher?.name ?? "відсутній",
+        User!.individual_count ?? 0,
+        User!.count ?? 0,
+        User!.miro_link ?? "відсутнє",
+        await db.get(User!.id)('club-typepacket') ?? false
+      ), {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.personalStudentAdminPanel()
@@ -4056,9 +4067,7 @@ async function main() {
 
       await set('state')('PeronalStudentHandler');
     }
-    else{
-      ctx.reply(script.errorException.chooseButtonError);
-    }
+    else ctx.reply(script.errorException.chooseButtonError);
   })
 
   // Change user role
@@ -5558,6 +5567,7 @@ async function main() {
               keyboard: teachersKeyboard
             }
           })
+          await set('state')('AdminAddUserToTeacherAndTrial_RespondTeacher');
           break;
 
         case "Додати викладачеві":
@@ -5576,6 +5586,7 @@ async function main() {
               keyboard: _teachersKeyboard
             }
           })
+          await set('state')('AdminAddUserToTeacher_RespondTeacher')
           break;
 
         default:
@@ -5663,6 +5674,128 @@ async function main() {
       }
       else ctx.reply('виникла помилка :( (помилка: не знайдено потрібного користувача)');
     }
+  })
+
+  onTextMessage('AdminAddUserToTeacherAndTrial_RespondTeacher', async(ctx, user, set, data) => {
+    const users = await dbProcess.ShowAllUsers(),
+        actualStudent = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id']))
+      let teachersReg = [], teachersKeyboard = [];
+
+    for (let i = 0; i < users.length; i++){
+      if (users[i].role === 'teacher' && !users[i].registered_students.includes(actualStudent)){
+        teachersKeyboard.push([{ text: users[i].name}]);
+      }
+    }
+
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else if (CheckException.TextException(data)){
+      for (let i = 0; i < users.length; i++){
+        if (users[i].role === 'teacher' && !users[i].registered_students.includes(actualStudent)){
+          teachersReg.push(users[i].name);
+        }
+      }
+
+      if (teachersReg.includes(data.text)){
+        await set('admin_tmp_usersoperation_teacher_id')(await dbProcess.GetUserIDByName(data.text));
+        ctx.reply('додайте лінк на дошку студента');
+        await set('state')('AdminAddUserToTeacherAndTrial_RespondMiro');
+      }
+      ctx.reply(script.errorException.chooseButtonError, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: teachersKeyboard
+        }
+      })
+    }
+    ctx.reply(script.errorException.chooseButtonError, {
+      reply_markup: {
+        one_time_keyboard: true,
+        keyboard: teachersKeyboard
+      }
+    })
+  })
+
+  onTextMessage('AdminAddUserToTeacherAndTrial_RespondMiro', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else if (data.text.startsWith("https://miro.com/app")){
+      const student = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id'])),
+        teacher = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_teacher_id']));
+
+      await dbProcess.UsersOperationWithGuest(student!.id, teacher!.id, data.text, 'trial_teacher');
+      ctx.reply(script.operationWithGuest(student!.name, teacher!.name, data.text, true), {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{ text: "В МЕНЮ" }]]
+        }
+      });
+      await set('state')('EndRootManager');
+    }
+    else ctx.reply('це не схоже на лінк для міро...');
+  })
+
+  onTextMessage('AdminAddUserToTeacher_RespondTeacher', async(ctx, user, set, data) => {
+    const users = await dbProcess.ShowAllUsers(),
+        actualStudent = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id']))
+      let teachersReg = [], teachersKeyboard = [];
+
+    for (let i = 0; i < users.length; i++){
+      if (users[i].role === 'teacher' && !users[i].registered_students.includes(actualStudent)){
+        teachersKeyboard.push([{ text: users[i].name}]);
+      }
+    }
+
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else if (CheckException.TextException(data)){
+      for (let i = 0; i < users.length; i++){
+        if (users[i].role === 'teacher' && !users[i].registered_students.includes(actualStudent)){
+          teachersReg.push(users[i].name);
+        }
+      }
+
+      if (teachersReg.includes(data.text)){
+        await set('admin_tmp_usersoperation_teacher_id')(await dbProcess.GetUserIDByName(data.text));
+        ctx.reply('додайте лінк на дошку студента');
+        await set('state')('AdminAddUserToTeacher_RespondMiro');
+      }
+      else ctx.reply(script.errorException.chooseButtonError, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: teachersKeyboard
+        }
+      })
+    }
+    else ctx.reply(script.errorException.chooseButtonError, {
+      reply_markup: {
+        one_time_keyboard: true,
+        keyboard: teachersKeyboard
+      }
+    })
+  })
+
+  onTextMessage('AdminAddUserToTeacher_RespondMiro', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else if (data.text.startsWith("https://miro.com/app")){
+      const student = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id'])),
+        teacher = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_teacher_id']));
+
+      await dbProcess.UsersOperationWithGuest(student!.id, teacher!.id, data.text, 'just_teacher');
+      ctx.reply(script.operationWithGuest(student!.name, teacher!.name, data.text), {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{ text: "В МЕНЮ" }]]
+        }
+      });
+      await set('state')('EndRootManager');
+    }
+    else ctx.reply('це не схоже на лінк для міро...');
   })
 
   // Payment Main Bot Function Action

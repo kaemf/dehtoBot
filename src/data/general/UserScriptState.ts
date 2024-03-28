@@ -94,3 +94,7 @@ export type UserScriptState =
   | "OperationWithUserHandler"
   | "AdminChangeRoleForUserHadnler"
   | "AdminChangeNameForUserHadnler"
+  | "AdminAddUserToTeacherAndTrial_RespondTeacher"
+  | "AdminAddUserToTeacherAndTrial_RespondMiro"
+  | "AdminAddUserToTeacher_RespondTeacher"
+  | "AdminAddUserToTeacher_RespondMiro"
