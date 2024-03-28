@@ -98,3 +98,5 @@ export type UserScriptState =
   | "AdminAddUserToTeacherAndTrial_RespondMiro"
   | "AdminAddUserToTeacher_RespondTeacher"
   | "AdminAddUserToTeacher_RespondMiro"
+  | "AdminSpeakingClubPersonalFindUser"
+  | "AdminSpeakingClubPersonalUserOperationHandler"

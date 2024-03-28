@@ -202,7 +202,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: await keyboards.speakingClubMenu()
+          keyboard: await keyboards.speakingClubMenu(userI!.role)
         },
       });
 
@@ -1144,12 +1144,13 @@ async function main() {
   })
 
   onTextMessage('ChoosingCourses', async (ctx, user, set, data) => {
+    const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
     if (CheckException.BackRoot(data)){
       ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: await keyboards.speakingClubMenu()
+          keyboard: await keyboards.speakingClubMenu(userObject!.role)
         }
       })
       await set('state')('FunctionRoot');
@@ -1548,7 +1549,7 @@ async function main() {
             parse_mode: "Markdown",
             reply_markup: {
               one_time_keyboard: true,
-              keyboard: await keyboards.speakingClubMenu()
+              keyboard: await keyboards.speakingClubMenu(userA!.role)
             },
           });
           break;
@@ -1575,12 +1576,13 @@ async function main() {
 
   // My Club Empty Handler
   onTextMessage('MyClubEmptyHandler', async(ctx, user, set, data) => {
+    const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
     if (CheckException.BackRoot(data)){
       ctx.reply("Виберіть одну із запропонованих кнопок", {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: await keyboards.speakingClubMenu()
+          keyboard: await keyboards.speakingClubMenu(userObject!.role)
         },
       });
 
@@ -1645,12 +1647,13 @@ async function main() {
 
   // Check count of lessons and pay more if it need
   onTextMessage('RespondCheckLessonsAndGetLessons', async(ctx, user, set, data) => {
+    const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
     if (CheckException.BackRoot(data)){
       ctx.reply("Виберіть одну із запропонованих кнопок", {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: await keyboards.speakingClubMenu()
+          keyboard: await keyboards.speakingClubMenu(userObject!.role)
         },
       });
 
@@ -1723,7 +1726,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: await keyboards.speakingClubMenu()
+          keyboard: await keyboards.speakingClubMenu(currentUser!.role)
         },
       });
 
@@ -2212,7 +2215,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: await keyboards.speakingClubMenu()
+          keyboard: await keyboards.speakingClubMenu(currentUser!.role)
         },
       });
 
@@ -2262,7 +2265,7 @@ async function main() {
             currentClub!.time, currentClub!.link), {
               reply_markup: {
                 one_time_keyboard: true,
-                keyboard: await keyboards.speakingClubMenu()
+                keyboard: await keyboards.speakingClubMenu(currentUser!.role)
               }
             });
             
@@ -2466,12 +2469,11 @@ async function main() {
       await set('state')('PeronalStudentHandler');
     }
     else if (data.text === 'В МЕНЮ'){
-      const userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
       ctx.reply(script.entire.chooseFunction, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject!.role)
         }
       })
 
@@ -2503,25 +2505,13 @@ async function main() {
 
   // Admin Panel (start)
   onTextMessage('RespondAdminActionAndRootChoose', async(ctx, user, set, data) => {
+    const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
     if (CheckException.BackRoot(data)){
       ctx.reply("З поверненням, Меркель! :)", {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Шпрах-Клуби"
-              },
-              {
-                text: "Особові справи"
-              }
-            ],[
-              {
-                text: "В МЕНЮ"
-              }
-            ]
-          ],
+          keyboard: await keyboards.speakingClubMenu(userObject!.role)
         },
       })
 
@@ -3596,25 +3586,13 @@ async function main() {
 
   //Personal Student Handler
   onTextMessage('PeronalStudentHandler', async(ctx, user, set, data) => {
+    const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
     if (CheckException.BackRoot(data)){
       ctx.reply("З поверненням, Меркель! :)", {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Шпрах-Клуби"
-              },
-              {
-                text: "Особові справи"
-              }
-            ],[
-              {
-                text: "В МЕНЮ"
-              }
-            ]
-          ],
+          keyboard: await keyboards.speakingClubMenu(userObject!.role)
         },
       })
 
@@ -3649,6 +3627,10 @@ async function main() {
           }
         }
       }
+    }
+    else if (data.text === 'Знайти користувача за даними'){
+      ctx.reply('введіть його ID / повне ім’я / номер телефону / нік в телеграмі');
+      await set('state')('AdminSpeakingClubPersonalFindUser')
     }
     else if (data.text === 'Змінити імʼя користувачу'){
       ctx.reply('Введіть id користувача, якому потрібно змінити імʼя', {reply_markup: {remove_keyboard: true}});
@@ -3817,129 +3799,104 @@ async function main() {
     else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length){
       await set('AP_student_id')(data.text);
 
-      await ctx.reply(`введіть число занять, яке має бути у користуваача  (наразі є: 3 занять по 280uah)`);
+      await ctx.reply(`введіть число занять, яке має бути у користувача  (наразі є: 3 занять по 280uah)`);
       await set('state')('CheckAvaibleActivePacketAndChangeCountLesson');
     }
-    else{
-      ctx.reply(script.errorException.textGettingError.defaultException);
-    }
+    else ctx.reply(script.errorException.textGettingError.defaultException);
   })
 
   onTextMessage('CheckAvaibleActivePacketAndChangeCountLesson', async(ctx, user, set, data) => {
-    const userIDWithoutProcessing = parseInt(user['AP_student_id']),
-      userIDChat: number = (await dbProcess.ShowAllUsers()).map(item => item.id)[userIDWithoutProcessing - 1],
-      getUserActualName = (await dbProcess.ShowAllUsers()).map(item => item.name)[userIDWithoutProcessing - 1];
     
     if (CheckException.BackRoot(data)){
-      const results = await dbProcess.ShowAllUsers();
-    
-      for (let i = 0; i < results.length; i++) {
-        await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, 
-          results[i].number, results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!), ConvertToPrice((await db.get(results[i].id)('club-typeclub'))!)!));
-      }
-
-      await ctx.reply('Виберіть номер студента, якому потрібно додати заняття', {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
-            return [{ text: `${index + 1}` }];
-          })
-        }
-      })
-
-      await set('state')('AddLessonForStudent');
+      //back
     }
     else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1){
-      await set('AP_UserChangeCountLesson_IDChat')(userIDChat.toString());
-      await set('AP_UserChangeCountLesson_Name')(getUserActualName);
       await set('AP_UserChangeCountLesson_New')(data.text);
-      if (await db.get(userIDChat)('club-typeclub')){
-        ctx.reply(script.speakingClub.activePacketCheck.ifAvaibleActivePacket(
-          getUserActualName, 
-          (await db.get(userIDChat)('club-typeclub'))!, 
-          ConvertToPrice((await db.get(userIDChat)('club-typeclub'))!)!), {
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: keyboards.yesNo()
-          }
-        })
-
-        await set('state')('ChoosePacketHandlerCustomLesson')
-      }
-      else{
-        ctx.reply(script.speakingClub.activePacketCheck.noAvaibleActivePacket(getUserActualName), {
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: keyboards.payPacketLessons()
-          }
-        });
-        await set('state')('ChangeCountUserLessonsAndPacket');
-      }
+      await ctx.reply('✅ число занять змінено!');
+      await ctx.reply('оберіть, за яким пакетом будуть додані заняття:', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.payPacketLessons()
+        }
+      });
+      await set('state')('ChangeCountUserLessonsAndPacket');
     }
     else ctx.reply('Вам потрібно ввести число більше або рівне одиниці.');
   })
 
-  onTextMessage('ChoosePacketHandlerCustomLesson', async(ctx, user, set, data) => {
-    const userID = await dbProcess.ShowOneUser(parseInt(user['AP_UserChangeCountLesson_IDChat'])),
-      getUserActualName = user['AP_UserChangeCountLesson_Name'],
-      toWrite = parseInt(user['AP_UserChangeCountLesson_New'])
+  // onTextMessage('ChoosePacketHandlerCustomLesson', async(ctx, user, set, data) => {
+  //   const userID = await dbProcess.ShowOneUser(parseInt(user['AP_UserChangeCountLesson_IDChat'])),
+  //     getUserActualName = user['AP_UserChangeCountLesson_Name'],
+  //     toWrite = parseInt(user['AP_UserChangeCountLesson_New'])
 
-    if (CheckException.BackRoot(data)){
-      await ctx.reply(`введіть число занять, яке має бути у користуваача  (наразі є: ${userID!.count} занять по ${ConvertToPrice(await db.get(userID!.id)('club-typeclub') ?? '')}uah)`, {reply_markup: {remove_keyboard: true}});
-      await set('state')('CheckAvaibleActivePacketAndChangeCountLesson');
-    }
-    else{
-      switch(data.text){
-        case "так":
-          await dbProcess.ChangeCountUser(userID!._id, toWrite);
+  //   if (CheckException.BackRoot(data)){
+  //     await ctx.reply(`введіть число занять, яке має бути у користуваача  (наразі є: ${userID!.count} занять по ${ConvertToPrice(await db.get(userID!.id)('club-typeclub') ?? '')}uah)`, {reply_markup: {remove_keyboard: true}});
+  //     await set('state')('CheckAvaibleActivePacketAndChangeCountLesson');
+  //   }
+  //   else{
+  //     switch(data.text){
+  //       case "так":
+  //         await dbProcess.ChangeCountUser(userID!._id, toWrite);
 
-          await ctx.reply(`Успішно! На рахунку у студента ${getUserActualName}: ${toWrite} занять`, {
-            parse_mode: "Markdown",
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: keyboards.personalStudentAdminPanel()
-            },
-          })
+  //         await ctx.reply(`Успішно! На рахунку у студента ${getUserActualName}: ${toWrite} занять`, {
+  //           parse_mode: "Markdown",
+  //           reply_markup: {
+  //             one_time_keyboard: true,
+  //             keyboard: keyboards.personalStudentAdminPanel()
+  //           },
+  //         })
 
-          await set('state')('PeronalStudentHandler');
-          break;
+  //         await set('state')('PeronalStudentHandler');
+  //         break;
 
-        case "ні":
-          ctx.reply(script.speakingClub.activePacketCheck.ifChooseActivePacket, {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: keyboards.payPacketLessons()
-            }
-          })
-          await set('state')('ChangeCountUserLessonsAndPacket');
-          break
+  //       case "ні":
+  //         ctx.reply(script.speakingClub.activePacketCheck.ifChooseActivePacket, {
+  //           reply_markup: {
+  //             one_time_keyboard: true,
+  //             keyboard: keyboards.payPacketLessons()
+  //           }
+  //         })
+  //         await set('state')('ChangeCountUserLessonsAndPacket');
+  //         break
 
-        default:
-          ctx.reply(script.errorException.chooseButtonError, {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: keyboards.yesNo()
-            }
-          })
-          break;
-      }
-    }
-  })
+  //       default:
+  //         ctx.reply(script.errorException.chooseButtonError, {
+  //           reply_markup: {
+  //             one_time_keyboard: true,
+  //             keyboard: keyboards.yesNo()
+  //           }
+  //         })
+  //         break;
+  //     }
+  //   }
+  // })
 
   onTextMessage('ChangeCountUserLessonsAndPacket', async(ctx, user, set, data) => {
-    const userID = await dbProcess.ShowOneUser(parseInt(user['AP_UserChangeCountLesson_IDChat'])),
-      getUserActualName = user['AP_UserChangeCountLesson_Name'],
-      toWrite = parseInt(user['AP_UserChangeCountLesson_New'])
+    const User = await dbProcess.ShowOneUser(parseInt(user['admin_speakingclub_personal_find_user'])),
+      teacher = await dbProcess.ShowOneUser(User!.teacher);
 
     if (CheckException.BackRoot(data)){
       await ctx.reply('Скільки додамо?', {reply_markup: {remove_keyboard: true}});
       await set('state')('CheckAvaibleActivePacketAndChangeCountLesson');
     }
-    else if (data.text === 'Разове заняття' || data.text === 'Шпрах-Клуб' || data.text === 'Шпрах-Клуб+PLUS'){
-      await dbProcess.ChangeCountUser(userID!._id, toWrite);
+    else if (data.text === 'Разове заняття (300uah)' || data.text === 'Пакет занять (280uah)'){
+      const toWrite = parseInt(user['AP_UserChangeCountLesson_New']);
+      await dbProcess.ChangeCountUser(User!._id, toWrite);
       await db.set(parseInt(user['AP_UserChangeCountLesson_IDChat']))('club-typeclub')(data.text);
 
-      await ctx.reply(`Успішно! На рахунку у студента ${getUserActualName}: ${toWrite} занять та активний пакет ${data.text} (${ConvertToPrice(data.text)} uah)`, {
+      await ctx.reply(`✅ успішно виконана операція!`);
+      await ctx.reply(script.studentFind.diffUserFind(
+        User!.role,
+        User!.id,
+        User!.name,
+        User!.username,
+        User!.number,
+        teacher? teacher.name: "відсутній",
+        User!.individual_count ?? 0,
+        User!.count ?? 0,
+        User!.miro_link ?? "відсутнє",
+        data.text
+      ), {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -5788,6 +5745,71 @@ async function main() {
     else ctx.reply('це не схоже на лінк для міро...');
   })
 
+  onTextMessage('AdminSpeakingClubPersonalFindUser', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else if (CheckException.TextException(data)){
+      const User = await dbProcess.FindUser(data.text);
+
+      if (User){
+        await set('admin_speakingclub_personal_find_user')(User.id)
+        const teacher = await dbProcess.ShowOneUser(User.teacher);
+        ctx.reply(script.studentFind.diffUserFind(
+          User.role,
+          User.id,
+          User.name,
+          User.username,
+          User.number,
+          teacher? teacher.name : "відсутній",
+          User.individual_count ?? 0,
+          User.count ?? 0,
+          User.miro_link ?? "відсутнє",
+          await db.get(User.id)('type_clubpacket') ?? false
+        ), {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.personalStudentAdminPanel()
+          }
+        })
+
+        await set('state')('AdminSpeakingClubPersonalUserOperationHandler')
+      }
+      else ctx.reply('такого користувача в базі даних немає або ви неправильно ввели дані, спробуйте ще раз');
+    }
+    else ctx.reply(script.errorException.textGettingError.defaultException);
+  })
+
+  onTextMessage('AdminSpeakingClubPersonalUserOperationHandler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else{
+      switch(data.text){
+        case "Редагувати заняття":
+          const userOperation = await dbProcess.ShowOneUser(parseInt(user['admin_speakingclub_personal_find_user']));
+          await ctx.reply(`введіть число занять, яке має бути у користуваача (наразі є: ${userOperation!.count} занять по ${ConvertToPrice(await db.get(userOperation!.id)('club-typeclub') ?? '') ?? 0}uah)`);
+          await set('state')('CheckAvaibleActivePacketAndChangeCountLesson');
+          break;
+
+        case "Змінити активний пакет":
+          break;
+
+        case "Видалити користувача":
+          break;
+
+        default:
+          ctx.reply(script.errorException.chooseButtonError, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.personalStudentAdminPanel()
+            }
+          })
+          break;
+      }
+    }
+  })
+
   // Payment Main Bot Function Action
   bot.action(/^approvePayment:(\d+)$/, async (ctx) => {
     const id = Number.parseInt(ctx.match[1]);
@@ -6146,7 +6168,7 @@ async function main() {
         idClub!.time, idClub!.link), {
           reply_markup: {
             one_time_keyboard: true,
-            keyboard: await keyboards.speakingClubMenu()
+            keyboard: await keyboards.speakingClubMenu(currentUser!.role)
           }
         });
         
@@ -6167,16 +6189,7 @@ async function main() {
         ctx.reply(script.speakingClub.registrationLesson.paymentRequest(notEnoughLessons.name!), {
           reply_markup: {
             one_time_keyboard: true,
-            keyboard: [
-              [
-                {
-                  text: "так"
-                },
-                {
-                  text: "ні"
-                }
-              ]
-            ]
+            keyboard: keyboards.yesNo()
           }
         })
 

@@ -159,8 +159,25 @@ class Keyboard{
       ]
   }
 
-  async speakingClubMenu(){
-    return [
+  async speakingClubMenu(role: string){
+    return role === 'admin' || role === 'developer'
+    ?
+    [
+      [
+        {
+          text: "Клуби"
+        },
+        {
+          text: "Особові справи"
+        }
+      ],[
+        {
+          text: "В МЕНЮ"
+        }
+      ]
+    ]
+    :
+    [
       [
         {
           text: "Реєстрація на клуб"
@@ -207,10 +224,10 @@ class Keyboard{
     return [
       [
         {
-          text: "Редагувати заняття"
+          text: "Знайти користувача за даними"
         },
         {
-          text: "Показати всіх користувачів"
+          text: "Показати усіх користувачів"
         },
       ],[
         {

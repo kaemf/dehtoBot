@@ -1,8 +1,10 @@
+// else if (data.text === 'Разове заняття (300uah)' || data.text === 'Пакет занять (280uah)'){
+
 export function ConvertToPrice(packet: string){
-    if (packet === 'РазовеЗаняття'){
+    if (packet === 'Разове заняття (300uah)'){
         return 300;
     }
-    else if (packet === 'Шпрах-Клуб' || packet === 'Шпрах-Клуб+PLUS'){
+    else if (packet === 'Пакет занять (280uah)'){
         return 280;
     }
     else{
