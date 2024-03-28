@@ -92,3 +92,5 @@ export type UserScriptState =
   | "AdminUsersOperationHandler"
   | "FindUserAndGoToOperationWithHim"
   | "OperationWithUserHandler"
+  | "AdminChangeRoleForUserHadnler"
+  | "AdminChangeNameForUserHadnler"

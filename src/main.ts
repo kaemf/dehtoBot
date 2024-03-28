@@ -5495,6 +5495,7 @@ async function main() {
         const teacher = await dbProcess.ShowOneUser(User.teacher);
 
         await set('admin_tmp_usersoperation_user_role')(User.role);
+        await set('admin_tmp_usersoperation_user_id')(User.id);
 
         ctx.reply(script.studentFind.diffUserFind(
           User.role,
@@ -5533,17 +5534,48 @@ async function main() {
               keyboard: keyboards.roleChange()
             }
           })
+          await set('state')('AdminChangeRoleForUserHadnler')
           break;
 
         case "Змінити ім’я користувачу":
           ctx.reply('введіть нове ім’я');
-          pointer
+          await set('state')('AdminChangeNameForUserHadnler');
           break;
 
         case "Додати на пробне":
+          const users = await dbProcess.ShowAllUsers(),
+            actualStudent = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id']))
+          let teachersKeyboard = []
+
+          for (let i = 0; i < users.length; i++){
+            if (users[i].role === 'teacher' && !users[i].registered_students.includes(actualStudent)){
+              teachersKeyboard.push([{ text: users[i].name }])
+            }
+          }
+          ctx.reply('оберіть викладача, до якого ви хочете додати студента:', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: teachersKeyboard
+            }
+          })
           break;
 
         case "Додати викладачеві":
+          const _users = await dbProcess.ShowAllUsers(),
+            _actualStudent = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id']))
+          let _teachersKeyboard = []
+
+          for (let i = 0; i < _users.length; i++){
+            if (_users[i].role === 'teacher' && !_users[i].registered_students.includes(_actualStudent)){
+              _teachersKeyboard.push([{ text: _users[i].name }])
+            }
+          }
+          ctx.reply('оберіть викладача, до якого ви хочете додати студента:', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: _teachersKeyboard
+            }
+          })
           break;
 
         default:
@@ -5554,6 +5586,82 @@ async function main() {
             }
           })
       }
+    }
+  })
+
+  onTextMessage('AdminChangeRoleForUserHadnler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else if (CheckException.TextException(data)){
+      const User = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id']))
+
+      if (User){
+        await dbProcess.ChangeKeyData(User, 'role', data.text);
+        const updatedUser = await dbProcess.ShowOneUser(User.id);
+        await ctx.reply('роль користувача успішно змінена!');
+        if (updatedUser){
+          const teacher = await dbProcess.ShowOneUser(User.teacher);
+          ctx.reply(script.studentFind.diffUserFind(
+            updatedUser.role,
+            updatedUser.id,
+            updatedUser.name,
+            updatedUser.username,
+            updatedUser.number,
+            teacher? teacher.name: "відсутній",
+            updatedUser.individual_count ?? 0,
+            updatedUser.count ?? 0,
+            updatedUser.miro_link ?? "відсутнє",
+            await db.get(User.id)('club-typeclub') ?? false
+          ), {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: [[{ text: "В МЕНЮ" }]]
+            }
+          })
+          await set('state')('EndRootManager');
+        }
+        else ctx.reply('виникла помилка :( (помилка: не знайдено оновлений образ користувача)');
+      }
+      else ctx.reply('виникла помилка :( (помилка: не знайдено потрібного користувача)');
+    }
+  })
+
+  onTextMessage('AdminChangeNameForUserHadnler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else if (CheckException.TextException(data)){
+      const User = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id']))
+
+      if (User){
+        await dbProcess.ChangeKeyData(User, 'name', data.text);
+        const updatedUser = await dbProcess.ShowOneUser(User.id);
+        await ctx.reply('роль користувача успішно змінена!');
+        if (updatedUser){
+          const teacher = await dbProcess.ShowOneUser(User.teacher);
+          ctx.reply(script.studentFind.diffUserFind(
+            updatedUser.role,
+            updatedUser.id,
+            updatedUser.name,
+            updatedUser.username,
+            updatedUser.number,
+            teacher? teacher.name: "відсутній",
+            updatedUser.individual_count ?? 0,
+            updatedUser.count ?? 0,
+            updatedUser.miro_link ?? "відсутнє",
+            await db.get(User.id)('club-typeclub') ?? false
+          ), {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: [[{ text: "В МЕНЮ" }]]
+            }
+          })
+          await set('state')('EndRootManager');
+        }
+        else ctx.reply('виникла помилка :( (помилка: не знайдено оновлений образ користувача)');
+      }
+      else ctx.reply('виникла помилка :( (помилка: не знайдено потрібного користувача)');
     }
   })
 
