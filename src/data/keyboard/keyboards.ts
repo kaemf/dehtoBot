@@ -241,6 +241,24 @@ class Keyboard{
     ]
   }
 
+  usersOperationInTheClub(){
+    return [
+      [
+        {
+          text: "Редагувати заняття"
+        }
+      ],[
+        {
+          text: "Змінити активний пакет"
+        }
+      ],[
+        {
+          text: "Видалити користувача"
+        }
+      ]
+    ]
+  }
+
   adminPanelChangeClub(){
     return [
       [
@@ -400,15 +418,12 @@ class Keyboard{
     return [
       [
         {
-          text: "Разове заняття"
+          text: "Разове заняття (300uah)"
         }
       ],
       [
         {
-          text: "Шпрах-Клуб"
-        },
-        {
-          text: "Шпрах-Клуб+PLUS"
+          text: "Пакет занять (280uah)"
         }
       ]
     ]
@@ -545,6 +560,28 @@ class Keyboard{
       ],[
         {
           text: "Змінити ім’я користувачу"
+        }
+      ]
+    ]
+  }
+
+  notificationSenders(){
+    return [
+      [
+        {
+          text: "Усім користувачам"
+        }
+      ],[
+        {
+          text: "Лише викладачам"
+        }
+      ],[
+        {
+          text: "Лише студентам"
+        }
+      ],[
+        {
+          text: "Відправити конкретному юзеру"
         }
       ]
     ]

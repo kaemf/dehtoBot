@@ -227,6 +227,10 @@ async function main() {
 
       await set('state')('AdminUsersOperationHandler');
     }
+    else if (data.text === 'Відправити сповіщення' && (userI!.role === 'admin' || userI!.role === 'developer')){
+      ctx.reply('напишіть текст сповіщення, який ви хочете віправити');
+      await set('state')('AdminNotificationRepondText')
+    }
     else if (data.text === "Розмовні клуби" && checkChats(ctx?.chat?.id ?? -1)){
       ctx.reply("З поверненням, Меркель! :)", {
         parse_mode: "Markdown",
@@ -425,7 +429,7 @@ async function main() {
       let teachersKeyboard = [];
 
       for (let i = 0; i < teachers.length; i++){
-        if (teachers[i].role === 'developer'){
+        if (teachers[i].role === 'teacher'){
           teachersKeyboard.push([{ text: teachers[i].name }]);
         }
       }
@@ -2233,7 +2237,7 @@ async function main() {
         if (currentClub!.count > 0){
           if (!await dbProcess.HasThisClubUser(ctx?.chat?.id ?? -1, currentItemIndex)){
             await dbProcess.ChangeCountUser(currentUser!._id, currentUser!.count - 1);
-            await dbProcess.ChangeKeyData(currentClub!, 'count', currentClub!.count - 1);
+            await dbProcess.ChangeKeyData(currentClub!, 'count', currentClub!.count - 1, true);
             await dbProcess.WriteNewClubToUser(ctx?.chat?.id ?? -1, currentClub!._id);
 
             for(let i = 0; i < users.length; i++){
@@ -3258,7 +3262,7 @@ async function main() {
     
           await set('AP_keydatatochange')(data.text);
     
-          await dbProcess.ChangeKeyData(dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid'])]), keyForChange, parseInt(data.text));
+          await dbProcess.ChangeKeyData(dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid'])]), keyForChange, parseInt(data.text), true);
           ctx.reply('Успішно виконана операція!', {
             parse_mode: "Markdown",
             reply_markup: {
@@ -3290,7 +3294,7 @@ async function main() {
             ctx.telegram.sendMessage(users[i].id, `${users[i].name}!\n\nХочемо вас повідомити, що на шпрах-клубі ${object!.title}, котрий на ${dbProcess.getDateClub(new Date(object!.date))} о ${object!.time} були змінені наступні дані:\n\n\n👉🏽Було змінено - ${keyForChangeService}\n✅Нові дані - ${data.text}`);
           }
         }
-        await dbProcess.ChangeKeyData(getCurrentClub[0]!, keyForChange, data.text);
+        await dbProcess.ChangeKeyData(getCurrentClub[0]!, keyForChange, data.text, true);
         ctx.reply('Успішно виконана операція!', {
           parse_mode: "Markdown",
           reply_markup: {
@@ -3328,7 +3332,7 @@ async function main() {
         console.log(object.title);
 
       await set('AP_keydatatochange')(data.text);
-      await dbProcess.ChangeKeyData(object, keyForChange, data.file[0]);
+      await dbProcess.ChangeKeyData(object, keyForChange, data.file[0], true);
       ctx.telegram.sendDocument(object.teacher_id, data.file[0], {caption: `Хей!\n\n🤝🏽 Хочемо повідомити, що у клуба ${object.title}, котрий на ${dbProcess.getDateClub(new Date(object.date))} о ${object.time} було змінено документ із лексикою\n\nПросимо ознайомитись❤️`});
       for (let i = 0; i < users.length; i++){
         if (await dbProcess.HasThisClubUser(users[i].id, object!._id)){
@@ -3412,7 +3416,7 @@ async function main() {
             object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]),
             users = await dbProcess.ShowAllUsers();
 
-          await dbProcess.ChangeKeyData(object!, 'date', `${data.text}-${user['change_date_month']}-${user['change_date_day']}`)
+          await dbProcess.ChangeKeyData(object!, 'date', `${data.text}-${user['change_date_month']}-${user['change_date_day']}`, true)
           await ctx.telegram.sendMessage(object!.teacher_id, `${object!.teacher}!\n\n➡️ Хочемо вас попередити, що клуб ${object!.title}, котрий ${dbProcess.getDateClub(new Date(object!.date))} о ${object!.time}, відтепер відбудеться ${dbProcess.getDateClub(new Date(`${data.text}-${user['change_date_month']}-${user['change_date_day']}`))} ${object!.time}\n\nДякуємо за розуміння❤️`)
           for (let i = 0; i < users.length; i++){
             if (await dbProcess.HasThisClubUser(users[i].id, object!._id)){
@@ -3480,7 +3484,7 @@ async function main() {
           object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]),
           users = await dbProcess.ShowAllUsers();
   
-        await dbProcess.ChangeKeyData(object!, 'time', `${user['change_time_hour']}:${data.text}`);
+        await dbProcess.ChangeKeyData(object!, 'time', `${user['change_time_hour']}:${data.text}`, true);
         await ctx.telegram.sendMessage(object!.teacher_id, `${object!.teacher}!\n\nХочемо попередити, що клуб ${object!.title}, котрий на ${dbProcess.getDateClub(new Date(object!.date))} о ${object!.time}, тепер буде проходити о ${user['change_time_hour']}:${data.text}\n\nУдачі❤️`)
         for (let i = 0; i < users.length; i++){
           if (await dbProcess.HasThisClubUser(users[i].id, object!._id)){
@@ -3537,8 +3541,8 @@ async function main() {
 
         ctx.telegram.sendMessage(teacher[1], `Йоу!\n\nВи були встановлені викладачем на клубі ${object!.title}\n\nВдалого заняття🍓`);
 
-        await dbProcess.ChangeKeyData(object!, 'teacher', teacher[0]);
-        await dbProcess.ChangeKeyData(object!, 'teacher_id', teacher[1]);
+        await dbProcess.ChangeKeyData(object!, 'teacher', teacher[0], true);
+        await dbProcess.ChangeKeyData(object!, 'teacher_id', teacher[1], true);
 
         ctx.reply('Успішно виконана операція!', {
           reply_markup: {
@@ -3882,7 +3886,7 @@ async function main() {
     else if (data.text === 'Разове заняття (300uah)' || data.text === 'Пакет занять (280uah)'){
       const toWrite = parseInt(user['AP_UserChangeCountLesson_New']);
       await dbProcess.ChangeCountUser(User!._id, toWrite);
-      await db.set(parseInt(user['AP_UserChangeCountLesson_IDChat']))('club-typeclub')(data.text);
+      await db.set(User!.id)('club-typeclub')(data.text);
 
       await ctx.reply(`✅ успішно виконана операція!`);
       await ctx.reply(script.studentFind.diffUserFind(
@@ -3900,11 +3904,11 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.personalStudentAdminPanel()
+          keyboard: keyboards.usersOperationInTheClub()
         },
       })
 
-      await set('state')('PeronalStudentHandler');
+      await set('state')('AdminSpeakingClubPersonalUserOperationHandler');
     }
     else{
       ctx.reply(script.errorException.chooseButtonError, {
@@ -5199,7 +5203,8 @@ async function main() {
       //back
     }
     else if (CheckException.TextException(data)){
-      const teacher = await dbProcess.ShowOneUser(await dbProcess.GetUserIDByName(data.text));
+      const userID = await dbProcess.GetUserIDByName(data.text);
+      const teacher = await dbProcess.ShowOneUser(userID);
 
       if (teacher && teacher.role === 'teacher'){
         await set('admin_teachersoperation_idone')(teacher.id);
@@ -5209,7 +5214,7 @@ async function main() {
           teacher.role,
           teacher.username,
           teacher.number,
-          teacher.registered_students.length
+          teacher.registered_students?.length ?? 0
         ), {
           reply_markup: {
             one_time_keyboard: true,
@@ -5277,13 +5282,13 @@ async function main() {
           let teachersStudentsObjects = [],
             teachersStudentsObjectsKeyboard = [];
 
-          for (let i = 0; i < teacherStudents.length; i++){
-            teachersStudentsObjects.push(await dbProcess.ShowOneUser(await dbProcess.GetUserIDByName(teacherStudents[i])));
-          }
-
-          const sortedStudents = teachersStudentsObjects.slice().sort((a: any, b: any) => a.name.localeCompare(b.name));
-          
-          if (sortedStudents){
+            
+          if (teacherStudents){
+            for (let i = 0; i < teacherStudents.length; i++){
+              teachersStudentsObjects.push(await dbProcess.ShowOneUser(await dbProcess.GetUserIDByName(teacherStudents[i])));
+            }
+  
+            const sortedStudents = teachersStudentsObjects.slice().sort((a: any, b: any) => a.name.localeCompare(b.name));
             for (let i = 0; i < sortedStudents.length; i++){
               teachersStudentsObjectsKeyboard.push([{ text: sortedStudents[i]!.name }])
             }
@@ -5555,7 +5560,7 @@ async function main() {
       const User = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id']))
 
       if (User){
-        await dbProcess.ChangeKeyData(User, 'role', data.text);
+        await dbProcess.ChangeKeyData(User, 'role', Role(data.text), false);
         const updatedUser = await dbProcess.ShowOneUser(User.id);
         await ctx.reply('роль користувача успішно змінена!');
         if (updatedUser){
@@ -5593,7 +5598,7 @@ async function main() {
       const User = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id']))
 
       if (User){
-        await dbProcess.ChangeKeyData(User, 'name', data.text);
+        await dbProcess.ChangeKeyData(User, 'name', data.text, false);
         const updatedUser = await dbProcess.ShowOneUser(User.id);
         await ctx.reply('роль користувача успішно змінена!');
         if (updatedUser){
@@ -5769,7 +5774,7 @@ async function main() {
         ), {
           reply_markup: {
             one_time_keyboard: true,
-            keyboard: keyboards.personalStudentAdminPanel()
+            keyboard: keyboards.usersOperationInTheClub()
           }
         })
 
@@ -5788,21 +5793,284 @@ async function main() {
       switch(data.text){
         case "Редагувати заняття":
           const userOperation = await dbProcess.ShowOneUser(parseInt(user['admin_speakingclub_personal_find_user']));
-          await ctx.reply(`введіть число занять, яке має бути у користуваача (наразі є: ${userOperation!.count} занять по ${ConvertToPrice(await db.get(userOperation!.id)('club-typeclub') ?? '') ?? 0}uah)`);
+          await ctx.reply(`введіть число занять, яке має бути у користувача (наразі є: ${userOperation!.count} занять по ${ConvertToPrice(await db.get(userOperation!.id)('club-typeclub') ?? '') ?? 0}uah)`);
           await set('state')('CheckAvaibleActivePacketAndChangeCountLesson');
           break;
 
         case "Змінити активний пакет":
+          ctx.reply('оберіть пакет, на який ви хочете змінити актуальний:', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.payPacketLessons()
+            }
+          })
+          await set('state')('AdminChangeUserActivePacketHandler')
           break;
 
         case "Видалити користувача":
+          ctx.reply('ви впевнені, що хочете видалити користувача?', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.yesNo(true)
+            }
+          });
+          await set('state')('AdminClubDeleteUserHandler');
           break;
 
         default:
           ctx.reply(script.errorException.chooseButtonError, {
             reply_markup: {
               one_time_keyboard: true,
-              keyboard: keyboards.personalStudentAdminPanel()
+              keyboard: keyboards.usersOperationInTheClub()
+            }
+          })
+          break;
+      }
+    }
+  })
+
+  onTextMessage('AdminChangeUserActivePacketHandler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else if (data.text === 'Разове заняття (300uah)' || data.text === 'Пакет занять (280uah)'){
+      const User = await dbProcess.ShowOneUser(parseInt(user['admin_speakingclub_personal_find_user'])),
+        teacher = await dbProcess.ShowOneUser(User!.teacher);
+      await set('club-typeclub')(data.text);
+      await ctx.reply('✅ успішно виконана операція!');
+
+      await ctx.reply(script.studentFind.diffUserFind(
+        User!.role,
+        User!.id,
+        User!.name,
+        User!.username,
+        User!.number,
+        teacher? teacher.name: "відсутній",
+        User!.individual_count ?? 0,
+        User!.count ?? 0,
+        User!.miro_link ?? "відсутнє",
+        data.text
+      ), {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.usersOperationInTheClub()
+        }
+      })
+      await set('state')('AdminSpeakingClubPersonalUserOperationHandler');
+    }
+    else ctx.reply(script.errorException.chooseButtonError);
+  })
+
+  onTextMessage('AdminClubDeleteUserHandler', async(ctx, user, set, data) => {
+    const User = await dbProcess.ShowOneUser(parseInt(user['admin_speakingclub_personal_find_user'])),
+      teacher = await dbProcess.ShowOneUser(User!.teacher);
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else{
+      switch(data.text){
+        case "Так":
+          // TO DO: LOGIC OF DELETE USER FROM CLUB
+          ctx.reply(`✅ користувача Дмитро Меркель було успішно видалено!`, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: [[{ text: "В МЕНЮ" }]]
+            }
+          })
+          await set('state')('EndRootManager');
+          break;
+        
+        case "Ні":
+          await ctx.reply('фухх, а то думаємо якась помилка вже..');
+          await ctx.reply(script.studentFind.diffUserFind(
+            User!.role,
+            User!.id,
+            User!.name,
+            User!.username,
+            User!.number,
+            teacher? teacher.name: "відсутній",
+            User!.individual_count ?? 0,
+            User!.count ?? 0,
+            User!.miro_link ?? "відсутнє",
+            data.text
+          ), {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.usersOperationInTheClub()
+            }
+          })
+          break;
+
+        default:
+          ctx.reply(script.errorException.chooseButtonError, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.yesNo(true)
+            }
+          })
+          break;
+      }
+    }
+  })
+
+  onTextMessage('AdminNotificationRepondText', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else if (CheckException.TextException(data)){
+      await set('admin_notification_text')(data.text);
+      ctx.reply('кому ви хочете віправити це сповіщення?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.notificationSenders()
+        }
+      })
+
+      await set('state')('AdminNotificationHandler');
+    }
+    else ctx.reply(script.errorException.textGettingError.defaultException);
+  })
+
+  onTextMessage('AdminNotificationHandler', async(ctx, user, set, data) => {
+    const AllUsers = await dbProcess.ShowAllUsers();
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else{
+      switch(data.text){
+        case "Усім користувачам":
+          for (let i = 0; i < AllUsers.length; i++){
+            try{
+              ctx.telegram.sendMessage(AllUsers[i].id, user['admin_notification_text'])
+              ctx.reply('віправлено ✅', {
+                reply_markup: {
+                  one_time_keyboard: true,
+                  keyboard: [[{ text: "В МЕНЮ" }]]
+                }
+              })
+              await set('state')('EndRootManager')
+            } catch (err){
+              console.log("Error to send message to user " +AllUsers[i].name +":"+err);
+              ctx.reply(`не вдалося надіслати сповіщення користувачу ${AllUsers[i].name} :( Скоріш за все він нас заблокував)`)
+            }
+          }
+          break;
+
+        case "Лише викладачам":
+          for (let i = 0; i < AllUsers.length; i++){
+            if (AllUsers[i].role === 'teacher'){
+              try{
+                ctx.telegram.sendMessage(AllUsers[i].id, user['admin_notification_text']);
+                ctx.reply('віправлено ✅', {
+                  reply_markup: {
+                    one_time_keyboard: true,
+                    keyboard: [[{ text: "В МЕНЮ" }]]
+                  }
+                })
+                await set('state')('EndRootManager')
+              } catch (err){
+                console.log("Error to send message to user " +AllUsers[i].name +":"+err);
+                ctx.reply(`не вдалося надіслати сповіщення користувачу ${AllUsers[i].name} :( Скоріш за все він нас заблокував)`)
+              }
+            }
+          }
+          break;
+
+        case "Лише студентам":
+          for (let i = 0; i < AllUsers.length; i++){
+            if (AllUsers[i].role === 'student'){
+              try{
+                ctx.telegram.sendMessage(AllUsers[i].id, user['admin_notification_text']);
+                ctx.reply('віправлено ✅', {
+                  reply_markup: {
+                    one_time_keyboard: true,
+                    keyboard: [[{ text: "В МЕНЮ" }]]
+                  }
+                })
+                await set('state')('EndRootManager')
+              } catch (err){
+                console.log("Error to send message to user " +AllUsers[i].name +":"+err);
+                ctx.reply(`не вдалося надіслати сповіщення користувачу ${AllUsers[i].name} :( Скоріш за все він нас заблокував)`)
+              }
+            }
+          }
+          break;
+
+        case "Відправити конкретному юзеру":
+          ctx.reply('введіть його ID / повне ім’я / номер телефону / нік в телеграмі');
+          await set('state')('AdminSendNotificationSpecificUser')
+      }
+    }
+  })
+
+  onTextMessage('AdminSendNotificationSpecificUser', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else if (CheckException.TextException(data)){
+      const User = await dbProcess.FindUser(data.text);
+
+      if (User){
+        const teacher = await dbProcess.ShowOneUser(User.teacher);
+        await set('admin_specific_user_send_notification_id')(User.id);
+        await ctx.reply(script.studentFind.diffUserFind(
+          User!.role,
+          User!.id,
+          User!.name,
+          User!.username,
+          User!.number,
+          teacher? teacher.name: "відсутній",
+          User!.individual_count ?? 0,
+          User!.count ?? 0,
+          User!.miro_link ?? "відсутнє",
+          data.text
+        ), {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.yesNo()
+          }
+        })
+        await set('state')('AdminSendNotificationSpecificUserHandler');
+      }
+      else ctx.reply('нажаль, такого користувача не знайдено, спробуйте ще раз, будь ласка')
+    }
+    else ctx.reply(script.errorException.textGettingError.defaultException);
+  })
+
+  onTextMessage('AdminSendNotificationSpecificUserHandler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else{
+      switch(data.text){
+        case "так":
+          try{
+            ctx.telegram.sendMessage(parseInt(user['admin_specific_user_send_notification_id']),
+            user['admin_notification_text']);
+          } catch (err){
+            const User = await dbProcess.ShowOneUser(parseInt(user['admin_specific_user_send_notification_id']))
+            console.log("Error to send message to user " +User?.name ?? '??' +":"+err);
+            ctx.reply(`не вдалося надіслати сповіщення користувачу ${User?.name ?? '(імені нема, можливо навіть в бд його нема)'} :( Скоріш за все він нас заблокував)`)
+          }
+          ctx.reply('віправлено ✅', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: [[{ text: "В МЕНЮ" }]]
+            }
+          })
+          await set('state')('EndRootManager')
+          break;
+
+        case "ні":
+          ctx.reply('добренько, тоді шукаємо далі');
+          await set('state')('AdminSendNotificationSpecificUser')
+          break;
+
+        default:
+          ctx.reply(script.errorException.chooseButtonError, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.yesNo()
             }
           })
           break;
@@ -5883,7 +6151,7 @@ async function main() {
     let currentAvailableCount = idClub!.count - 1
 
     await dbProcess.WriteNewClubToUser(idUser, idClub!._id)
-    await dbProcess.ChangeKeyData(idClub!, 'count', currentAvailableCount);
+    await dbProcess.ChangeKeyData(idClub!, 'count', currentAvailableCount, true);
     await dbProcess.SwitchToCompletTrialLesson(idUser, 'true');
 
     let recordedUsers = '';
@@ -6056,7 +6324,7 @@ async function main() {
 
     await dbProcess.ChangeCountUser(currentUser!._id, currentUser!.count + 4);
     await dbProcess.WriteNewClubToUser(idUser, idClub!._id)
-    await dbProcess.ChangeKeyData(idClub!, 'count', idClub!.count - 1);
+    await dbProcess.ChangeKeyData(idClub!, 'count', idClub!.count - 1, true);
     await dbProcess.SwitchToCompletTrialLesson(idUser, 'true');
 
     for (let i = 0; i < users.length; i++){
@@ -6132,7 +6400,7 @@ async function main() {
     if (currentUser!.count > 0){
       if (!await dbProcess.HasThisClubUser(ctx?.chat?.id ?? -1, idClub!._id)){
         await dbProcess.ChangeCountUser(currentUser!._id, currentUser!.count - 1);
-        await dbProcess.ChangeKeyData(idClub!, 'count', idClub!.count - 1);
+        await dbProcess.ChangeKeyData(idClub!, 'count', idClub!.count - 1, true);
         await dbProcess.WriteNewClubToUser(ctx?.chat?.id ?? -1, idClub!._id);
 
         for(let i = 0; i < users.length; i++){

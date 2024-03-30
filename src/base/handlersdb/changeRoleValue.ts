@@ -10,7 +10,7 @@ export default function Role(data: string){
             return 'admin';
         
         default:
-            return false;
+            return '';
     }
 }
 

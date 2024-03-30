@@ -18,11 +18,11 @@ export default async function dbProcess(botdb: MongoClient){
             await this.clubdbLessons.deleteOne({ _id: new ObjectId(id) });
         }
 
-        async ChangeKeyData(id: Object, key: string, value: string | number){
+        async ChangeKeyData(id: Object, key: string, value: string | number, club: boolean){
             const updateObject = { $set: {} } as { $set: { [key: string]: string | number } };
             updateObject.$set[key] = value;
 
-            await this.clubdbLessons.updateOne(id, updateObject);
+            club ? await this.clubdbLessons.updateOne(id, updateObject) : await this.botdbUsers.updateOne(id, updateObject);
         }
 
         async ShowData(id: ObjectId) {
@@ -534,16 +534,16 @@ export default async function dbProcess(botdb: MongoClient){
                 const teachersStudents = teacher.registered_students;
                 switch(parametr){
                     case "trial_teacher":
-                        await this.ChangeKeyData(student, 'teacher', teacher.id);
-                        await this.ChangeKeyData(student, 'miro_link', miro_link);
-                        await this.ChangeKeyData(teacher, 'registered_students', teachersStudents.push(student.name));
+                        await this.ChangeKeyData(student, 'teacher', teacher.id, false);
+                        await this.ChangeKeyData(student, 'miro_link', miro_link, false);
+                        await this.ChangeKeyData(teacher, 'registered_students', teachersStudents.push(student.name), false);
                         // TO DO: REGISTER STUDENT TO INDIVIDUAL LESSON AND CREATE IT
                         break;
 
                     case "just_teacher":
-                        await this.ChangeKeyData(student, 'teacher', teacher.id);
-                        await this.ChangeKeyData(student, 'miro_link', miro_link);
-                        await this.ChangeKeyData(teacher, 'registered_students', teachersStudents.push(student.name));
+                        await this.ChangeKeyData(student, 'teacher', teacher.id, false);
+                        await this.ChangeKeyData(student, 'miro_link', miro_link, false);
+                        await this.ChangeKeyData(teacher, 'registered_students', teachersStudents.push(student.name), false);
                         break;
 
                     default:
