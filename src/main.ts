@@ -409,7 +409,18 @@ async function main() {
 
       }
       else if (userObject!.role === 'teacher'){
+        if (userObject!.set_individual_lessons){
 
+        }
+        else {
+          ctx.reply('на данний момент у вас відсутні заняття', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.myScheduleTeacher()
+            }
+          });
+          await set('state')('TeacherSchduleHandler');
+        }
       }
       else{
         ctx.reply(script.errorException.chooseButtonError, {
@@ -6076,6 +6087,100 @@ async function main() {
           break;
       }
     }
+  })
+
+  onTextMessage('TeacherSchduleHandler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else{
+      switch(data.text){
+        case "Запланувати заняття":
+          const teachersStudents = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1)
+          ?
+          (await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1))?.registered_students : false;
+          if (teachersStudents){
+            let studentsKeyboard = [];
+            for (let i = 0; i < teachersStudents.length; i++){
+              studentsKeyboard.push([{ text: teachersStudents[i] }]);
+            }
+            ctx.reply('оберіть студента, з яким плануєте заняття:', {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: studentsKeyboard
+              }
+            })
+
+            await set('state')('IndividualLessonScheduleCheckAvailibilityStudentAndGetDateTime')
+          }
+          ctx.reply('нажаль, на данний момент ви не маєте жодного активного студента');
+          break;
+
+        case "Перенести заняття":
+          break;
+
+        case "Видалити заняття":
+          break;
+
+        case "Запланувати пробне заняття":
+          break;
+
+        default:
+          ctx.reply(script.errorException.chooseButtonError, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.myScheduleTeacher()
+            }
+          })
+          break;
+      }
+    }
+  })
+
+  onTextMessage('IndividualLessonScheduleCheckAvailibilityStudentAndGetDateTime', async(ctx, user, set, data) => {
+    const teacherStudents = (await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1))?.registered_student;
+    let students = [];
+    
+    for (let i = 0; i < teacherStudents.length; i++){
+      students.push([{ text: teacherStudents[i] }]);
+    }
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else if (teacherStudents.includes(data.text)){
+      const User = await dbProcess.FindUser(data.text);
+      if (User){
+        await ctx.reply(script.studentFind.diffUserFind(
+          User.role,
+          User.id,
+          User.name,
+          User.username,
+          User.number,
+          user['name'],
+          User.individual_count ?? 0,
+          User.count ?? 0,
+          User.miro_link ?? "відсутнє",
+          await db.get(User.id)('club-typeclub') ?? false
+        ))
+
+        if (User.individual_count > 0){
+          await ctx.reply('вкажіть день, місяць та рік у форматі:\n23.05.2024');
+        }
+        else ctx.reply(`не можна запланувати заняття, у ${User.name} немає проплачених занять - повідомте в підтримку та оберіть іншого студента:`, {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: students
+          }
+        })
+      }
+      else ctx.reply(`нажаль, такого користувача як ${data.text} не знайдено в базі данних`)
+    }
+    else ctx.reply(script.errorException.chooseButtonError, {
+      reply_markup: {
+        one_time_keyboard: true, 
+        keyboard: students
+      }
+    })
   })
 
   // Payment Main Bot Function Action

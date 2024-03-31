@@ -5,6 +5,7 @@ export default async function dbProcess(botdb: MongoClient){
         private clubdbLessons = botdb.db('dehtoBDB').collection('clubLessons');
         private botdbUsers = botdb.db('dehtoBDB').collection('dataUsers');
         private deTaskDB = botdb.db('dehtoBDB').collection('deTask');
+        private individualdbLessons = botdb.db('dehtoBDB').collection('individualLessons');
 
         async ShowAll() {
             return await this.clubdbLessons.find({}).toArray();
@@ -550,6 +551,58 @@ export default async function dbProcess(botdb: MongoClient){
                         throw new Error('\n\nUncorrect parametr in UsersOperationWithGuest()');
                 }
             }
+        }
+
+        async CreateNewIndividualLesson(idStudent: number, idTeacher: number, date: string, time: string, duration: number){
+            const student = await this.ShowOneUser(idStudent),
+                teacher = await this.ShowOneUser(idTeacher);
+
+            if (student && teacher){
+                const teachersStudents = teacher?.registered_students ?? false;
+                let teacherHaveThisStudent = false;
+                if (teachersStudents){
+                    for (let i = 0; i < teachersStudents.length; i++){
+                        if (teachersStudents[i].name === student.name){
+                            teacherHaveThisStudent = true;
+                            break;
+                        }
+                    }
+                    if (teacherHaveThisStudent){
+                        if (new Date(`${date}T${time}`)){
+                            if (duration === 60 || duration === 90 || duration === 30){
+                                let lessonPush = [], lessonTeacherPush = [];
+                                const lesson = await this.individualdbLessons.insertOne({
+                                    idStudent: idStudent,
+                                    idTeacher: idTeacher,
+                                    date: date,
+                                    time: time,
+                                    duration: duration
+                                });
+
+                                if (student.individual_lessons){
+                                    lessonPush = student.individual_lessons;
+                                    lessonPush.push(lesson.insertedId);
+                                }
+                                else lessonPush = [ lesson.insertedId ];
+
+                                if (teacher.set_individual_lessons){
+                                    lessonTeacherPush = teacher.set_individual_lessons;
+                                    lessonTeacherPush.push(lesson.insertedId);
+                                }
+                                else lessonTeacherPush = [ lesson.insertedId ];
+
+                                await this.botdbUsers.updateOne({id: idStudent}, {$set: {individual_lessons: lessonPush}})
+                                await this.botdbUsers.updateOne({id: idTeacher}, {$set: {set_individual_lessons: lessonTeacherPush}});
+                            }
+                            else throw new Error(`\n\nDuration entered is uncorrect (${duration})`);
+                        }
+                        else throw new Error(`\n\nDate is uncorrect. ${date} and ${time}.\n\nIn system view is ${new Date(`${date}T${time}`)}`);
+                    }
+                    else throw new Error(`\n\nTeacher haven't student ${student.name}`);
+                }
+                else throw new Error(`\n\nTeacher haven't any student`);
+            }
+            else throw new Error('\n\nError: can`t find student or teacher in CreateNewIndividualLesson function');
         }
     }
 

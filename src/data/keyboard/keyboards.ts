@@ -586,6 +586,28 @@ class Keyboard{
       ]
     ]
   }
+
+  myScheduleTeacher(){
+    return [
+      [
+        {
+          text: "Запланувати заняття"
+        }
+      ],[
+        {
+          text: "Перенести заняття"
+        }
+      ],[
+        {
+          text: "Видалити заняття"
+        }
+      ],[
+        {
+          text: "Запланувати пробне заняття"
+        }
+      ]
+    ]
+  }
 }
 
 const keyboards : Keyboard = new Keyboard();

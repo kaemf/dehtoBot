@@ -106,3 +106,5 @@ export type UserScriptState =
   | "AdminNotificationHandler"
   | "AdminSendNotificationSpecificUser"
   | "AdminSendNotificationSpecificUserHandler"
+  | "TeacherSchduleHandler"
+  | "IndividualLessonScheduleCheckAvailibilityStudentAndGetDateTime"
