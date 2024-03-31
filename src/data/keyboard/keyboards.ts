@@ -608,6 +608,23 @@ class Keyboard{
       ]
     ]
   }
+
+  durationChoose(){
+    return [
+      [
+        {
+          text: "60хв"
+        },
+        {
+          text: "90хв"
+        }
+      ],[
+        {
+          text: "30хв"
+        }
+      ]
+    ]
+  }
 }
 
 const keyboards : Keyboard = new Keyboard();

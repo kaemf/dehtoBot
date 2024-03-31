@@ -170,7 +170,20 @@ UA773220010000026004330103247
 
   indivdual: {
     entire: (role: string) => role === 'admin' || role === 'developer' || role === 'teacher' ? 'що цікавить' : 'оберіть, що вас цікавить :)',
-    studentDeleteFromTeacher: (teacher: string, student: string) => `✅ студента ${student} було успішно видалено від викладача ${teacher}`
+    studentDeleteFromTeacher: (teacher: string, student: string) => `✅ студента ${student} було успішно видалено від викладача ${teacher}`,
+    individualLessonCreated: (name: string, date: string, dayOfWeek: string, time: string, count: number) => `чудово!\n\nзаняття з ${name} заплановано на:
+👉 ${date} (${dayOfWeek}) о ${time} за Києвом🇺🇦\n\n✅ Залишок: ${count / 60} занять (${count}хв)`,
+    rescheduleForTeacher: (position: number, time: string, duration: number, name: string, username: string, number: number) =>
+    `👉 ${position}\n${time} за Києвом 🇺🇦 (${duration}хв)\n${name}\n(@${username}); ${number}\n\n`,
+    trialFinal: (name: string, date: string, dayOfWeek: string, time: string, miro_link: string, zoom_link: string) => `чудово!\n
+заняття з ${name} заплановано на:
+👉 ${date} (${dayOfWeek}) о ${time} за Києвом🇺🇦\n
+❗️не забудьте повідомити підтримку після заняття, який рівень у студента та як пройшло заняття\n
+Вдалого пробного🍓\n
+лінк на Miro: 
+${miro_link}\n
+лінк на зустріч:
+${zoom_link}`
   },
 
   trialLesson: {
@@ -563,7 +576,10 @@ ${number}
         default:
           throw new Error('\n\nUser role undefined. Can`t continue work while this issue not fixed.')
       }
-    }
+    },
+
+    checkIndividualCountShowStudent: (name: string, nickname: string, number: number, count: number) =>
+    `👉 ${name}\n(@${nickname}); ${number}\n\n${count > 0 ? '✅' : '❌'} Залишок: ${count / 60} занять (${count}хв)`
   },
 
   operationWithGuest: (name: string, teacher: string, miro_link: string, addToTrial?: boolean) => 

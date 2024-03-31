@@ -11,6 +11,10 @@ export default async function dbProcess(botdb: MongoClient){
             return await this.clubdbLessons.find({}).toArray();
         }
 
+        async ShowAllInvdividualLessons() {
+            return await this.individualdbLessons.find({}).toArray();
+        }
+
         async AddData(data: {title: string, teacher: string, date: string, time: string, count: number, link: string}) {
             return await this.clubdbLessons.insertOne(data);
         }
@@ -535,10 +539,8 @@ export default async function dbProcess(botdb: MongoClient){
                 const teachersStudents = teacher.registered_students;
                 switch(parametr){
                     case "trial_teacher":
-                        await this.ChangeKeyData(student, 'teacher', teacher.id, false);
                         await this.ChangeKeyData(student, 'miro_link', miro_link, false);
-                        await this.ChangeKeyData(teacher, 'registered_students', teachersStudents.push(student.name), false);
-                        // TO DO: REGISTER STUDENT TO INDIVIDUAL LESSON AND CREATE IT
+                        await this.ChangeKeyData(teacher, 'trial_students', teachersStudents.push(student.name), false);
                         break;
 
                     case "just_teacher":
@@ -570,10 +572,17 @@ export default async function dbProcess(botdb: MongoClient){
                     if (teacherHaveThisStudent){
                         if (new Date(`${date}T${time}`)){
                             if (duration === 60 || duration === 90 || duration === 30){
-                                let lessonPush = [], lessonTeacherPush = [];
+                                let lessonPush = [], lessonTeacherPush = [], actualMCount
+
+                                if (student.individual_count - duration >= 0){
+                                    actualMCount = student.individual_count - duration;
+                                }
+                                else throw new Error('\n\nStudent haven`t enough minutes for individual lesson\nCreateNewIndividualLesson()');
+
                                 const lesson = await this.individualdbLessons.insertOne({
                                     idStudent: idStudent,
                                     idTeacher: idTeacher,
+                                    type: "classic",
                                     date: date,
                                     time: time,
                                     duration: duration
@@ -591,10 +600,103 @@ export default async function dbProcess(botdb: MongoClient){
                                 }
                                 else lessonTeacherPush = [ lesson.insertedId ];
 
-                                await this.botdbUsers.updateOne({id: idStudent}, {$set: {individual_lessons: lessonPush}})
+                                await this.botdbUsers.updateOne({id: idStudent}, {$set: {individual_lessons: lessonPush, individual_count: actualMCount}})
                                 await this.botdbUsers.updateOne({id: idTeacher}, {$set: {set_individual_lessons: lessonTeacherPush}});
                             }
                             else throw new Error(`\n\nDuration entered is uncorrect (${duration})`);
+                        }
+                        else throw new Error(`\n\nDate is uncorrect. ${date} and ${time}.\n\nIn system view is ${new Date(`${date}T${time}`)}`);
+                    }
+                    else throw new Error(`\n\nTeacher haven't student ${student.name}`);
+                }
+                else throw new Error(`\n\nTeacher haven't any student`);
+            }
+            else throw new Error('\n\nError: can`t find student or teacher in CreateNewIndividualLesson function');
+        }
+
+        async EditExistIndividualLesson(id: ObjectId, date: string, time: string, duration: number){
+            const lesson = await this.individualdbLessons.findOne({_id: id});
+                let result;
+
+            if (lesson){
+                const student = await this.ShowOneUser(lesson.idStudent);
+
+                if (lesson.duration > duration){
+                    const different = lesson.duration - duration;
+                    result = student!.individual_count + different;
+                    if (result < 0){
+                        return false;
+                    }
+                    else{
+                        await this.individualdbLessons.updateOne({_id: id}, {$set: {
+                            date: date,
+                            time: time
+                        }});
+                        await this.botdbUsers.updateOne({id: student!.id}, {$set: { individual_count: result }});
+                        return true;
+                    }
+                }
+                else{
+                    const different = duration - lesson.duration;
+                    result = student!.individual_count - different;
+                    if (result < 0){
+                        return false;
+                    }
+                    else{
+                        await this.individualdbLessons.updateOne({_id: id}, {$set: {
+                            date: date,
+                            time: time
+                        }});
+                        await this.botdbUsers.updateOne({id: student!.id}, {$set: { individual_count: result }});
+                        return true;
+                    }
+                }
+            }
+            else throw new Error('\n\nLesson to edit not found');
+        }
+
+        async DeleteIndividualLesson(id: ObjectId){
+            const lesson = await this.individualdbLessons.findOne({_id: id});
+
+            if (lesson){
+                const student = await dbProcess.ShowOneUser(lesson.idStudent);
+
+                if (student){
+                    const lessonDuration = lesson.duration;
+                    await this.individualdbLessons.deleteOne({_id: id});
+                    await this.botdbUsers.updateOne({_id: id}, {$set: {individual_count: student.individual_count + lessonDuration}});
+                }
+                else throw new Error('\n\nUser not found DeleteIndividualLesson()');
+            }
+            else throw new Error('\n\nLesson not found in DeleteIndividualLesson()');
+        }
+
+        async CreateTrialLesson(idStudent: number, idTeacher: number, date: string, time: string, zoom_link: string){
+            const student = await this.ShowOneUser(idStudent),
+                teacher = await this.ShowOneUser(idTeacher);
+
+            if (student && teacher){
+                const teachersStudents = teacher?.trial_students ?? false;
+                let teacherHaveThisStudent = false;
+                if (teachersStudents){
+                    for (let i = 0; i < teachersStudents.length; i++){
+                        if (teachersStudents[i].name === student.name){
+                            teacherHaveThisStudent = true;
+                            break;
+                        }
+                    }
+                    if (teacherHaveThisStudent){
+                        if (new Date(`${date}T${time}`)){
+                            const lesson = await this.individualdbLessons.insertOne({
+                                idStudent: idStudent,
+                                idTeacher: idTeacher,
+                                type: "trial",
+                                zoom_link: zoom_link,
+                                date: date,
+                                time: time,
+                            });
+
+                            await this.botdbUsers.updateOne({id: idStudent}, {$set: {trial: lesson.insertedId}});
                         }
                         else throw new Error(`\n\nDate is uncorrect. ${date} and ${time}.\n\nIn system view is ${new Date(`${date}T${time}`)}`);
                     }
