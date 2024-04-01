@@ -1,3 +1,5 @@
+import { WithId } from "mongodb";
+
 export default interface IndividualArray{
-    [key: string]: string[]
+    [key: string]: any[]
 }

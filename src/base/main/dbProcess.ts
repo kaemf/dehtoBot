@@ -564,7 +564,7 @@ export default async function dbProcess(botdb: MongoClient){
                 let teacherHaveThisStudent = false;
                 if (teachersStudents){
                     for (let i = 0; i < teachersStudents.length; i++){
-                        if (teachersStudents[i].name === student.name){
+                        if (teachersStudents[i] === student.name){
                             teacherHaveThisStudent = true;
                             break;
                         }
@@ -705,6 +705,16 @@ export default async function dbProcess(botdb: MongoClient){
                 else throw new Error(`\n\nTeacher haven't any student`);
             }
             else throw new Error('\n\nError: can`t find student or teacher in CreateNewIndividualLesson function');
+        }
+
+        async GetSpecificIndividualLessons(lessons: ObjectId[]){
+            let object = []
+
+            for (let i = 0; i < lessons.length; i++){
+                object.push(await this.individualdbLessons.findOne({_id: lessons[i]}));
+            }
+
+            return object;
         }
     }
 

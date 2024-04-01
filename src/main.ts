@@ -22,11 +22,12 @@ import formattedName from "./data/process/nameFormatt";
 import DateRecord from "./base/handlers/getTime";
 import MongoDBReturnType from "./data/general/mongoDBType";
 import { Markup, TelegramError } from "telegraf";
-import { Db, ObjectId } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import { DateProcess, DateProcessToPresentView, TimeProcess, getDayOfWeek } from "./data/process/dateAndTimeProcess";
+import IndividualArray from "./data/individual/interface";
 
 async function main() {
-  const [ onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, db, dbProcess ] = await arch();
+  const [ onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, notifbot, db, dbProcess ] = await arch();
 
   //Begin bot work, collecting user data (his telegram name) set up state_1
   bot.start( (ctx) => {
@@ -281,6 +282,39 @@ async function main() {
         }
       }
     }
+    else if ((data.text === 'Служба турботи' || data.text === 'Моя служба турботи') && (userI!.role === 'guest' || userI!.role === 'student' || userI!.role === 'developer')){
+      const objectList = await dbProcess.CreateNewLiveSupport(),
+          status = await db.get(ctx?.chat?.id ?? -1)('processStatus') ?? "waiting",
+          usersCollection = await dbProcess.GetAllUsers(),
+          inline = liveKeyboard(ctx?.chat?.id ?? -1, status, objectList.insertedId.toString());
+        let allBusy = true,
+          arrayIDs = [], arrayCIDs = [];
+
+        for (let n = 0; n < usersCollection.length; n++){
+          if (usersCollection[n].system_role === 'worker' && usersCollection[n].available === 'available'){
+            const message = ctx.telegram.sendMessage(usersCollection[n].id, script.liveSupport.userRequest(user['name'], user['username'], user['phone_number'], DateHistory()), {
+              parse_mode: "HTML",
+              ...Markup.inlineKeyboard(inline)
+            }); 
+            arrayIDs.push((await message).message_id);
+            arrayCIDs.push(usersCollection[n].id);
+            allBusy = false;
+          }
+        }
+
+        if (allBusy){
+          ctx.reply("Вибачте, але наразі всі оператори заняті, спробуйте, будь ласка, пізніше. Вибачте за незручності", {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.menu()
+            }
+          });
+        }
+        else{
+          await dbProcess.AddMessageIDsLiveSupport(objectList.insertedId, arrayIDs, arrayCIDs);
+          await ctx.reply(script.liveSupport.userRespond);
+        }
+    }
     else{
       ctx.reply(script.errorException.chooseFunctionError, {
         parse_mode: "Markdown",
@@ -321,9 +355,9 @@ async function main() {
       await set('state')('RespondCourseAndGetPacket');
     }
     else if (data.text === 'Баланс моїх занять' && userObject!.role === 'student'){
-      const count = 1;
+      const count = userObject!.individual_count;
       if (count > 0){
-        ctx.reply(`✅ Баланс ваших індивідуальних занять ${count} занять (${count * 60} хв)`, {
+        ctx.reply(`✅ Баланс ваших індивідуальних занять ${count/60} занять (${count}хв)`, {
           reply_markup: {
             one_time_keyboard: true,
             keyboard: keyboards.indiviualMenu(userObject!.role)
@@ -407,50 +441,105 @@ async function main() {
     }
     else if (data.text === 'Мій розклад'){
       if (userObject!.role === 'student'){
-
-      }
-      else if (userObject!.role === 'teacher'){
-        if (userObject!.set_individual_lessons){
-          const lessons = userObject!.set_individual_lessons;
-          let lastDateLoop = '', lessonProcess = {}
-
-
-          let items = [
-
-            {
-              data:[
-
-              ]
-            },
-            {}
-          ]
+        if (userObject!.individual_lessons){
+          const lessons = await dbProcess.GetSpecificIndividualLessons(userObject!.individual_lessons);
+          let lastDateLoop = '', lessonProcess: IndividualArray = {}
 
           for (let i = 0; i < lessons.length; i++){
-            if (lastDateLoop === lessons[i].date){
-              continue;
-            }
-            else{
-              lessonProcess[lessons[i].date] = []
+            if (lastDateLoop === lessons[i]!.date) continue;
+            else lessonProcess[lessons[i]!.date] = []
+          }
+
+          const keys = Object.keys(lessonProcess);
+          for (let i = 0; i < keys.length; i++){
+            for (let j = 0; j < lessons.length; j++){
+              if (keys[i] === lessons[j]!.date){
+                lessonProcess[keys[i]].push(lessons[j])
+              }
             }
           }
 
-          lessons.forEach(lessons => {
-            if (!lessons[lessons.date]) {
-              lessons[lessons.date] = [];
+          for (let i = 0; i < keys.length; i++){
+            const key = keys[i];
+            let message = `📋 ${getDayOfWeek(new Date(key))} ${key}\n\n`;
+    
+            for (let j = 0; j < lessonProcess[key].length; j++) {
+              const lesson = lessonProcess[key][j],
+                student = await dbProcess.ShowOneUser(lesson.idStudent),
+                teacher = await dbProcess.ShowOneUser(lesson.idTeacher);
+              message += script.indivdual.scheduleShowStudent(
+                lesson.time,
+                lesson.duration,
+                teacher!.name,
+                teacher!.username,
+                teacher!.number,
+                student!.miro_link ?? "відсутнє"
+              )
             }
-            lessons[lessons.date].push(lessons);
-          });
-
-          Object.keys(meetingsByDate).forEach(date => {
-            let formattedMeetings = `📋 ${date}\n\n`;
-        
-            meetingsByDate[date].forEach((meeting, index) => {
-                formattedMeetings += `👉 ${index + 1}\n${meeting.time} ${meeting.location} (${meeting.duration})\n${meeting.attendee}\n${meeting.contact}\n\n`;
+    
+            ctx.reply(message, {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboards.indiviualMenu(userObject!.role)
+              }
             });
+          }
         
-            console.log(formattedMeetings);
-        });
-        
+        }
+        else {
+          ctx.reply('на данний момент у вас відсутні заняття', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.indiviualMenu(userObject!.role)
+            }
+          });
+          await set('state')('TeacherSchduleHandler');
+        }
+      }
+      else if (userObject!.role === 'teacher'){
+        if (userObject!.set_individual_lessons){
+          const lessons = await dbProcess.GetSpecificIndividualLessons(userObject!.set_individual_lessons);
+          let lastDateLoop = '', lessonProcess: IndividualArray = {}
+
+          for (let i = 0; i < lessons.length; i++){
+            if (lastDateLoop === lessons[i]!.date) continue;
+            else lessonProcess[lessons[i]!.date] = []
+          }
+
+          const keys = Object.keys(lessonProcess);
+          for (let i = 0; i < keys.length; i++){
+            for (let j = 0; j < lessons.length; j++){
+              if (keys[i] === lessons[j]!.date){
+                lessonProcess[keys[i]].push(lessons[j])
+              }
+            }
+          }
+
+          for (let i = 0; i < keys.length; i++){
+            const key = keys[i];
+            let message = `📋 ${getDayOfWeek(new Date(key))} ${key}\n\n`;
+    
+            for (let j = 0; j < lessonProcess[key].length; j++) {
+              const lesson = lessonProcess[key][j],
+                student = await dbProcess.ShowOneUser(lesson.idStudent) ? await dbProcess.ShowOneUser(lesson.idStudent) : false;
+              message += script.indivdual.rescheduleForTeacher(
+                j + 1,
+                lesson.time,
+                lesson.duration,
+                student? student.name : "Не вдалося знайти ім'я в БД :(",
+                student? student.username : "unknown",
+                student? student.number : "не вдалося знайти номеру :("
+              )
+            }
+    
+            ctx.reply(message, {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboards.myScheduleTeacher()
+              }
+            });
+          }
+          await set('state')('TeacherSchduleHandler');
         }
         else {
           ctx.reply('на данний момент у вас відсутні заняття', {
@@ -5345,22 +5434,65 @@ async function main() {
       //back
     }
     else{
+      const teacher = await dbProcess.ShowOneUser(parseInt(user['admin_teachersoperation_idone']));
       switch(data.text){
         case "Переглянути розклад викладача":
-          ctx.reply('Temporary unavailable', {
+          if (teacher!.set_individual_lessons){
+            const lessons = await dbProcess.GetSpecificIndividualLessons(teacher!.set_individual_lessons);
+            let lastDateLoop = '', lessonProcess: IndividualArray = {}
+  
+            for (let i = 0; i < lessons.length; i++){
+              if (lastDateLoop === lessons[i]!.date) continue;
+              else lessonProcess[lessons[i]!.date] = []
+            }
+  
+            const keys = Object.keys(lessonProcess);
+            for (let i = 0; i < keys.length; i++){
+              for (let j = 0; j < lessons.length; j++){
+                if (keys[i] === lessons[j]!.date){
+                  lessonProcess[keys[i]].push(lessons[j])
+                }
+              }
+            }
+  
+            for (let i = 0; i < keys.length; i++){
+              const key = keys[i];
+              let message = `📋 ${getDayOfWeek(new Date(key))} ${key}\n\n`;
+      
+              for (let j = 0; j < lessonProcess[key].length; j++) {
+                const lesson = lessonProcess[key][j],
+                  student = await dbProcess.ShowOneUser(lesson.idStudent) ? await dbProcess.ShowOneUser(lesson.idStudent) : false;
+                message += script.indivdual.rescheduleForTeacher(
+                  j + 1,
+                  lesson.time,
+                  lesson.duration,
+                  student? student.name : "Не вдалося знайти ім'я в БД :(",
+                  student? student.username : "unknown",
+                  student? student.number : "не вдалося знайти номеру :("
+                )
+              }
+      
+              ctx.reply(message, {
+                reply_markup: {
+                  one_time_keyboard: true,
+                  keyboard: keyboards.ourTeachersMenu()
+                }
+              });
+            }
+          
+          }
+          else ctx.reply('на данний момент у викладача вісутні заняття', {
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.ourTeachersMenu()
             }
-          })
+          });
           break;
 
         case "Показати усіх студентів викладача":
-          const teacher = await dbProcess.ShowOneUser(parseInt(user['admin_teachersoperation_idone'])),
-            teacherStudents = teacher!.registered_students;
+          const teacherStudents = teacher!.registered_students;
           let teachersStudentsObjects = [],
             teachersStudentsObjectsKeyboard = [];
-
             
           if (teacherStudents){
             for (let i = 0; i < teacherStudents.length; i++){
@@ -6093,16 +6225,17 @@ async function main() {
         const teacher = await dbProcess.ShowOneUser(User.teacher);
         await set('admin_specific_user_send_notification_id')(User.id);
         await ctx.reply(script.studentFind.diffUserFind(
-          User!.role,
-          User!.id,
-          User!.name,
-          User!.username,
-          User!.number,
+          User.role,
+          User.id,
+          User.name,
+          User.username,
+          User.number,
           teacher? teacher.name: "відсутній",
-          User!.individual_count ?? 0,
-          User!.count ?? 0,
-          User!.miro_link ?? "відсутнє",
-          data.text
+          User.individual_count ?? 0,
+          User.count ?? 0,
+          User.miro_link ?? "відсутнє",
+          data.text,
+          User.registered_student ?? 0 
         ), {
           reply_markup: {
             one_time_keyboard: true,
@@ -6181,7 +6314,7 @@ async function main() {
 
             await set('state')('IndividualLessonScheduleCheckAvailibilityStudentAndGetDateTime')
           }
-          ctx.reply('нажаль, на данний момент ви не маєте жодного активного студента');
+          else ctx.reply('нажаль, на данний момент ви не маєте жодного активного студента');
           break;
 
         case "Перенести заняття":
@@ -6223,7 +6356,7 @@ async function main() {
   })
 
   onTextMessage('IndividualLessonScheduleCheckAvailibilityStudentAndGetDateTime', async(ctx, user, set, data) => {
-    const teacherStudents = (await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1))?.registered_student;
+    const teacherStudents = (await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1))?.registered_students;
     let students = [];
     
     for (let i = 0; i < teacherStudents.length; i++){
@@ -6239,7 +6372,7 @@ async function main() {
           User.name,
           User.username,
           User.number,
-          User.count ?? 0
+          User.individual_count ?? 0
         ))
 
         if (User.individual_count > 0){
@@ -6920,6 +7053,370 @@ async function main() {
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
   })
+
+  onTextMessage('UserLiveSupportHandler', async(ctx, user, set, data) => {
+    if (data.text === 'ВІДМІНА'){
+      const [ messages, chats ] = await dbProcess.GetMessageIDsLiveSupport(new ObjectId(user['userObjectCloseLiveSupport']));
+
+      for(let n = 0; n < messages.length; n++){
+        await ctx.telegram.editMessageReplyMarkup(chats[n], messages[n], undefined, Markup.inlineKeyboard(liveKeyboard(ctx?.chat?.id ?? -1, 'declined', user['userObjectCloseLiveSupport'])).reply_markup)
+      }
+
+      ctx.reply('Канал успішно закрито, сподіваємося ваше питання було вирішено!', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.endRootMenu()
+        }
+      });
+
+      ctx.telegram.sendMessage(user['activeHelperLiveSupport'], "Користувач закрив канал.", {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.endRootMenu()
+        }
+      })
+
+      await dbProcess.ChangeAvaibiltyForOperator(parseInt(user['activeHelperLiveSupport']), true);
+
+      await db.set(parseInt(user['activeHelperLiveSupport']))('state')('EndFunctionManager');
+      await set('state')('EndFunctionManager');
+    }
+    else{
+      switch(true){
+        case CheckException.TextException(data):
+          ctx.telegram.sendMessage(user['activeHelperLiveSupport'], data.text, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+
+        case CheckException.FileException(data):
+          ctx.telegram.sendDocument(user['activeHelperLiveSupport'], data.file, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+
+        case CheckException.PhotoException(data):
+          ctx.telegram.sendPhoto(user['activeHelperLiveSupport'], data.photo, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+
+        case CheckException.LocationException(data):
+          ctx.telegram.sendLocation(user['activeHelperLiveSupport'], data.location[0], data.location[1], {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+
+        case CheckException.PhoneException(data):
+          ctx.telegram.sendContact(user['activeHelperLiveSupport'], data.phone_number, user['name'], {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+  
+        case CheckException.PollsException(data):
+          ctx.telegram.sendMessage(user['activeHelperLiveSupport'], "Користувач надіслав тип повідомлення Polls (котрий не підтримується)", {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+  
+          ctx.reply("Вибачте, але такий тип повідомлення у нас не підтримується.", {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+
+        case CheckException.StickerException(data):
+          ctx.telegram.sendSticker(user['activeHelperLiveSupport'], data.stickers, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+
+        case CheckException.VideoException(data):
+          ctx.telegram.sendVideo(user['activeHelperLiveSupport'], data.video, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+
+        case CheckException.AudioException(data):
+          ctx.telegram.sendAudio(user['activeHelperLiveSupport'], data.audio, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+        
+        case CheckException.VoiceException(data):
+          ctx.telegram.sendVoice(user['activeHelperLiveSupport'], data.voice, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+        
+        case CheckException.VideoNoteException(data):
+          ctx.telegram.sendAudio(user['activeHelperLiveSupport'], data.video_circle, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+        
+        default:
+          ctx.reply("Вибачте, але таке не підтримується", {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          });
+
+          ctx.telegram.sendMessage(user['activeHelperLiveSupport'], "Користувач надіслав непідтримуваний тип повідомлення.", {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+      }
+    }
+  })
+
+  onTextMessage('OperatorLiveSupportHandler', async(ctx, user, set, data) => {
+    if (data.text === 'ВІДМІНА'){
+      const [ messages, chats ] = await dbProcess.GetMessageIDsLiveSupport(new ObjectId(user['operatorObjectCloseLiveSupport']));
+
+      for(let n = 0; n < messages.length; n++){
+        await ctx.telegram.editMessageReplyMarkup(chats[n], messages[n], undefined, Markup.inlineKeyboard(liveKeyboard(ctx?.chat?.id ?? -1, 'declined', user['operatorObjectCloseLiveSupport'])).reply_markup)
+      }
+
+      ctx.reply('Прекрасно, тепер можете відпочивати', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.endRootMenu()
+        }
+      })
+
+      ctx.telegram.sendMessage(user['activeUserLiveSupport'], "Оператор закрив канал, сподіваємося ваше питання було вирішено.", {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.endRootMenu()
+        }
+      })
+
+      await dbProcess.ChangeAvaibiltyForOperator(ctx?.chat?.id ?? -1, true);
+
+      await db.set(parseInt(user['activeUserLiveSupport']))('state')('EndFunctionManager')
+      await set('state')('EndFunctionManager');
+    }
+    else{
+      switch(true){
+        case CheckException.TextException(data):
+          ctx.telegram.sendMessage(user['activeUserLiveSupport'], data.text, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+
+        case CheckException.FileException(data):
+          ctx.telegram.sendDocument(user['activeUserLiveSupport'], data.file, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+
+        case CheckException.PhotoException(data):
+          ctx.telegram.sendPhoto(user['activeUserLiveSupport'], data.photo, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+
+        case CheckException.LocationException(data):
+          ctx.telegram.sendLocation(user['activeUserLiveSupport'], data.location[0], data.location[1], {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+
+        case CheckException.PhoneException(data):
+          ctx.telegram.sendContact(user['activeUserLiveSupport'], data.phone_number, user['name'], {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+  
+        case CheckException.PollsException(data):
+          ctx.telegram.sendMessage(user['activeUserLiveSupport'], "Користувач надіслав тип повідомлення Polls (котрий не підтримується)", {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+  
+          ctx.reply("Вибачте, але такий тип повідомлення у нас не підтримується.", {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+
+        case CheckException.StickerException(data):
+          ctx.telegram.sendSticker(user['activeUserLiveSupport'], data.stickers, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+
+        case CheckException.VideoException(data):
+          ctx.telegram.sendVideo(user['activeUserLiveSupport'], data.video, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+
+        case CheckException.AudioException(data):
+          ctx.telegram.sendAudio(user['activeUserLiveSupport'], data.audio, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+        
+        case CheckException.VoiceException(data):
+          ctx.telegram.sendVoice(user['activeUserLiveSupport'], data.voice, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+        
+        case CheckException.VideoNoteException(data):
+          ctx.telegram.sendAudio(user['activeUserLiveSupport'], data.video_circle, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+        
+        default:
+          ctx.reply("Вибачте, але таке не підтримується", {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          });
+
+          ctx.telegram.sendMessage(user['activeUserLiveSupport'], "Користувач надіслав непідтримуваний тип повідомлення.", {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+          break;
+      }
+    }
+  })
+
+  bot.action(/^acceptSupport:(\d+),(.+)$/, async (ctx) => {
+    const id = Number.parseInt(ctx.match[1]),
+      object = ctx.match[2],
+      [ messages, chats ] = await dbProcess.GetMessageIDsLiveSupport(new ObjectId(object));
+    let operator: string | undefined = '';
+
+    try {
+      for(let n = 0; n < messages.length; n++){
+        if (messages[n] === ctx.callbackQuery.message?.message_id){
+          await ctx.editMessageReplyMarkup(Markup.inlineKeyboard(liveKeyboard(id, 'accepted', ctx.match[2])).reply_markup);
+          operator = await db.get(chats[n])('name');
+          await db.set(id)('activeHelperLiveSupport')(chats[n]);
+          await db.set(id)('userObjectCloseLiveSupport')(object);
+          await db.set(chats[n])('operatorObjectCloseLiveSupport')(object);
+          await db.set(chats[n])('activeUserLiveSupport')(id.toString());
+          await db.set(chats[n])('state')('OperatorLiveSupportHandler');
+          await db.set(id)('state')('UserLiveSupportHandler');
+          await dbProcess.ChangeAvaibiltyForOperator(chats[n], false);
+        }
+        else await ctx.telegram.editMessageReplyMarkup(chats[n], messages[n], undefined, Markup.inlineKeyboard(liveKeyboard(id, 'busy', ctx.match[2])).reply_markup)
+      }
+      ctx.telegram.sendMessage(id, `Ваш запит прийняв оператор ${operator}`, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.liveSupportProbablyCancel()
+        }
+      });
+      ctx.reply('Ви успішно прийняли запит користувача, можете працювати', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.liveSupportProbablyCancel()
+        }
+      })
+    } catch (e) {
+      console.log(e);
+    }
+
+    return ctx.answerCbQuery(`Ви успішно взяли замовлення`);
+  });
+
+  bot.action(/^acceptedCheck$/, (ctx) => {
+    return ctx.answerCbQuery(`Ви вже прийняли цього користувача.`);
+  });
+
+  bot.action(/^busyCheck$/, (ctx) => {
+    return ctx.answerCbQuery(`Цього користувача прийняв ішний оператор.`);
+  });
+
+  bot.action(/^declinedCheck$/, (ctx) => {
+    return ctx.answerCbQuery(`Канал вже закритий, не актуально.`);
+  });
+
+  bot.action(/^errorCheck$/, (ctx) => {
+    return ctx.answerCbQuery(`Помилка, повідомте підтримку.`);
+  });
 
   // Payment Main Bot Function Action
   bot.action(/^approvePayment:(\d+)$/, async (ctx) => {

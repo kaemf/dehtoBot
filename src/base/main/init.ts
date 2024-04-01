@@ -40,12 +40,15 @@ export default async function init() {
   console.log("Connecting to mongodb...")
   const botdb = await connectToClubDB();
 
-  console.log("Creating telegraf bot instanse...");
+  console.log("Creating telegraf bots instanse...");
   // prod
   // const token : string = '6503582186:AAF-dg1FCpXR0jI_tXXoeEpw7lFJSmbwGUs';
+  // notif
+  const notiftoken : string = '7149519033:AAE2qO_VxWQVaBDt7mUJ0SZIZ5zS50Hlo-8';
   // dev
   const token : string = '6192445742:AAHSlflbQoeylaqx3hZAh0WkS3fZ1Bt8sdU';
-  const bot = new Telegraf(token);
+  const bot = new Telegraf(token),
+    bot_notification = new Telegraf(notiftoken);
   console.log("Done\n");
 
   console.warn('\n\n  BOT READY TO WORK!\n\n')
@@ -57,5 +60,5 @@ export default async function init() {
     set: (id: number) => (property: string) => async (new_value: string) => await redis.hSet(`${id}`, property, new_value)
   })
 
-  return [bot, wRedis, botdb] as const;
+  return [bot, bot_notification, wRedis, botdb] as const;
 }

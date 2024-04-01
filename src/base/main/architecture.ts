@@ -7,7 +7,7 @@ import dbProcess from './dbProcess';
 type ActionType<T> = (ctx: Context<Update>, user: {[x: string]: string}, set: (key: string) => (value: string) => Promise<number>, additionalData: T) => void;
 
 export default async function arch() {
-  const [ bot, db, botdb ] = await init(),
+  const [ bot, bot_notif, db, botdb ] = await init(),
     DBProcess = await dbProcess(botdb);
 
   const onContactMessage = (startState: UserScriptState, action: ActionType<Operation>) => 
@@ -259,5 +259,5 @@ export default async function arch() {
     else return next();
   });
 
-  return [onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, db, DBProcess] as const;
+  return [onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, bot_notif, db, DBProcess] as const;
 }

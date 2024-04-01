@@ -170,11 +170,19 @@ UA773220010000026004330103247
 
   indivdual: {
     entire: (role: string) => role === 'admin' || role === 'developer' || role === 'teacher' ? 'що цікавить' : 'оберіть, що вас цікавить :)',
+
     studentDeleteFromTeacher: (teacher: string, student: string) => `✅ студента ${student} було успішно видалено від викладача ${teacher}`,
+
     individualLessonCreated: (name: string, date: string, dayOfWeek: string, time: string, count: number) => `чудово!\n\nзаняття з ${name} заплановано на:
 👉 ${date} (${dayOfWeek}) о ${time} за Києвом🇺🇦\n\n✅ Залишок: ${count / 60} занять (${count}хв)`,
-    rescheduleForTeacher: (position: number, time: string, duration: number, name: string, username: string, number: number) =>
-    `👉 ${position}\n${time} за Києвом 🇺🇦 (${duration}хв)\n${name}\n(@${username}); ${number}\n\n`,
+
+    rescheduleForTeacher: (position: number, time: string, duration: number, studentName: string, username: string, number: number) =>
+    `👉 ${position}\n${time} за Києвом 🇺🇦 (${duration}хв)\n${studentName}\n(@${username}); ${number}\n\n`,
+
+    scheduleShowStudent: (time: string, duration: number, teacherName: string, teacherUsername: string, teacherNumber: number, miro_link: string) =>
+    `👉 ${time} за Києвом 🇺🇦 (${duration}хв)\n\nВикладач: ${teacherName}\n(@${teacherUsername});${teacherNumber}\n
+посилання на дошку Miro студента: ${miro_link}\n\n`,
+
     trialFinal: (name: string, date: string, dayOfWeek: string, time: string, miro_link: string, zoom_link: string) => `чудово!\n
 заняття з ${name} заплановано на:
 👉 ${date} (${dayOfWeek}) о ${time} за Києвом🇺🇦\n
@@ -525,7 +533,7 @@ ${name}
 (@${username}); ${phone}\n
 Тип занять: ${typeOfLessons}
 Викладач: ${teacher}
-✅ Залишок: ${count} занять (${count * 60}хв)\n
+✅ Залишок: ${count / 60} занять (${count}хв)\n
 посилання на дошку Miro студента: ${miro}`,
 
     showTeacher: (name: string, id: number, role: string, username: string, phone: string, countOfStudents: number) =>
@@ -538,7 +546,7 @@ ${name}
     `👉 ${ConvertRole(role)} (ID: ${id})
 ${name}
 (@${username}); ${phone}\n
-✅ Залишок: ${count} занять (${count * 60}хв)\n
+✅ Залишок: ${count / 60} занять (${count}хв)\n
 посилання на дошку Miro студента: ${miro}`,
 
     userFind: (position: number, id: number, name: string, username: string, number: number, role: string, teacher: string, individual_count: number, count: number, miro_link: string, clubPacket: string | boolean) => 
@@ -552,7 +560,7 @@ ${role !== 'guest'? `👉 Кількість індивід. занять: ${ind
 Лінк на дошку: ${miro_link? `${miro_link}\n` : 'Відсутня\n'}` : ''}
 👉 Кількість розм. клубів: ${count} (${clubPacket ? `${ConvertToPrice(clubPacket.toString())}uah` : 'Користувач не брав участі в клубах'})`,
 
-    diffUserFind: (role: string, id: number, name: string, username: string, number: number, teacher: string, individual_count: number, count: number, miro_link: string, clubPacket: string | boolean) => {
+    diffUserFind: (role: string, id: number, name: string, username: string, number: number, teacher: string, individual_count: number, count: number, miro_link: string, clubPacket: string | boolean, countOfStudents?: number) => {
       switch(role){
         case "guest":
           return `👉 Користувач (ID: ${id})\n${name}\n(@${username}); ${number}\n\nТип занять: -`
@@ -566,6 +574,9 @@ ${number}
 Викладач: ${teacher}
 Лінк на дошку: ${miro_link? `${miro_link}\n` : 'Відсутня\n'}
 👉 Кількість розм. клубів: ${count} (${clubPacket ? `${ConvertToPrice(clubPacket.toString())}uah` : 'Користувач не брав участі в клубах'})`
+
+        case "teacher":
+          return `👉 Викладач (ID: ${id})\n${name}\n(@${username}); ${number}\n\n${countOfStudents ? "✅" : "❌"} К-ть студентів: ${countOfStudents}`
 
         case "admin":
           return `👉 Адмін (ID: ${id})\n${name}\n(@${username}); ${number}`
