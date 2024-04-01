@@ -412,8 +412,27 @@ async function main() {
       else if (userObject!.role === 'teacher'){
         if (userObject!.set_individual_lessons){
           const lessons = userObject!.set_individual_lessons;
+          let lastDateLoop = '', lessonProcess = {}
 
-          
+
+          let items = [
+
+            {
+              data:[
+
+              ]
+            },
+            {}
+          ]
+
+          for (let i = 0; i < lessons.length; i++){
+            if (lastDateLoop === lessons[i].date){
+              continue;
+            }
+            else{
+              lessonProcess[lessons[i].date] = []
+            }
+          }
 
           lessons.forEach(lessons => {
             if (!lessons[lessons.date]) {
@@ -6176,17 +6195,15 @@ async function main() {
           break;
 
         case "Запланувати пробне заняття":
-          let keyboardGuest = [];
-          const AllGuests = await dbProcess.ShowAllUsers();
-          for (let i = 0; i < AllGuests.length; i++){
-            if (AllGuests[i].role === 'guest'){
-              keyboardGuest.push([{ text: AllGuests[i].name }]);
-            }
+          let keyboardTrials = [];
+          const trialStudents = (await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1))!.trial_students;
+          for (let i = 0; i < trialStudents.length; i++){
+            keyboardTrials.push([{ text: trialStudents[i] }]);
           }
           ctx.reply('оберіть студента, з яким потрібно запланувати пробне заняття:', {
             reply_markup: {
               one_time_keyboard: true,
-              keyboard: keyboardGuest
+              keyboard: keyboardTrials
             }
           })
 
