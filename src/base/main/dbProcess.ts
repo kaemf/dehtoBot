@@ -7,6 +7,7 @@ export default async function dbProcess(botdb: MongoClient){
         private deTaskDB = botdb.db('dehtoBDB').collection('deTask');
         private individualdbLessons = botdb.db('dehtoBDB').collection('individualLessons');
         private liveSupport = botdb.db('dehtoBDB').collection('supportActiveChannels');
+        private notificationTransport = botdb.db('dehtoBDB').collection('notificationTransfer');
 
         async ShowAll() {
             return await this.clubdbLessons.find({}).toArray();
@@ -750,6 +751,14 @@ export default async function dbProcess(botdb: MongoClient){
 
         async DeleteServiceCare(idCare: ObjectId){
             await this.liveSupport.deleteOne({_id: idCare});
+        }
+
+        async DoTransport(data: string){
+            return (await this.notificationTransport.insertOne({media: data})).insertedId;
+        }
+
+        async GetTransport(id: ObjectId){
+            return (await this.notificationTransport.findOne({_id: id}))!.media;
         }
     }
 

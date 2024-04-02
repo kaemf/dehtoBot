@@ -3,66 +3,66 @@ const packetData = {
         "🔵": {
             name: 'Мінімальний',
             countOfLessons: 5,
-            price: 400
+            price: 420
         },
         "🔴": {
             name: 'Економний',
             countOfLessons: 10,
-            price: 380
+            price: 395
         },
         "🟢": {
             name: 'Популярний',
             countOfLessons: 20,
-            price: 350
+            price: 370
         },
         "🟡": {
             name: 'Вигідний',
             countOfLessons: 50,
-            price: 330
+            price: 350
         }
     },
     "Рівень В1-В2": {
         "🔵": {
             name: 'Мінімальний',
             countOfLessons: 5,
-            price: 500
+            price: 520
         },
         "🔴": {
             name: 'Економний',
             countOfLessons: 10,
-            price: 480
+            price: 495
         },
         "🟢": {
             name: 'Популярний',
             countOfLessons: 20,
-            price: 450
+            price: 470
         },
         "🟡": {
             name: 'Вигідний',
             countOfLessons: 50,
-            price: 430
+            price: 450
         }
     },
     "Рівень С1-С2": {
         "🔵": {
             name: 'Мінімальний',
             countOfLessons: 5,
-            price: 600
+            price: 620
         },
         "🔴": {
             name: 'Економний',
             countOfLessons: 10,
-            price: 580
+            price: 595
         },
         "🟢": {
             name: 'Популярний',
             countOfLessons: 20,
-            price: 550
+            price: 570
         },
         "🟡": {
             name: 'Вигідний',
             countOfLessons: 50,
-            price: 530
+            price: 550
         }
     }
 };

@@ -635,6 +635,27 @@ class Keyboard{
       ]
     ]
   }
+
+  choosePacket(){
+    return [
+      [
+        {
+          text: "🔵",
+        },
+        {
+          text: "🔴",
+        },
+      ],
+      [
+        {
+          text: "🟢",
+        },
+        {
+          text: "🟡",
+        }
+      ]
+    ]
+  }
 }
 
 const keyboards : Keyboard = new Keyboard();

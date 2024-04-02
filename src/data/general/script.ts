@@ -599,7 +599,21 @@ ${number}
   liveSupport: {
     userRequest: (name: string, telegram: string, phone: string, dateRequest: string) => `Новий запит на підтримку!\n\nІм'я - ${name} (@${telegram})\nТелефон - ${phone}\n\nДата заявки - ${dateRequest}`,
     userRespond: `Ваш запит прийнято, очікуйте на оператора, а наразі можете задати запитання (одним повідомленням)`
-  }
+  },
+
+  notification: {
+    forStudent: {
+      scheduleLesson: (dayOfWeek: string, day: string, month: string, time: string, teacherName: string, miro_link: string, countOfLessons: number) => `📌 Заплановане заняття 📌\n
+Коли: ${dayOfWeek}, ${day} ${month}} о ${time} за Києвом🇺🇦
+Викладач: ${teacherName}\n
+посилання на дошку Miro: ${miro_link}\n
+${countOfLessons > 0 ? '✅' : '❌'}✅ Залишок: ${countOfLessons / 60} занять (${countOfLessons}хв)`
+
+    },
+    forTeachers: {
+
+    }
+  },
 
 }
 

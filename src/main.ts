@@ -26,10 +26,11 @@ import { Markup, TelegramError } from "telegraf";
 import { ObjectId } from 'mongodb';
 import { DateProcess, DateProcessToPresentView, TimeProcess, getDayOfWeek } from "./data/process/dateAndTimeProcess";
 import IndividualArray from "./data/individual/interface";
-import e from "express";
+import axios from "axios";
+import NotificationReg from "./data/general/notificationProcess";
 
 async function main() {
-  const [ onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, notifbot, db, dbProcess ] = await arch();
+  const [ onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, notifbot, notiftoken, db, dbProcess ] = await arch();
 
   //Begin bot work, collecting user data (his telegram name) set up state_1
   bot.start( (ctx) => {
@@ -47,6 +48,12 @@ async function main() {
     const username = ctx.chat.type === "private" ? ctx.chat.username ?? null : null;
     db.set(ctx.chat.id)('username')(username ?? 'unknown')
     db.set(ctx.chat.id)('state')('WaitingForName')
+  });
+
+  notifbot.start( (ctx) => {
+    console.log('NOTIFICATION BOT STARTED');
+
+    ctx.reply('Вітаю, я бот сповіщень, відтепер ви маєте змогу отримувати сповіщення від dehto, як адмін');
   });
   
   bot.command('menu', async (ctx) => {
@@ -316,7 +323,12 @@ async function main() {
         else{
           await dbProcess.AddMessageIDsLiveSupport(objectList.insertedId, arrayIDs, arrayCIDs);
           await set('student_tmp_service_care_id')(objectList.insertedId.toString());
-          await ctx.reply(script.liveSupport.userRespond);
+          await ctx.reply(script.liveSupport.userRespond, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: [[{ text: "ВІДМІНИТИ" }]]
+            }
+          });
           await set('state')('CareServiceQuestionHandler')
         }
     }
@@ -704,19 +716,19 @@ async function main() {
     }
     else if (CheckException.TextException(data)){
       // For Developer
-      ctx.telegram.sendMessage(devChat,
+      notifbot.telegram.sendMessage(devChat,
         script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()),
         {parse_mode: 'HTML'})
 
-      ctx.telegram.sendMessage(confirmationChat,
+      notifbot.telegram.sendMessage(confirmationChat,
         script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()),
         {parse_mode: 'HTML'})
 
-      ctx.telegram.sendMessage(supportChat,
+      notifbot.telegram.sendMessage(supportChat,
         script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()),
         {parse_mode: 'HTML'})
 
-      ctx.telegram.sendMessage(eugeneChat,
+      notifbot.telegram.sendMessage(eugeneChat,
         script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()),
         {parse_mode: 'HTML'})
 
@@ -942,24 +954,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "🔵",
-              },
-              {
-                text: "🔴",
-              },
-            ],
-            [
-              {
-                text: "🟢",
-              },
-              {
-                text: "🟡",
-              }
-            ],
-          ],
+          keyboard: keyboards.choosePacket()
         },
       });
   
@@ -1007,24 +1002,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "🔵",
-              },
-              {
-                text: "🔴",
-              },
-            ],
-            [
-              {
-                text: "🟢",
-              },
-              {
-                text: "🟡",
-              }
-            ],
-          ],
+          keyboard: keyboards.choosePacket()
         },
       })
     }
@@ -1044,24 +1022,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "🔵",
-              },
-              {
-                text: "🔴",
-              },
-            ],
-            [
-              {
-                text: "🟢",
-              },
-              {
-                text: "🟡",
-              }
-            ],
-          ],
+          keyboard: keyboards.choosePacket()
         },
       });
   
@@ -1072,35 +1033,35 @@ async function main() {
         name = get("name") ?? "учень",
         inline = inlineApprovePayment(id, paymentStatus),
         unique_file_id = data.photo[0];
-  
+
       // For Developer
-      // ctx.telegram.sendPhoto(devChat, unique_file_id, {
+      notifbot.telegram.sendPhoto(devChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
+        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()), 
+        parse_mode: 'HTML',
+        // ...Markup.inlineKeyboard(inline)
+        }
+      )
+      
+      // notifbot.telegram.sendPhoto(confirmationChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
       //   caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()), 
       //   parse_mode: 'HTML',
+      //   // ...Markup.inlineKeyboard(inline)
+      //   }
+      // )
+  
+      // notifbot.telegram.sendPhoto(supportChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
+      //   caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()),
+      //   parse_mode: 'HTML', 
+      //   // ...Markup.inlineKeyboard(inline)
+      //   }
+      // )
+
+      // notifbot.telegram.sendPhoto(eugeneChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
+      //   caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()),
+      //   parse_mode: 'HTML', 
       //   ...Markup.inlineKeyboard(inline)
       //   }
       // )
-      
-      ctx.telegram.sendPhoto(confirmationChat, unique_file_id, {
-        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()), 
-        parse_mode: 'HTML',
-        ...Markup.inlineKeyboard(inline)
-        }
-      )
-  
-      ctx.telegram.sendPhoto(supportChat, unique_file_id, {
-        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()),
-        parse_mode: 'HTML', 
-        ...Markup.inlineKeyboard(inline)
-        }
-      )
-
-      ctx.telegram.sendPhoto(eugeneChat, unique_file_id, {
-        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()),
-        parse_mode: 'HTML', 
-        ...Markup.inlineKeyboard(inline)
-        }
-      )
   
       ctx.reply(script.payInvidualLesson.endWork(await name ?? "учень"), {
         parse_mode: "Markdown",
@@ -1128,31 +1089,31 @@ async function main() {
         unique_file_id = data.file[0];
   
       // For Developer
-      // ctx.telegram.sendDocument(devChat, unique_file_id, {
-      //   caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()), 
-      //   parse_mode: 'HTML',
-      //   ...Markup.inlineKeyboard(inline)
-      //   }
-      // )
-      
-      ctx.telegram.sendDocument(confirmationChat, unique_file_id, {
+      notifbot.telegram.sendDocument(devChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
         caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()), 
         parse_mode: 'HTML',
-        ...Markup.inlineKeyboard(inline)
+        // ...Markup.inlineKeyboard(inline)
+        }
+      )
+      
+      notifbot.telegram.sendDocument(confirmationChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
+        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()), 
+        parse_mode: 'HTML',
+        // ...Markup.inlineKeyboard(inline)
         }
       )
   
-      ctx.telegram.sendDocument(supportChat, unique_file_id, {
+      notifbot.telegram.sendDocument(supportChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
         caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()),
         parse_mode: 'HTML', 
-        ...Markup.inlineKeyboard(inline)
+        // ...Markup.inlineKeyboard(inline)
         }
       )
 
-      ctx.telegram.sendDocument(eugeneChat, unique_file_id, {
+      notifbot.telegram.sendDocument(eugeneChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
         caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()),
         parse_mode: 'HTML', 
-        ...Markup.inlineKeyboard(inline)
+        // ...Markup.inlineKeyboard(inline)
         }
       )
   
@@ -1399,36 +1360,36 @@ async function main() {
         unique_file_id = data.photo[0];
       
       // For Developer
-      // ctx.telegram.sendPhoto(devChat, unique_file_id, {
-      //   caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
-      //   parse_mode: 'HTML', 
-      //   ...Markup.inlineKeyboard(inline)
-      //   }
-      // )
-      
-      ctx.telegram.sendPhoto(confirmationChat, unique_file_id, {
+      notifbot.telegram.sendPhoto(devChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
         caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
         parse_mode: 'HTML', 
-        ...Markup.inlineKeyboard(inline)
+        // ...Markup.inlineKeyboard(inline)
+        }
+      )
+      
+      notifbot.telegram.sendPhoto(confirmationChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
+        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
+        parse_mode: 'HTML', 
+        // ...Markup.inlineKeyboard(inline)
         }
       )
   
-      ctx.telegram.sendPhoto(supportChat, unique_file_id, {
+      notifbot.telegram.sendPhoto(supportChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
         caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
         parse_mode: 'HTML',
-        ...Markup.inlineKeyboard(inline)
+        // ...Markup.inlineKeyboard(inline)
         }
       )
 
-      ctx.telegram.sendPhoto(eugeneChat, unique_file_id, {
+      notifbot.telegram.sendPhoto(eugeneChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
         caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
         parse_mode: 'HTML',
-        ...Markup.inlineKeyboard(inline)
+        // ...Markup.inlineKeyboard(inline)
         }
       )
   
-      ctx.reply(script.teacherOnHour.payment.paymentSent(await name ?? 'учень'));
-      ctx.reply(script.teacherOnHour.payment.waitForContact, {
+      await ctx.reply(script.teacherOnHour.payment.paymentSent(await name ?? 'учень'));
+      await ctx.reply(script.teacherOnHour.payment.waitForContact, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -1459,36 +1420,36 @@ async function main() {
         unique_file_id = data.file[0];
       
       // For Developer
-      // ctx.telegram.sendDocument(devChat, unique_file_id, {
-      //   caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
-      //   parse_mode: 'HTML', 
-      //   ...Markup.inlineKeyboard(inline)
-      //   }
-      // )
-      
-      ctx.telegram.sendDocument(confirmationChat, unique_file_id, {
+      notifbot.telegram.sendDocument(devChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
         caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
         parse_mode: 'HTML', 
-        ...Markup.inlineKeyboard(inline)
+        // ...Markup.inlineKeyboard(inline)
+        }
+      )
+      
+      notifbot.telegram.sendDocument(confirmationChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
+        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
+        parse_mode: 'HTML', 
+        // ...Markup.inlineKeyboard(inline)
         }
       )
   
-      ctx.telegram.sendDocument(supportChat, unique_file_id, {
+      notifbot.telegram.sendDocument(supportChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
         caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
         parse_mode: 'HTML',
-        ...Markup.inlineKeyboard(inline)
+        // ...Markup.inlineKeyboard(inline)
         }
       )
 
-      ctx.telegram.sendDocument(eugeneChat, unique_file_id, {
+      notifbot.telegram.sendDocument(eugeneChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
         caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
         parse_mode: 'HTML',
-        ...Markup.inlineKeyboard(inline)
+        // ...Markup.inlineKeyboard(inline)
         }
       )
   
-      ctx.reply(script.teacherOnHour.payment.paymentSent(await name ?? 'учень'));
-      ctx.reply(script.teacherOnHour.payment.waitForContact, {
+      await ctx.reply(script.teacherOnHour.payment.paymentSent(await name ?? 'учень'));
+      await ctx.reply(script.teacherOnHour.payment.waitForContact, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -1567,19 +1528,19 @@ async function main() {
       await set('_addquesttrial')(data.text);
       
       // For Developer
-      // ctx.telegram.sendMessage(devChat,
-      //   script.registrationLesson.report(user['name'], user['username'], user['phone_number'], user['_graphic'], user['_languagelevel'], data.text, DateRecord()),
-      //   { parse_mode: 'HTML' });
-  
-      ctx.telegram.sendMessage(confirmationChat,
+      notifbot.telegram.sendMessage(devChat,
         script.registrationLesson.report(user['name'], user['username'], user['phone_number'], user['_graphic'], user['_languagelevel'], data.text, DateRecord()),
         { parse_mode: 'HTML' });
   
-      ctx.telegram.sendMessage(supportChat,
+      notifbot.telegram.sendMessage(confirmationChat,
+        script.registrationLesson.report(user['name'], user['username'], user['phone_number'], user['_graphic'], user['_languagelevel'], data.text, DateRecord()),
+        { parse_mode: 'HTML' });
+  
+      notifbot.telegram.sendMessage(supportChat,
         script.registrationLesson.report(user['name'], user['username'], user['phone_number'], user['_graphic'], user['_languagelevel'], data.text, DateRecord()),
         { parse_mode: 'HTML' });
 
-      ctx.telegram.sendMessage(eugeneChat,
+      notifbot.telegram.sendMessage(eugeneChat,
         script.registrationLesson.report(user['name'], user['username'], user['phone_number'], user['_graphic'], user['_languagelevel'], data.text, DateRecord()),
         { parse_mode: 'HTML' });
   
@@ -1948,15 +1909,15 @@ async function main() {
     }
     else if (data.text === 'Разове заняття'){
       ctx.reply(script.speakingClub.onceClub);
-      await set('club-typeclub')('РазовеЗаняття');
+      await set('club-typeclub')(data.text);
       await set('state')('RespondPaymentAndGetCourseOrFinal');
     }
-    else if (data.text === 'Шпрах-Клуб'){
+    else if (data.text === 'Шпрах клуб'){
       ctx.reply(script.speakingClub.standartClub);
       await set('club-typeclub')(data.text);
       await set('state')('RespondPaymentAndGetCourseOrFinal');
     }
-    else if (data.text === 'Шпрах-Клуб+PLUS'){
+    else if (data.text === 'Шпрах клуб плюс'){
       ctx.reply(script.speakingClub.plusClub);
       await set('club-typeclub')(data.text);
       await set('state')('RespondPaymentAndGetCourseOrFinal');
@@ -1992,18 +1953,18 @@ async function main() {
       const paymentStatus = await get('paymentStatusClubOrPacket') ?? 'unknown',
         unique_file_id = data.photo[0];
   
-      if (user['club-typeclub'] === 'РазовеЗаняття'){
+      if (user['club-typeclub'] === 'Разове Заняття'){
         const date = DateRecord();
         if (clubIndex !== ''){
           const inline = inlineAcceptOncePayment(id, clubIndex, paymentStatus, date);
 
-          await ctx.telegram.sendPhoto(devChat, unique_file_id, {
+          await notifbot.telegram.sendPhoto(devChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
             parse_mode: "HTML",
             caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
           })
 
-          await ctx.telegram.sendPhoto(supportChat, unique_file_id, {
+          await notifbot.telegram.sendPhoto(supportChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
             parse_mode: "HTML",
             caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
@@ -2012,13 +1973,13 @@ async function main() {
         else{
           const inline = inlineAcceptOncePaymentWithoutClub(id, paymentStatus, date);
 
-          // await ctx.telegram.sendPhoto(devChat, unique_file_id, {
-          //   parse_mode: "HTML",
-          //   caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
-          //   ...Markup.inlineKeyboard(inline)
-          // })
+          await notifbot.telegram.sendPhoto(devChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
+            parse_mode: "HTML",
+            caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
+            ...Markup.inlineKeyboard(inline)
+          })
 
-          await ctx.telegram.sendPhoto(supportChat, unique_file_id, {
+          await notifbot.telegram.sendPhoto(supportChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
             parse_mode: "HTML",
             caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
@@ -2047,20 +2008,20 @@ async function main() {
 
         await set('state')('EndRootManager');
       }
-      else if (user['club-typeclub'] === 'Шпрах-Клуб'){
+      else if (user['club-typeclub'] === 'Шпрах клуб'){
         const date = DateRecord();
         if (clubIndex !== ''){
           const inline = inlineAcceptClubWithPacketPayment(id, clubIndex, paymentStatus, 's', date);
 
           // packet and club
           // For Developer
-          // await ctx.telegram.sendPhoto(devChat, unique_file_id, {
-          //   parse_mode: "HTML",
-          //   caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
-          //   ...Markup.inlineKeyboard(inline)
-          // })
+          await notifbot.telegram.sendPhoto(devChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
+            parse_mode: "HTML",
+            caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
+            ...Markup.inlineKeyboard(inline)
+          })
 
-          await ctx.telegram.sendPhoto(supportChat, unique_file_id, {
+          await notifbot.telegram.sendPhoto(supportChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
             parse_mode: "HTML",
             caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
@@ -2071,13 +2032,13 @@ async function main() {
 
           //packet
           // For Developer
-          // await ctx.telegram.sendPhoto(devChat, unique_file_id, {
-          //   parse_mode: "HTML",
-          //   caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
-          //   ...Markup.inlineKeyboard(inline)
-          // })
+          await notifbot.telegram.sendPhoto(devChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
+            parse_mode: "HTML",
+            caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
+            ...Markup.inlineKeyboard(inline)
+          })
 
-          await ctx.telegram.sendPhoto(supportChat, unique_file_id, {
+          await notifbot.telegram.sendPhoto(supportChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
             parse_mode: "HTML",
             caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
@@ -2106,7 +2067,7 @@ async function main() {
 
         await set('state')('EndRootManager');
       }
-      else if (user['club-typeclub'] === 'Шпрах-Клуб+PLUS'){
+      else if (user['club-typeclub'] === 'Шпрах клуб плюс'){
         await set('sc_clubplus_proof')(data.photo[0]);
         await set('sc_clubplus_typeproof')('photo');
         ctx.reply(script.speakingClub.thanksType.typePlus, {
@@ -2126,19 +2087,19 @@ async function main() {
       await set('paymentStatusClubOrPacket')('unknown');
       const paymentStatus = await get('paymentStatusClubOrPacket') ?? 'unknown';
 
-      if (user['club-typeclub'] === 'РазовеЗаняття'){
+      if (user['club-typeclub'] === 'Разове Заняття'){
         const date = DateRecord();
         if (clubIndex !== ''){
           const inline = inlineAcceptOncePayment(id, clubIndex, paymentStatus, date);
 
           // For Developer
-          // await ctx.telegram.sendDocument(devChat, data.file, {
-          //   parse_mode: "HTML",
-          //   caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
-          //   ...Markup.inlineKeyboard(inline)
-          // })
+          await notifbot.telegram.sendDocument(devChat, await NotificationReg(ctx, notiftoken, data.file[0]), {
+            parse_mode: "HTML",
+            caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
+            ...Markup.inlineKeyboard(inline)
+          })
 
-          await ctx.telegram.sendDocument(supportChat, data.file[0], {
+          await notifbot.telegram.sendDocument(supportChat, await NotificationReg(ctx, notiftoken, data.file[0]), {
             parse_mode: "HTML",
             caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
@@ -2148,32 +2109,32 @@ async function main() {
           const inline = inlineAcceptOncePaymentWithoutClub(id, paymentStatus, date);
 
           // For Developer
-          // await ctx.telegram.sendDocument(devChat, data.file, {
-          //   parse_mode: "HTML",
-          //   caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
-          //   ...Markup.inlineKeyboard(inline)
-          // })
+          await notifbot.telegram.sendDocument(devChat, await NotificationReg(ctx, notiftoken, data.file[0]), {
+            parse_mode: "HTML",
+            caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
+            ...Markup.inlineKeyboard(inline)
+          })
 
-          await ctx.telegram.sendDocument(supportChat, data.file[0], {
+          await notifbot.telegram.sendDocument(supportChat, await NotificationReg(ctx, notiftoken, data.file[0]), {
             parse_mode: "HTML",
             caption: script.speakingClub.report.forAcceptPayment.Once(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
           })
         }
       }
-      else if (user['club-typeclub'] === 'Шпрах-Клуб'){
+      else if (user['club-typeclub'] === 'Шпрах клуб'){
         const date = DateRecord();
         if (clubIndex !== ''){
           const inline = inlineAcceptClubWithPacketPayment(id, clubIndex, paymentStatus, "s", DateRecord());
 
           // For Developer
-          // ctx.telegram.sendDocument(devChat, data.file, {
-          //   parse_mode: "HTML",
-          //   caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
-          //   ...Markup.inlineKeyboard(inline)
-          // })
+          notifbot.telegram.sendDocument(devChat, await NotificationReg(ctx, notiftoken, data.file[0]), {
+            parse_mode: "HTML",
+            caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
+            ...Markup.inlineKeyboard(inline)
+          })
 
-          ctx.telegram.sendDocument(supportChat, data.file[0], {
+          notifbot.telegram.sendDocument(supportChat, await NotificationReg(ctx, notiftoken, data.file[0]), {
             parse_mode: "HTML",
             caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
@@ -2183,13 +2144,13 @@ async function main() {
           const inline = inlineAcceptPacketPayment(id, paymentStatus, 's');
 
           // For Developer
-          // ctx.telegram.sendDocument(devChat, data.file, {
-          //   parse_mode: "HTML",
-          //   caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
-          //   ...Markup.inlineKeyboard(inline)
-          // })
+          notifbot.telegram.sendDocument(devChat, await NotificationReg(ctx, notiftoken, data.file[0]), {
+            parse_mode: "HTML",
+            caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
+            ...Markup.inlineKeyboard(inline)
+          })
 
-          ctx.telegram.sendDocument(supportChat, data.file[0], {
+          notifbot.telegram.sendDocument(supportChat, data.file[0], {
             parse_mode: "HTML",
             caption: script.speakingClub.report.forAcceptPayment.nonPlus(user['name'], user['username'], user['phone_number'], date),
             ...Markup.inlineKeyboard(inline)
@@ -2217,7 +2178,7 @@ async function main() {
         })
         await set('state')('EndRootManager');
       }
-      else if (user['club-typeclub'] === 'Шпрах-Клуб+PLUS'){
+      else if (user['club-typeclub'] === 'Шпрах клуб плюс'){
         await set('sc_clubplus_proof')(data.file[0]);
         await set('sc_clubplus_typeproof')('file');
         ctx.reply(script.speakingClub.thanksType.typePlus, {
@@ -2288,13 +2249,13 @@ async function main() {
             const inline = inlineAcceptClubWithPacketPayment(ctx?.chat?.id ?? -1, user['sc_request_torecord_usertoclub'], paymentStatus, 'p', DateRecord());
   
             // For Developer
-            // ctx.telegram.sendPhoto(devChat, user['sc_clubplus_proof'], {
-            //   parse_mode: "HTML",
-            //   caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
-            //   ...Markup.inlineKeyboard(inline)
-            // })
+            notifbot.telegram.sendPhoto(devChat, await NotificationReg(ctx, notiftoken, user['sc_clubplus_proof']), {
+              parse_mode: "HTML",
+              caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
+              ...Markup.inlineKeyboard(inline)
+            })
 
-            ctx.telegram.sendPhoto(supportChat, user['sc_clubplus_proof'], {
+            notifbot.telegram.sendPhoto(supportChat, await NotificationReg(ctx, notiftoken, user['sc_clubplus_proof']), {
               parse_mode: "HTML",
               caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
               ...Markup.inlineKeyboard(inline)
@@ -2304,13 +2265,13 @@ async function main() {
             const inline = inlineAcceptClubWithPacketPayment(ctx?.chat?.id ?? -1, user['sc_request_torecord_usertoclub'], paymentStatus, 'p', DateRecord());
   
             // For Developer
-            // ctx.telegram.sendDocument(devChat, user['sc_clubplus_proof'], {
-            //   parse_mode: "HTML",
-            //   caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
-            //   ...Markup.inlineKeyboard(inline)
-            // })
+            notifbot.telegram.sendDocument(devChat, await NotificationReg(ctx, notiftoken, user['sc_clubplus_proof']), {
+              parse_mode: "HTML",
+              caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
+              ...Markup.inlineKeyboard(inline)
+            })
 
-            ctx.telegram.sendDocument(supportChat, user['sc_clubplus_proof'], {
+            notifbot.telegram.sendDocument(supportChat, await NotificationReg(ctx, notiftoken, user['sc_clubplus_proof']), {
               parse_mode: "HTML",
               caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
               ...Markup.inlineKeyboard(inline)
@@ -2324,13 +2285,13 @@ async function main() {
             const inline = inlineAcceptPacketPayment(ctx?.chat?.id ?? -1, paymentStatus, 'plus');
 
             // For Developer
-            // ctx.telegram.sendPhoto(devChat, user['sc_clubplus_proof'], {
-            //   parse_mode: "HTML",
-            //   caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
-            //   ...Markup.inlineKeyboard(inline)
-            // })
+            notifbot.telegram.sendPhoto(devChat, await NotificationReg(ctx, notiftoken, user['sc_clubplus_proof']), {
+              parse_mode: "HTML",
+              caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
+              ...Markup.inlineKeyboard(inline)
+            })
 
-            ctx.telegram.sendPhoto(supportChat, user['sc_clubplus_proof'], {
+            notifbot.telegram.sendPhoto(supportChat, await NotificationReg(ctx, notiftoken, user['sc_clubplus_proof']), {
               parse_mode: "HTML",
               caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
               ...Markup.inlineKeyboard(inline)
@@ -2340,13 +2301,13 @@ async function main() {
             const inline = inlineAcceptPacketPayment(ctx?.chat?.id ?? -1, paymentStatus, 'plus');
 
             // For Developer
-            // ctx.telegram.sendDocument(devChat, user['sc_clubplus_proof'], {
-            //   parse_mode: "HTML",
-            //   caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
-            //   ...Markup.inlineKeyboard(inline)
-            // })
+            notifbot.telegram.sendDocument(devChat, await NotificationReg(ctx, notiftoken, user['sc_clubplus_proof']), {
+              parse_mode: "HTML",
+              caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
+              ...Markup.inlineKeyboard(inline)
+            })
 
-            ctx.telegram.sendDocument(supportChat, user['sc_clubplus_proof'], {
+            notifbot.telegram.sendDocument(supportChat, await NotificationReg(ctx, notiftoken, user['sc_clubplus_proof']), {
               parse_mode: "HTML",
               caption: script.speakingClub.report.forAcceptPayment.Plus(user['name'], user['username'], user['phone_number'], data.text, course, date),
               ...Markup.inlineKeyboard(inline)
@@ -2427,11 +2388,11 @@ async function main() {
 
             if (currentUser!.count === 1){
               // For Developer
-              await ctx.telegram.sendMessage(devChat, script.speakingClub.report.notEnoughLessons(
+              await notifbot.telegram.sendMessage(devChat, script.speakingClub.report.notEnoughLessons(
                 user['name'], user['username'], user['phone_number'], currentUser!.email !== undefined ? currentUser!.email : "Пошта відсутня", user['club-typeclub']
               ));
                 
-              await ctx.telegram.sendMessage(confirmationChat, script.speakingClub.report.notEnoughLessons(
+              await notifbot.telegram.sendMessage(confirmationChat, script.speakingClub.report.notEnoughLessons(
                 user['name'], user['username'], user['phone_number'], currentUser!.email !== undefined ? currentUser!.email : "Пошта відсутня", user['club-typeclub']
               ));
                 
@@ -4000,53 +3961,6 @@ async function main() {
     }
     else ctx.reply('Вам потрібно ввести число більше або рівне одиниці.');
   })
-
-  // onTextMessage('ChoosePacketHandlerCustomLesson', async(ctx, user, set, data) => {
-  //   const userID = await dbProcess.ShowOneUser(parseInt(user['AP_UserChangeCountLesson_IDChat'])),
-  //     getUserActualName = user['AP_UserChangeCountLesson_Name'],
-  //     toWrite = parseInt(user['AP_UserChangeCountLesson_New'])
-
-  //   if (CheckException.BackRoot(data)){
-  //     await ctx.reply(`введіть число занять, яке має бути у користуваача  (наразі є: ${userID!.count} занять по ${ConvertToPrice(await db.get(userID!.id)('club-typeclub') ?? '')}uah)`, {reply_markup: {remove_keyboard: true}});
-  //     await set('state')('CheckAvaibleActivePacketAndChangeCountLesson');
-  //   }
-  //   else{
-  //     switch(data.text){
-  //       case "так":
-  //         await dbProcess.ChangeCountUser(userID!._id, toWrite);
-
-  //         await ctx.reply(`Успішно! На рахунку у студента ${getUserActualName}: ${toWrite} занять`, {
-  //           parse_mode: "Markdown",
-  //           reply_markup: {
-  //             one_time_keyboard: true,
-  //             keyboard: keyboards.personalStudentAdminPanel()
-  //           },
-  //         })
-
-  //         await set('state')('PeronalStudentHandler');
-  //         break;
-
-  //       case "ні":
-  //         ctx.reply(script.speakingClub.activePacketCheck.ifChooseActivePacket, {
-  //           reply_markup: {
-  //             one_time_keyboard: true,
-  //             keyboard: keyboards.payPacketLessons()
-  //           }
-  //         })
-  //         await set('state')('ChangeCountUserLessonsAndPacket');
-  //         break
-
-  //       default:
-  //         ctx.reply(script.errorException.chooseButtonError, {
-  //           reply_markup: {
-  //             one_time_keyboard: true,
-  //             keyboard: keyboards.yesNo()
-  //           }
-  //         })
-  //         break;
-  //     }
-  //   }
-  // })
 
   onTextMessage('ChangeCountUserLessonsAndPacket', async(ctx, user, set, data) => {
     const User = await dbProcess.ShowOneUser(parseInt(user['admin_speakingclub_personal_find_user'])),
@@ -6499,6 +6413,11 @@ async function main() {
         parseInt(data.text.replace(/хв/g, '').trim())
       )
 
+      ctx.telegram.sendMessage(parseInt(user['teacher_individual_lesson_schedule_student_id']), 
+        script.notification.forStudent.scheduleLesson(
+          
+        ))
+
       const User = await dbProcess.ShowOneUser(parseInt(user['teacher_individual_lesson_schedule_student_id']));
       if (User){
         const date = DateProcessToPresentView(user['teacher_date_individual_lesson_set'])
@@ -7082,6 +7001,7 @@ async function main() {
       })
 
       await dbProcess.ChangeAvaibiltyForOperator(parseInt(user['activeHelperLiveSupport']), true);
+      await dbProcess.DeleteServiceCare(new ObjectId(user['userObjectCloseLiveSupport']));
 
       await db.set(parseInt(user['activeHelperLiveSupport']))('state')('EndRootManager');
       await set('state')('EndRootManager');
@@ -7239,6 +7159,7 @@ async function main() {
       })
 
       await dbProcess.ChangeAvaibiltyForOperator(ctx?.chat?.id ?? -1, true);
+      await dbProcess.DeleteServiceCare(new ObjectId(user['operatorObjectCloseLiveSupport']));
 
       await db.set(parseInt(user['activeUserLiveSupport']))('state')('EndRootManager')
       await set('state')('EndRootManager');
@@ -7384,8 +7305,8 @@ async function main() {
         }
       })
 
-      for(let n = 0; n < serviceCare!.messages.length; n++){
-        await ctx.telegram.editMessageReplyMarkup(serviceCare!.chats[n], serviceCare!.messages[n], undefined, Markup.inlineKeyboard(liveKeyboard(ctx?.chat?.id ?? -1, 'declined', user['userObjectCloseLiveSupport'])).reply_markup)
+      for(let n = 0; n < serviceCare!.messageIDs.length; n++){
+        await ctx.telegram.editMessageReplyMarkup(serviceCare!.chatIDs[n], serviceCare!.messageIDs[n], undefined, Markup.inlineKeyboard(liveKeyboard(ctx?.chat?.id ?? -1, 'declined', user['userObjectCloseLiveSupport'])).reply_markup)
       }
 
       await dbProcess.DeleteServiceCare(serviceCare!._id);
@@ -7416,7 +7337,8 @@ async function main() {
   bot.action(/^acceptSupport:(\d+),(.+)$/, async (ctx) => {
     const id = Number.parseInt(ctx.match[1]),
       object = ctx.match[2],
-      [ messages, chats ] = await dbProcess.GetMessageIDsLiveSupport(new ObjectId(object));
+      [ messages, chats ] = await dbProcess.GetMessageIDsLiveSupport(new ObjectId(object)),
+      serviceCare = await dbProcess.GetServiceCareObject(new ObjectId(object));
     let operator: string | undefined = '';
 
     try {
@@ -7446,6 +7368,16 @@ async function main() {
           keyboard: keyboards.liveSupportProbablyCancel()
         }
       })
+
+      if (serviceCare!.quesion !== ''){
+        console.log('yes');
+        ctx.reply(serviceCare!.question, {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.liveSupportProbablyCancel()
+          }
+        })
+      }
     } catch (e) {
       console.log(e);
     }
@@ -7879,6 +7811,7 @@ async function main() {
   })
 
   bot.launch();
+  notifbot.launch();
 }
 
 main();

@@ -60,5 +60,5 @@ export default async function init() {
     set: (id: number) => (property: string) => async (new_value: string) => await redis.hSet(`${id}`, property, new_value)
   })
 
-  return [bot, bot_notification, wRedis, botdb] as const;
+  return [bot, bot_notification, token, wRedis, botdb] as const;
 }

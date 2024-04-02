@@ -19,6 +19,10 @@ export function getDayOfWeek(date: Date){
     return daysOfWeek[date.getDay()];
 }
 
+export function UniversalSingleDataProcess(date: Date, parametr: string){
+    // TO DO
+}
+
 export function DateProcess(dateString: string){
     const dateSplitted = dateString.replace(/[^\d.]/g, '').split('.').map(component => component.trim()),
         isValidDate = /^[0-9]{2}$/.test(dateSplitted[0]) && /^[0-9]{2}$/.test(dateSplitted[1]) && /^[0-9]{4}$/.test(dateSplitted[2]);
