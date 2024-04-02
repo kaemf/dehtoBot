@@ -19,12 +19,14 @@ import { inlineApprovePayment, inlineAcceptOncePayment, inlineAcceptOncePaymentW
   inlineAcceptPacketPayment, inlineAcceptClubWithPacketPayment, inlineEventAnnouncementClub } 
   from "./data/keyboard/paymentButtons";
 import formattedName from "./data/process/nameFormatt";
-import DateRecord from "./base/handlers/getTime";
+import { liveKeyboard } from "./data/keyboard/livekeyboard";
+import DateRecord, { DateHistory } from "./base/handlers/getTime";
 import MongoDBReturnType from "./data/general/mongoDBType";
 import { Markup, TelegramError } from "telegraf";
 import { ObjectId } from 'mongodb';
 import { DateProcess, DateProcessToPresentView, TimeProcess, getDayOfWeek } from "./data/process/dateAndTimeProcess";
 import IndividualArray from "./data/individual/interface";
+import e from "express";
 
 async function main() {
   const [ onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, notifbot, db, dbProcess ] = await arch();
@@ -285,7 +287,7 @@ async function main() {
     else if ((data.text === 'Служба турботи' || data.text === 'Моя служба турботи') && (userI!.role === 'guest' || userI!.role === 'student' || userI!.role === 'developer')){
       const objectList = await dbProcess.CreateNewLiveSupport(),
           status = await db.get(ctx?.chat?.id ?? -1)('processStatus') ?? "waiting",
-          usersCollection = await dbProcess.GetAllUsers(),
+          usersCollection = await dbProcess.ShowAllUsers(),
           inline = liveKeyboard(ctx?.chat?.id ?? -1, status, objectList.insertedId.toString());
         let allBusy = true,
           arrayIDs = [], arrayCIDs = [];
@@ -303,16 +305,19 @@ async function main() {
         }
 
         if (allBusy){
+          await dbProcess.DeleteServiceCare(objectList.insertedId);
           ctx.reply("Вибачте, але наразі всі оператори заняті, спробуйте, будь ласка, пізніше. Вибачте за незручності", {
             reply_markup: {
               one_time_keyboard: true,
-              keyboard: keyboards.menu()
+              keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
             }
           });
         }
         else{
           await dbProcess.AddMessageIDsLiveSupport(objectList.insertedId, arrayIDs, arrayCIDs);
+          await set('student_tmp_service_care_id')(objectList.insertedId.toString());
           await ctx.reply(script.liveSupport.userRespond);
+          await set('state')('CareServiceQuestionHandler')
         }
     }
     else{
@@ -7065,21 +7070,21 @@ async function main() {
       ctx.reply('Канал успішно закрито, сподіваємося ваше питання було вирішено!', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.endRootMenu()
+          keyboard: [[{ text: "В МЕНЮ" }]]
         }
       });
 
       ctx.telegram.sendMessage(user['activeHelperLiveSupport'], "Користувач закрив канал.", {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.endRootMenu()
+          keyboard: [[{ text: "В МЕНЮ" }]]
         }
       })
 
       await dbProcess.ChangeAvaibiltyForOperator(parseInt(user['activeHelperLiveSupport']), true);
 
-      await db.set(parseInt(user['activeHelperLiveSupport']))('state')('EndFunctionManager');
-      await set('state')('EndFunctionManager');
+      await db.set(parseInt(user['activeHelperLiveSupport']))('state')('EndRootManager');
+      await set('state')('EndRootManager');
     }
     else{
       switch(true){
@@ -7093,7 +7098,8 @@ async function main() {
           break;
 
         case CheckException.FileException(data):
-          ctx.telegram.sendDocument(user['activeHelperLiveSupport'], data.file, {
+          ctx.telegram.sendDocument(user['activeHelperLiveSupport'], data.file[0], {
+            caption: data.file[1],
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.liveSupportProbablyCancel()
@@ -7102,7 +7108,8 @@ async function main() {
           break;
 
         case CheckException.PhotoException(data):
-          ctx.telegram.sendPhoto(user['activeHelperLiveSupport'], data.photo, {
+          ctx.telegram.sendPhoto(user['activeHelperLiveSupport'], data.photo[0], {
+            caption: data.photo[1],
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.liveSupportProbablyCancel()
@@ -7120,7 +7127,7 @@ async function main() {
           break;
 
         case CheckException.PhoneException(data):
-          ctx.telegram.sendContact(user['activeHelperLiveSupport'], data.phone_number, user['name'], {
+          ctx.telegram.sendContact(user['activeHelperLiveSupport'], data.phone_number[0], user['name'], {
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.liveSupportProbablyCancel()
@@ -7154,7 +7161,8 @@ async function main() {
           break;
 
         case CheckException.VideoException(data):
-          ctx.telegram.sendVideo(user['activeHelperLiveSupport'], data.video, {
+          ctx.telegram.sendVideo(user['activeHelperLiveSupport'], data.video[0], {
+            caption: data.video[1],
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.liveSupportProbablyCancel()
@@ -7219,21 +7227,21 @@ async function main() {
       ctx.reply('Прекрасно, тепер можете відпочивати', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.endRootMenu()
+          keyboard: [[{ text: "В МЕНЮ" }]]
         }
       })
 
       ctx.telegram.sendMessage(user['activeUserLiveSupport'], "Оператор закрив канал, сподіваємося ваше питання було вирішено.", {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.endRootMenu()
+          keyboard: [[{ text: "В МЕНЮ" }]]
         }
       })
 
       await dbProcess.ChangeAvaibiltyForOperator(ctx?.chat?.id ?? -1, true);
 
-      await db.set(parseInt(user['activeUserLiveSupport']))('state')('EndFunctionManager')
-      await set('state')('EndFunctionManager');
+      await db.set(parseInt(user['activeUserLiveSupport']))('state')('EndRootManager')
+      await set('state')('EndRootManager');
     }
     else{
       switch(true){
@@ -7247,7 +7255,8 @@ async function main() {
           break;
 
         case CheckException.FileException(data):
-          ctx.telegram.sendDocument(user['activeUserLiveSupport'], data.file, {
+          ctx.telegram.sendDocument(user['activeUserLiveSupport'], data.file[0], {
+            caption: data.file[1],
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.liveSupportProbablyCancel()
@@ -7256,7 +7265,8 @@ async function main() {
           break;
 
         case CheckException.PhotoException(data):
-          ctx.telegram.sendPhoto(user['activeUserLiveSupport'], data.photo, {
+          ctx.telegram.sendPhoto(user['activeUserLiveSupport'], data.photo[0], {
+            caption: data.photo[1],
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.liveSupportProbablyCancel()
@@ -7274,7 +7284,7 @@ async function main() {
           break;
 
         case CheckException.PhoneException(data):
-          ctx.telegram.sendContact(user['activeUserLiveSupport'], data.phone_number, user['name'], {
+          ctx.telegram.sendContact(user['activeUserLiveSupport'], data.phone_number[0], user['name'], {
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.liveSupportProbablyCancel()
@@ -7308,7 +7318,8 @@ async function main() {
           break;
 
         case CheckException.VideoException(data):
-          ctx.telegram.sendVideo(user['activeUserLiveSupport'], data.video, {
+          ctx.telegram.sendVideo(user['activeUserLiveSupport'], data.video[0], {
+            caption: data.video[1],
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.liveSupportProbablyCancel()
@@ -7360,6 +7371,46 @@ async function main() {
           break;
       }
     }
+  })
+
+  onTextMessage('CareServiceQuestionHandler', async(ctx, user, set, data) => {
+    const serviceCare = await dbProcess.GetServiceCareObject(new ObjectId(user['student_tmp_service_care_id']));
+
+    if (data.text === 'ВІДМІНИТИ'){
+      ctx.reply('добренько, гадаємо це була помилка, гарного дня', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{ text: "В МЕНЮ" }]]
+        }
+      })
+
+      for(let n = 0; n < serviceCare!.messages.length; n++){
+        await ctx.telegram.editMessageReplyMarkup(serviceCare!.chats[n], serviceCare!.messages[n], undefined, Markup.inlineKeyboard(liveKeyboard(ctx?.chat?.id ?? -1, 'declined', user['userObjectCloseLiveSupport'])).reply_markup)
+      }
+
+      await dbProcess.DeleteServiceCare(serviceCare!._id);
+      await set('state')('EndRootManager');
+    }
+    else if (CheckException.TextException(data)){
+      if (serviceCare!.question){
+        ctx.reply('ви вже надали питання, очікуйте, будь ласка, на оператора', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: [[{ text: "ВІДМІНИТИ" }]]
+          }
+        })
+      }
+      else{
+        await dbProcess.WriteAdditionalQuestionToServiceCare(serviceCare!._id, data.text);
+        ctx.reply('дякуємо, тепер, будь ласка, очікуйте на оператора', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: [[{ text: "ВІДМІНИТИ" }]]
+          }
+        })
+      }
+    }
+    else ctx.reply(script.errorException.textGettingError.defaultException);
   })
 
   bot.action(/^acceptSupport:(\d+),(.+)$/, async (ctx) => {

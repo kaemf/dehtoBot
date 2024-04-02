@@ -6,6 +6,7 @@ export default async function dbProcess(botdb: MongoClient){
         private botdbUsers = botdb.db('dehtoBDB').collection('dataUsers');
         private deTaskDB = botdb.db('dehtoBDB').collection('deTask');
         private individualdbLessons = botdb.db('dehtoBDB').collection('individualLessons');
+        private liveSupport = botdb.db('dehtoBDB').collection('supportActiveChannels');
 
         async ShowAll() {
             return await this.clubdbLessons.find({}).toArray();
@@ -715,6 +716,40 @@ export default async function dbProcess(botdb: MongoClient){
             }
 
             return object;
+        }
+
+        async GetMessageIDsLiveSupport(oid: ObjectId){
+            const object = await this.liveSupport.findOne({ _id: oid });
+      
+            return [ object!.messageIDs, object!.chatIDs];
+        }
+
+        async CreateNewLiveSupport(){
+            return await this.liveSupport.insertOne({messageIDs: []});
+        }
+
+        async AddMessageIDsLiveSupport(oid: ObjectId, messageIDs: number[], chatIDs: number[]){
+            await this.liveSupport.updateOne({_id: oid}, {$set: {messageIDs: messageIDs, chatIDs: chatIDs}})
+        }
+
+        async ChangeAvaibiltyForOperator(operatorID: number, available: boolean){
+            const operator = await this.ShowOneUser(operatorID);
+            if (operator && operator.system_role === 'worker'){
+              await this.botdbUsers.updateOne({id: operatorID}, {$set : {available: available ? "available" : "busy" }});
+            }
+            else return false;
+        }
+
+        async GetServiceCareObject(idCare: ObjectId){
+            return await this.liveSupport.findOne({_id: idCare});
+        }
+
+        async WriteAdditionalQuestionToServiceCare(idCare: ObjectId, question: string){
+            await this.liveSupport.updateOne({_id: idCare}, {$set: {question: question}});
+        }
+
+        async DeleteServiceCare(idCare: ObjectId){
+            await this.liveSupport.deleteOne({_id: idCare});
         }
     }
 

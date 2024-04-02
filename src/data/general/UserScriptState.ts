@@ -127,3 +127,6 @@ export type UserScriptState =
   | "IndividualLessonsTrialLessonRespondDate"
   | "IndividualLessonTrialLessonRespondTime"
   | "IndividualLessonRespondLinkAndCreate"
+  | "UserLiveSupportHandler"
+  | 'OperatorLiveSupportHandler'
+  | "CareServiceQuestionHandler"

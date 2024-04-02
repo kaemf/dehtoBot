@@ -594,7 +594,12 @@ ${number}
   },
 
   operationWithGuest: (name: string, teacher: string, miro_link: string, addToTrial?: boolean) => 
-  `✅ користувача ${name} успішно додано ${addToTrial? 'на пробне': ''} до викладача ${teacher}\n\nпосилання на дошку Miro студента: ${miro_link}`
+  `✅ користувача ${name} успішно додано ${addToTrial? 'на пробне': ''} до викладача ${teacher}\n\nпосилання на дошку Miro студента: ${miro_link}`,
+
+  liveSupport: {
+    userRequest: (name: string, telegram: string, phone: string, dateRequest: string) => `Новий запит на підтримку!\n\nІм'я - ${name} (@${telegram})\nТелефон - ${phone}\n\nДата заявки - ${dateRequest}`,
+    userRespond: `Ваш запит прийнято, очікуйте на оператора, а наразі можете задати запитання (одним повідомленням)`
+  }
 
 }
 
