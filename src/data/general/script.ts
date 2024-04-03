@@ -174,7 +174,7 @@ UA773220010000026004330103247
     studentDeleteFromTeacher: (teacher: string, student: string) => `✅ студента ${student} було успішно видалено від викладача ${teacher}`,
 
     individualLessonCreated: (name: string, date: string, dayOfWeek: string, time: string, count: number) => `чудово!\n\nзаняття з ${name} заплановано на:
-👉 ${date} (${dayOfWeek}) о ${time} за Києвом🇺🇦\n\n✅ Залишок: ${count / 60} занять (${count}хв)`,
+👉 ${date} (${dayOfWeek}) о ${time} за Києвом🇺🇦\n\n${count > 0 ? '✅' : '❌'} Залишок: ${count / 60} занять (${count}хв)`,
 
     rescheduleForTeacher: (position: number, time: string, duration: number, studentName: string, username: string, number: number) =>
     `👉 ${position}\n${time} за Києвом 🇺🇦 (${duration}хв)\n${studentName}\n(@${username}); ${number}\n\n`,
@@ -210,13 +210,13 @@ ${zoom_link}`
 
     question: 'напишіть, будь ласка🤝🏽',
 
-    report: (name: string, username: string, phone_number: string, graphic: string, languagelevel: string, addquestion: string, date: string) => 
+    report: (name: string, username: string, phone_number: string, graphic: string, languagelevel: string, goal: string, date: string) => 
     `🍓 Пробний урок 🍓\n
 👉🏽${name} (@${username})
 👉🏽${phone_number}
-👉🏽<b>Зручний час проведення</b>: ${graphic}
+👉🏽<b>Графік</b>: ${graphic}
 👉🏽<b>Рівень володіння мовою</b>: ${languagelevel}
-👉🏽<b>Додаткові питання</b>: ${addquestion}
+👉🏽<b>Ціль</b>: ${goal}
 👉🏽<b>Дата створення заявки</b>: ${date}`
   },
 
@@ -604,14 +604,112 @@ ${number}
   notification: {
     forStudent: {
       scheduleLesson: (dayOfWeek: string, day: string, month: string, time: string, teacherName: string, miro_link: string, countOfLessons: number) => `📌 Заплановане заняття 📌\n
-Коли: ${dayOfWeek}, ${day} ${month}} о ${time} за Києвом🇺🇦
+Коли: ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦
 Викладач: ${teacherName}\n
 посилання на дошку Miro: ${miro_link}\n
-${countOfLessons > 0 ? '✅' : '❌'}✅ Залишок: ${countOfLessons / 60} занять (${countOfLessons}хв)`
+${countOfLessons > 0 ? '✅' : '❌'} Залишок: ${countOfLessons / 60} занять (${countOfLessons}хв)`,
+
+      notEnoughCountOfLessons: (name: string) => `🤷‍♂️ Немає оплачених занять 🤷‍♂️\n\n😢 ${name} у вас немає проплачених занять, будемо продовжувати?`,
+
+      rescheduleLesson: (oldDayOfWeek: string, oldDay: string, oldMonth: string, oldTime: string, newDayOfWeek: string, newDay: string, newMonth: string, newTime: string, miro_link: string, count: number) => 
+      `♻️️️ Перенесення заняття ♻️\n
+👉 заняття з ${oldDayOfWeek} ${oldDay} ${oldMonth} о ${oldTime} перенесено на ${newDayOfWeek}, ${newDay} ${newMonth} о ${newTime} за Києвом 🇺🇦\n\nпосилання на дошку Miro: ${miro_link}\n
+✅ Залишок: ${count / 60} занять (${count}хв)`,
+      deleteIndividualLesson: (dayOfWeek: string, day: string, month: string, time: string, count: number) =>
+      `❌️️ Видалення заняття ❌\n\n👉 заняття в ${dayOfWeek}, ${day} ${month} о ${time} за Києвом 🇺🇦 видалено\n\n✅ Залишок: ${count / 60} занять (${count}хв)`,
+
+      trialLessonByTeacher: (dayOfWeek: string, day: string, month: string, time: string, teacherName: string, miro_link: string) => `📌 Пробне заняття заплановане 📌\n
+Коли: ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦
+Викладач: ${teacherName}\n
+👉 посилання на дошку Miro: ${miro_link}`,
+
+      addStudentForTeacher: (nameStudent: string, nameTeacher: string, usernameTeacher: string, numberTeacher: string, miro_link: string, count: number) => 
+      `🥳 ${nameStudent}, вітаємо у числі студентів dehto\n
+👉 ваш викладач:\n${nameTeacher}
+(@${usernameTeacher}); ${numberTeacher}\n
+👉 ваше посилання на дошку Miro: ${miro_link}\n
+${count > 0 ? '✅' : '❌'} Залишок: ${count / 60} занять (${count}хв)
+бот - це ваш особистий кабінет. тут можна переглянути залишок занять, свій розклад, оплатити пакет занять, зареєструватися на розмовні клуби, а також поспілкуватися з підтримкою ;)\n\nпобачимося🍓 `,
+
+      changeCountStudentIndividualLesson: (teacherName: string, teacherUserName: string, teacherNumber: string, miro_link: string, count: number) =>
+`📈 Баланс занять змінено 📈\n\n👉 ваш викладач:\n${teacherName}
+(@${teacherUserName}); ${teacherNumber}\n
+👉 ваше посилання на дошку Miro: ${miro_link}\n
+✅ Залишок: ${count / 60} занять (${count}хв)\n
+гарного дня 🙌`,
+
+      studentTransfer: (studentName: string, teacherName: string, teacherUserName: string, teacherNumber: string, miro_link: string, count: number) =>
+      `🔁 ${studentName}, вас було переведено до іншого викладача\n
+👉 ваш викладач:\n${teacherName}
+(@${teacherUserName}); ${teacherNumber}\n
+👉 ваше посилання на дошку Miro: ${miro_link}\n
+✅ Залишок: ${count / 60} занять (${count}хв)\n\nпобачимося🍓 `,
+
+      deleteStudent: (nameTeacher: string) =>
+      `🙂 вас було прибрано від викладача ${nameTeacher}\n\nбажаємо вам натхнення та успіхів у вивченні мови!\n\nз любовʼю, команда dehto🍓 `
 
     },
-    forTeachers: {
 
+    forTeachers: {
+      addStudentForTeacherForTrialLesson: (name: string, username: string, number: string, miro_link: string) =>
+`✅ вам було додано студента для пробного заняття:\n👉 ${name}\n(@${username}); ${number}\n
+знайти та назначити пробне заняття можна в розділі “Запланувати пробне заняття” \n
+посилання на дошку Miro: ${miro_link}`,
+
+      addStudentForTeacher: (name: string, username: string, number: string, miro_link: string, count: number) => 
+      `🥳 вам було додано студента для індивідуальних занять:\n
+👉 ${name}\n(@${username}); ${number}\n\nможете писати та планувати подальші індивідуальні заняття ;)\n
+посилання на дошку Miro: ${miro_link}\n\n✅ Залишок: ${count / 60} занять (${count}хв)`,
+
+      changeCountStudentIndividualLesson: (studentName: string, studentUserName: string, studentNumber: string, miro_link: string, count: number) =>
+      `📈 Баланс занять у студента змінено 📈\n\n👉 ${studentName}\n
+(@${studentUserName}); ${studentNumber}\n
+посилання на дошку Miro: ${miro_link}\n
+${count > 0 ? '✅' : '❌'} Залишок: ${count / 60} занять (${count}хв)`,
+
+      studentTransfer: (studentName: string, studentUserName: string, studentNumber: string, miro_link: string, count: number) =>
+      `🔁 до вас було переведено студента для індивідуальних занять:\n
+👉 ${studentName}\n(@${studentUserName}); ${studentNumber}\n
+можете писати та планувати подальші індивідуальні заняття ;)\n
+посилання на дошку Miro: ${miro_link}\n
+${count > 0 ? '✅' : '❌'} Залишок: ${count / 60} занять (${count}хв)`,
+
+      deleteStudent: (studentName: string, studentUserName: string, studentNumber: string) =>
+      `🙂 у вас було прибрано з індивідуальних занять студента:\n
+👉 ${studentName}\n(@${studentUserName}); ${studentNumber}\n
+не забудьте написати йому_їй щось приємне;)\n
+можете скопіювати: ${studentName}, підтримка повідомила, що Ви не будете продовжувати навчання, проте мені було приємно з Вами працювати!🥹\n\n
+Бажаю Вам натхнення та успіхів у вивченні мови!
+Вдалого дня🍓`
+    },
+    
+    forAdmins: {
+      notEnoughCountOfLessons: (name: string, username: string, number: string, teacherName: string) => `🤷‍♂️ Немає оплачених занять 🤷‍♂️\n\nСтудент: ${name} \n(@${username}); ${number}\nВикладач: ${teacherName}`,
+
+      rescheduleLesson: (studentName: string, username: string, number: string, teacherName: string, day: string, month: string, time: string, reason: string, miro_link: string, count: number) => 
+      `♻️️️ Перенесення заняття ♻️\n
+Студент: ${studentName}
+(@${username}); ${number}
+Викладач: ${teacherName}\n
+👉 заняття перенесено на субота, ${day} ${month} о ${time} за Києвом 🇺🇦
+Причина: ${reason}
+посилання на дошку Miro: ${miro_link}\n
+✅ Залишок: ${count / 60} занять (${count}хв)`,
+
+      deleteIndividualLesson: (studentName: string, username: string, number: string, teacherName:string, dayOfWeek: string, day: string, month: string, time: string, reason: string, count: number) =>
+      `❌️️ Видалення заняття ❌\n
+Студент: ${studentName} 
+(@${username}); ${number}
+Викладач: ${teacherName}\n
+👉 заняття в ${dayOfWeek}, ${day} ${month} о ${time} за Києвом 🇺🇦 видалено
+Причина: ${reason}\n
+✅ Залишок: ${count / 60} занять (${count}хв)`,
+
+      trialLessonByTeacher: (dayOfWeek: string, day: string, month: string, time: string, studentName: string, teacherName: string, miro_link: string) => `📌 Пробне заняття заплановане 📌\n
+Коли: ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦
+Студент: ${studentName}
+Викладач: ${teacherName}\n
+👉 посилання на дошку Miro: ${miro_link}`
     }
   },
 

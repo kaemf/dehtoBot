@@ -147,3 +147,20 @@ export const inlineEventAnnouncementClub = (id: number, ObjectIDClub: string): H
         ]
     ];
 }
+
+//If individual no lessons, payment button generate
+export const inlinePayButton = (id: number): HideableIKBtn[][] => {
+    return [
+        [
+            Markup.button.callback("перейти до оплати", `goToPay:${id}`),
+        ]
+    ];
+}
+
+export const inlineScheduleTrialLessonTeacher = (id: number, idStudent: number): HideableIKBtn[][] => {
+    return [
+        [
+            Markup.button.callback("запланувати пробне заняття", `scheduleTrialLessonTeacher:${id},${idStudent}`),
+        ]
+    ];
+}

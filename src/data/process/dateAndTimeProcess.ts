@@ -20,7 +20,24 @@ export function getDayOfWeek(date: Date){
 }
 
 export function UniversalSingleDataProcess(date: Date, parametr: string){
-    // TO DO
+    switch(parametr){
+        case "day_of_week":
+            return getDayOfWeek(date).toLowerCase().toString();
+
+        case "month":
+            const months = [
+                "січня", "лютого", "березня", "квітня", "травня", "червня",
+                "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"
+            ];
+
+            return months[date.getMonth()].toString();
+
+        case "day":
+            return date.getDate().toString();
+
+        default:
+            throw new Error('\n\nUncorrect parametr get in UniversalSingleDataProcess()');
+    }
 }
 
 export function DateProcess(dateString: string){

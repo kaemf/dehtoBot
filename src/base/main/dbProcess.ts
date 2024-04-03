@@ -507,7 +507,7 @@ export default async function dbProcess(botdb: MongoClient){
                             }
                             else throw new Error('\n\nUser not found in Teacher');
                         }
-                        break;
+                        return currentTeacher;
 
                     default:
                         throw new Error('\n\nUncorrect parametr in IndividualChangeUserData()');
@@ -575,6 +575,10 @@ export default async function dbProcess(botdb: MongoClient){
                         if (new Date(`${date}T${time}`)){
                             if (duration === 60 || duration === 90 || duration === 30){
                                 let lessonPush = [], lessonTeacherPush = [], actualMCount
+
+                                console.log(student.individual_count - duration > 0)
+                                console.log(student.individual_count - duration === 0)
+                                console.log(student.individual_count - duration)
 
                                 if (student.individual_count - duration >= 0){
                                     actualMCount = student.individual_count - duration;
@@ -751,14 +755,6 @@ export default async function dbProcess(botdb: MongoClient){
 
         async DeleteServiceCare(idCare: ObjectId){
             await this.liveSupport.deleteOne({_id: idCare});
-        }
-
-        async DoTransport(data: string){
-            return (await this.notificationTransport.insertOne({media: data})).insertedId;
-        }
-
-        async GetTransport(id: ObjectId){
-            return (await this.notificationTransport.findOne({_id: id}))!.media;
         }
     }
 
