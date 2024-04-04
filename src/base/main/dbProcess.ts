@@ -25,8 +25,8 @@ export default async function dbProcess(botdb: MongoClient){
             await this.clubdbLessons.deleteOne({ _id: new ObjectId(id) });
         }
 
-        async ChangeKeyData(id: Object, key: string, value: string | number, club: boolean){
-            const updateObject = { $set: {} } as { $set: { [key: string]: string | number } };
+        async ChangeKeyData(id: Object, key: string, value: string | number | string[] | number[], club: boolean){
+            const updateObject = { $set: {} } as { $set: { [key: string]: string | number | string[] | number[] } };
             updateObject.$set[key] = value;
 
             club ? await this.clubdbLessons.updateOne(id, updateObject) : await this.botdbUsers.updateOne(id, updateObject);
@@ -538,11 +538,15 @@ export default async function dbProcess(botdb: MongoClient){
                 teacher = await this.ShowOneUser(idTeacher);
 
             if (student && teacher){
-                const teachersStudents = teacher.registered_students;
+                const teachersStudents = teacher.registered_students,
+                    trialStudents = teacher.trial_students;
                 switch(parametr){
                     case "trial_teacher":
                         await this.ChangeKeyData(student, 'miro_link', miro_link, false);
-                        await this.ChangeKeyData(teacher, 'trial_students', teachersStudents.push(student.name), false);
+                        await this.botdbUsers.updateOne({_id: teacher._id}, {$set: {
+                            trial_students: trialStudents? trialStudents.push(student.name): [ student.name ]
+                        }})
+                        // await this.ChangeKeyData(teacher, 'trial_students', teachersStudents.push(student.name), false);
                         break;
 
                     case "just_teacher":
@@ -684,9 +688,9 @@ export default async function dbProcess(botdb: MongoClient){
             if (student && teacher){
                 const teachersStudents = teacher?.trial_students ?? false;
                 let teacherHaveThisStudent = false;
-                if (teachersStudents){
+                if (teachersStudents.length){
                     for (let i = 0; i < teachersStudents.length; i++){
-                        if (teachersStudents[i].name === student.name){
+                        if (teachersStudents[i] === student.name){
                             teacherHaveThisStudent = true;
                             break;
                         }

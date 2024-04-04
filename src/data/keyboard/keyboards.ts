@@ -18,32 +18,32 @@ function CheckDeveloper(currentChatId: number){
 
 class Keyboard{
   mainMenu(currentChatId: number, role: string){
-    // if (CheckDeveloper(currentChatId)){
-    //   return [
-    //     [
-    //       {
-    //         text: "Індивідуальні заняття"
-    //       }
-    //     ],[
-    //       {
-    //         text: "Шпрах-Клуби"
-    //       }
-    //     ],[
-    //       {
-    //         text: "Вчитель на годину",
-    //       },
-    //     ],[
-    //       {
-    //         text: "Мої Шпрах-клуби"
-    //       }  
-    //     ],[
-    //       {
-    //         text: "Адмін Панель"
-    //       }
-    //     ]
-    // ]
-    // }
-    if (role === 'teacher'){
+    if (false){
+      return [
+        [
+          {
+            text: "Індивідуальні заняття"
+          }
+        ],[
+          {
+            text: "Шпрах-Клуби"
+          }
+        ],[
+          {
+            text: "Вчитель на годину",
+          },
+        ],[
+          {
+            text: "Мої Шпрах-клуби"
+          }  
+        ],[
+          {
+            text: "Адмін Панель"
+          }
+        ]
+    ]
+    }
+    if (true){
       return [
         [
           {
@@ -60,7 +60,7 @@ class Keyboard{
         ]
       ]
       }
-      else if (role === 'student'){
+      else if (false){
         return [
           [
             {
@@ -77,7 +77,7 @@ class Keyboard{
           ]
         ]
       }
-      else if (checkChats(currentChatId)){
+      else if (false){
         return [
             [
               {
@@ -293,9 +293,9 @@ class Keyboard{
   roleChange(){
     return [
       [
-        {
-          text: "Студент"
-        },
+        // {
+        //   text: "Студент"
+        // },
         {
           text: "Викладач"
         }
@@ -418,12 +418,17 @@ class Keyboard{
     return [
       [
         {
-          text: "Разове заняття (300uah)"
+          text: "Разове заняття"
         }
       ],
       [
         {
-          text: "Пакет занять (280uah)"
+          text: "Шпрах клуб"
+        }
+      ],
+      [
+        {
+          text: "Шпрах клуб плюс"
         }
       ]
     ]

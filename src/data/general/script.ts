@@ -36,7 +36,7 @@ const script = {
 
       videoException: `о... дякуємо, але відео нам не потрібне\nнастисніть, будь ласка, на кнопку знизу «поділитися номером»`,
 
-      locationException: `ого... вибачте, але нам Ваше місцезнаходження не потрібне\n\nнастисніть, будь ласка, на кнопку знизу «поділитися номером»`,
+      locationException: `ого... вибачте, але нам ваше місцезнаходження не потрібне\n\nнастисніть, будь ласка, на кнопку знизу «поділитися номером»`,
       
       pollsException: `опа... а це що...\n\nвибачте, але голосувати тут не тре, настисніть, будь ласка, на кнопку знизу «поділитися номером»`
 
@@ -63,109 +63,109 @@ const script = {
 
       videoException: `о... дякуємо, але відео нам не потрібне\nбудь ласка, просто напишіть`,
 
-      locationException: `ого... вибачте, але нам Ваше місцезнаходження не потрібне\n\nбудь ласка, просто напишіть, те що ми запитували`,
+      locationException: `ого... вибачте, але нам ваше місцезнаходження не потрібне\n\nбудь ласка, просто напишіть, те що ми запитували`,
 
       pollsException: `опа... а це що...\n\nвибачте, але голосувати тут не тре, просто напишіть, те що ми запитували`,
 
-      mailException: `от халепа...\n\nте що Ви ввели не схоже на електронну пошту\nповторіть, будь ласка, ще раз!`
+      mailException: `от халепа...\n\nте що ви ввели не схоже на електронну пошту\nповторіть, будь ласка, ще раз!`
     }
   },
 
   entire: {
-    greeting : 'привіт! я - бот мовної школи dehto. підкажіть, як до Вас можна звертатися?☺️',
+    greeting : 'привіт! я - бот мовної школи dehto. підкажіть, як до вас можна звертатися?☺️',
 
     niceNameAndGetPhone: (name: string) => `${name}! яке прекрасне ім’я🥹\n
-будь ласка, залиште номер телефону, щоб підтримці було легше з Вами звʼязатися🫶🏽`,
+будь ласка, залиште номер телефону, щоб підтримці було легше з вами звʼязатися🫶🏽`,
 
     shareYourPhone: "Поділитись своїм номером телефону",
 
-    chooseFunction: `чудно!)\n\nа тепер оберіть, який формат Вас цікавить:`
+    chooseFunction: `чудно!)\n\nа тепер оберіть, який формат вас цікавить:`
   },
 
   payInvidualLesson: {
     chooseLevelCourse: `dehto дякує за довіру❤\nоберіть свій рівень`,
 
-    choosePacket: (minimal: number, econom: number, popular: number, large: number) => `оберіть, будь ласка, пакет занять, який Вас цікавить:\n\n
+    choosePacket: (minimal: number, econom: number, popular: number, large: number) => `оберіть, будь ласка, пакет занять, який вас цікавить:\n\n
 🔵 Мінімальний: 5 занять (${minimal}uah - 1 заняття) 
 🔴 Економний: 10 занять (${econom}uah - 1 заняття) 
 🟢 Популярний: 20 занять (${popular}uah - 1 заняття) 
-🟡 Вигідний: 50 занять (${large}uah - 1 заняття)`,
+🟡 вигідний: 50 занять (${large}uah - 1 заняття)`,
 
     statsAboutChoosedPacket: (packetName: string, priceSingle: number, countOfLessons: number) => `🤭 індивідуальне заняття пакету «${packetName}» вартує
 ${priceSingle} uah / 60 хв. цей пакет включає ${countOfLessons} занять\n
-👉🏽 до сплати ${priceSingle * countOfLessons} uah`,
+👉 до сплати ${priceSingle * countOfLessons} uah`,
 
     payment: {
-      require: `👉🏽🧾 Одержувач
+      require: `👉🧾 Одержувач
 ФОП Молоков Євгеній Альбертович
 IBAN 
 UA773220010000026004330103247
 ЄДРПОУ 3706201794
 Призначення платежу:
 Разова оплата додаткового заняття.\n
-👉🏽💳 або ж на реквізити банківської карти:
+👉💳 або ж на реквізити банківської карти:
     4035200042356078 Молоков Є.А.`,
 
       proofRequest: `скрін про оплату надішліть сюди😌`
     },
 
     endWork: (name: string) => `дякуємо, ${name}🫶🏽
-найближчим часом із Вами звʼяжеться служба турботи та повідомить про стан оплати)\n
+найближчим часом із вами звʼяжеться служба турботи та повідомить про стан оплати)\n
 а також, за потреби, відкриє Вам доступ до усіх відео-лекцій на сайті dehto☺️\n
 гарного дня!🍓`, 
 
     report: (name: string, username: string, phone_number: string, choosedPacket: string, date: string) => 
     `💰 Оплата занять 💰\n
-👉🏽${name} (@${username})
-👉🏽${phone_number}
-👉🏽<b>Пакет</b>: ${choosedPacket}
-👉🏽<b>Дата створення заявки</b>: ${date}`
+👉${name} (@${username})
+👉${phone_number}
+👉<b>Пакет</b>: ${choosedPacket}
+👉<b>Дата створення заявки</b>: ${date}`
   },
   
   teacherOnHour: {
-    greeting: "вітаю! я - ваш особистий вчитель на годину з dehto. підкажи, як до Вас звертатися?☺️",
+    greeting: "вітаю! я - ваш особистий вчитель на годину з dehto. підкажи, як до вас звертатися?☺️",
 
-    whatALovelyName: (name: string) => `${name}! яке прекрасне ім’я🥹 залиште номер телефону, щоб вчитель dehto зв\'язався із Вами`,
+    whatALovelyName: (name: string) => `${name}! яке прекрасне ім’я🥹 залиште номер телефону, щоб вчитель dehto зв\'язався із вами`,
 
-    whatsTheProblem: "окей, дякуємо! підкажіть, будь ласка, з яким рівнем у Вас виникли труднощі?",
+    whatsTheProblem: "підкажіть, будь ласка, з яким рівнем у вас виникли труднощі?",
 
-    whatLecture: "з якою лекцією?",
+    whatLecture: "вкажіть номер лекції",
 
     additionalQuestions: {
-      question: "чи є у Вас питання, які dehto допоможе вирішити?🤔",
+      question: "чи є у вас додаткові питання до викладача dehto?🤔",
       no: "немає",
       yes: "маю питання",
-      ifYes: "яке саме?",
+      ifYes: "напишіть, будь ласка, своє питання тут:",
     },
 
     payment: {
-      thanks: `дякуємо за Вашу відповідь🥰\n
-поки вчитель dehto готує матеріали для заняття - можете внести оплату за заняття (350uah) на реквізити за рахунком ФОП:\n\n
-👉🏽🧾 Одержувач
+      thanks: `чудово!🥰\n
+поки викладач dehto готує матеріали для заняття - внесіть оплату за заняття (400uah) на реквізити за рахунком ФОП:\n\n
+👉🧾 Одержувач
 ФОП Молоков Євгеній Альбертович
 IBAN
 UA773220010000026004330103247
 ЄДРПОУ 3706201794
 Призначення платежу:
 Разова оплата додаткового заняття.\n
-👉🏽💳 або ж на реквізити банківської карти:
+👉💳 або ж на реквізити банківської карти:
   4035200042356078 Молоков Є.А.`,
 
       sendPics: "скрін про оплату надішліть сюди😌",
       
       paymentSent: (name: string) => `дякуємо, ${name}🫶🏽`,
 
-      waitForContact: "скоро із Вами зв’яжеться вчитель і ви узгодите час проведення заняття😉",
+      waitForContact: "😉 скоро із вами зв’яжеться підтримка та повідомить про стан оплати - надалі ж ви узгодите час проведення заняття",
     },
 
     report: (name: string, username: string, phone_number: string, course: string, lecture: string, question: string, date: string) =>
-    `✅ Вчитель на годину ✅\n  
-👉🏽${name} (@${username})
-👉🏽${phone_number}
-👉🏽<b>Курс</b>: ${course}
-👉🏽<b>Лекція</b>: ${lecture}
-👉🏽<b>Додаткові питання</b>: ${question}
-👉🏽<b>Дата створення заявки</b>: ${date}`
+    `⏳ Вчитель на годину ⏳\n  
+👉${name} (@${username})
+${phone_number}
+👉<b>Курс</b>: ${course}
+👉<b>Лекція</b>: ${lecture}
+👉<b>Додаткові питання</b>: ${question}\n\n
+дата створення заявки: ${date}`
   },
 
   indivdual: {
@@ -180,7 +180,7 @@ UA773220010000026004330103247
     `👉 ${position}\n${time} за Києвом 🇺🇦 (${duration}хв)\n${studentName}\n(@${username}); ${number}\n\n`,
 
     scheduleShowStudent: (time: string, duration: number, teacherName: string, teacherUsername: string, teacherNumber: number, miro_link: string) =>
-    `👉 ${time} за Києвом 🇺🇦 (${duration}хв)\n\nВикладач: ${teacherName}\n(@${teacherUsername});${teacherNumber}\n
+    `👉 ${time} за Києвом 🇺🇦 (${duration}хв)\n\nвикладач: ${teacherName}\n(@${teacherUsername});${teacherNumber}\n
 посилання на дошку Miro студента: ${miro_link}\n\n`,
 
     trialFinal: (name: string, date: string, dayOfWeek: string, time: string, miro_link: string, zoom_link: string) => `чудово!\n
@@ -199,49 +199,49 @@ ${zoom_link}`
 
     countOfLessonsRequest: `скільки занять на тиждень хочете мати?`,
 
-    levelLanguageRequest: `напишіть, будь ласка, яким, приблизно, рівнем мови Ви володієте?`,
+    levelLanguageRequest: `напишіть, будь ласка, яким, приблизно, рівнем мови ви володієте?`,
 
     goalLearnRequest: `яка вашіа ціль вивчення мови? для чого її вчите?`,
 
     thanksPartTwo: (graphic: string) => `чудно!)\n
-👉🏽 отож, пробне заняття краще провести: ${graphic}\n
-скоро з Вами звʼяжеться підтримка для узгодження деталей та сам викладач😎\n
+👉 отож, пробне заняття краще провести: ${graphic}\n
+скоро з вами звʼяжеться підтримка для узгодження деталей та сам викладач😎\n
 гарного дня!🌱`,
 
     question: 'напишіть, будь ласка🤝🏽',
 
     report: (name: string, username: string, phone_number: string, graphic: string, languagelevel: string, goal: string, date: string) => 
-    `🍓 Пробний урок 🍓\n
-👉🏽${name} (@${username})
-👉🏽${phone_number}
-👉🏽<b>Графік</b>: ${graphic}
-👉🏽<b>Рівень володіння мовою</b>: ${languagelevel}
-👉🏽<b>Ціль</b>: ${goal}
-👉🏽<b>Дата створення заявки</b>: ${date}`
+    `🍓 Пробне заняття 🍓\n
+👉${name} (@${username})
+${phone_number}
+👉<b>Графік</b>: ${graphic}
+👉<b>Рівень володіння мовою</b>: ${languagelevel}
+👉<b>Ціль</b>: ${goal}\n
+дата створення заявки: ${date}`
   },
 
   registrationLesson: {
     niceWhatATime: `супер!\n
-який у Вас графік? в які дні та години Вам зручно займатися?🤩`,
+який у вас графік? в які дні та години Вам зручно займатися?🤩`,
 
-    levelLanguageRequest: `напишіть, будь ласка, яким, приблизно, рівнем мови Ви володієте?`,
+    levelLanguageRequest: `напишіть, будь ласка, яким, приблизно, рівнем мови ви володієте?`,
 
     thanks: (name: string, graphic: string) => `дякуємо, ${name}!🌱\n
-👉🏽 отже, стосовно графіка:  ${graphic}\n
-якщо у Вас є додаткові побажання - напишіть їх, якщо немає - напишіть «немає»🤗`,
+👉 отже, стосовно графіка:  ${graphic}\n
+якщо у вас є додаткові побажання - напишіть їх, якщо немає - напишіть «немає»🤗`,
 
     end: `супер!\n
-скоро з Вами звʼяжеться підтримка для узгодження деталей та сам викладач😎\n
+скоро з вами звʼяжеться підтримка для узгодження деталей та сам викладач😎\n
 гарного дня!🌱`,
 
     report: (name: string, username: string, phone_number: string, graphic: string, languagelevel: string, addquestion: string, date: string) =>
     `📆 Запис на заняття 📆\n
-👉🏽${name} (@${username})
-👉🏽${phone_number}
-👉🏽<b>Зручний час проведення</b>: ${graphic}
-👉🏽<b>Рівень володіння мовою</b>: ${languagelevel}
-👉🏽<b>Додаткові питання</b>: ${addquestion}
-👉🏽<b>Дата створення заявки</b>: ${date}`
+👉${name} (@${username})
+👉${phone_number}
+👉<b>Зручний час проведення</b>: ${graphic}
+👉<b>Рівень володіння мовою</b>: ${languagelevel}
+👉<b>Додаткові питання</b>: ${addquestion}
+👉<b>Дата створення заявки</b>: ${date}`
   },
 
   about: (version: string) => `
@@ -253,7 +253,7 @@ Instagram: <b><a href="https://www.instagram.com/watthatt/">@watthatt</a></b>
   `,
 
     speakingClub: {
-      entire: `Виберіть кнопку:`,
+      entire: `виберіть кнопку:`,
 
       about: `дякуємо, що цікавишся нашими шпрах-клубами🥹\n\nза ось цим посиланням ти можеш переглянути коротеньке відео про те, як вони у нас влаштовані та про правила поводження на клубі: https://youtu.be/OaUqpIgKV4s\n\nчекатимемо тебе на шпрах-клубах dehto!\nцьом♥️`,
 
@@ -261,15 +261,15 @@ Instagram: <b><a href="https://www.instagram.com/watthatt/">@watthatt</a></b>
         entire: `раді, що ти облав_ла пробне заняття!\n\nрадше разове заняття на звичайному шпрах-клубі, щоб зрозуміти, чи пасує тобі такий формат☺️\n\nзаняття вартує як і звичайне - 300uah\n\nготовий_а продовжувати?)`,
         
         getPayment: `тепер перейдімо до оплати😁
-👉🏽 до сплати 240 uah\n
-👉🏽🧾 Одержувач
+👉 до сплати 240 uah\n
+👉🧾 Одержувач
 ФОП Молоков Євгеній Альбертович
 IBAN 
 UA773220010000026004330103247
 ЄДРПОУ 3706201794
 Призначення платежу:
 Разова оплата додаткового заняття.\n
-👉🏽💳 або ж на реквізити банківської карти:
+👉💳 або ж на реквізити банківської карти:
     4035200042356078 Молоков Є.А.\n
 скрін про оплату надішліть сюди😌`,
 
@@ -282,7 +282,7 @@ UA773220010000026004330103247
       defaultDecline: `тоді гарного дня!🌱`,
 
       lessLessons: (count: number) => {
-        return count > 0 ? `Ваш залишок занять: ${count} заняття☺️` : `У Вас немає проплачених занять😳\nбажаєте придбати?)`;
+        return count > 0 ? `✅ Баланс ваших розмовних клубів: ${count} заняття` : `У вас немає проплачених занять😳\nбажаєте придбати?)`;
       },
 
       payPacketLesson: `у нас для тебе чудова новина!
@@ -291,77 +291,77 @@ UA773220010000026004330103247
 Разове заняття
 ціна: 300 uah\n
 ✅ 2
-Пакет “Шпрах-Клуб”
-👉🏽 5 занять (280uah за одне)
+Пакет “Шпрах клуб”
+👉 5 занять (280uah за одне)
 ціна: 1400 uah\n
 ✅ 3
-пакет “Шпрах-Клуб+PLUS” 
-👉🏽 5 занять (280uah за одне)
-👉🏽 доступ до одного відео-курсу на сайті
+пакет “Шпрах клуб плюс” 
+👉 5 занять (280uah за одне)
+👉 доступ до одного відео-курсу на сайті
 ціна: 2800 uah\n
 *повна ціна одного відео-курсу на сайті дехто 2300uah`,
 
       onceClub: `чудно!\n
-😉 Ви обрали разове заняття
-👉🏽 до сплати 300 uah\n\n
-👉🏽🧾 Одержувач
+😉 ви обрали разове заняття
+👉 до сплати 300 uah\n\n
+👉🧾 Одержувач
 ФОП Молоков Євгеній Альбертович
 IBAN 
 UA773220010000026004330103247
 ЄДРПОУ 3706201794
 Призначення платежу:
 Разова оплата додаткового заняття.\n
-👉🏽💳 або ж на реквізити банківської карти:
+👉💳 або ж на реквізити банківської карти:
   4035200042356078 Молоков Є.А.\n
 скрін про оплату надішліть сюди😌`,
 
       standartClub: `чудно!\n
-😉 Ви обрали пакет “Шпрах-Клуб”
-👉🏽 до сплати 1400 uah\n\n
-👉🏽🧾 Одержувач
+😉 ви обрали пакет “Шпрах-Клуб”
+👉 до сплати 1400 uah\n\n
+👉🧾 Одержувач
 ФОП Молоков Євгеній Альбертович
 IBAN 
 UA773220010000026004330103247
 ЄДРПОУ 3706201794
 Призначення платежу:
 Разова оплата додаткового заняття.\n
-👉🏽💳 або ж на реквізити банківської карти:
+👉💳 або ж на реквізити банківської карти:
     4035200042356078 Молоков Є.А.\n\n
 скрін про оплату надішліть сюди😌`,
 
       plusClub: `чудно!\n
-😉 Ви обрали пакет “Шпрах-Клуб+PLUS”
-👉🏽 до сплати 2800 uah\n\n
-👉🏽🧾 Одержувач
+😉 ви обрали пакет “Шпрах-Клуб+PLUS”
+👉 до сплати 2800 uah\n\n
+👉🧾 Одержувач
 ФОП Молоков Євгеній Альбертович
 IBAN 
 UA773220010000026004330103247
 ЄДРПОУ 3706201794
 Призначення платежу:
 Разова оплата додаткового заняття.\n
-👉🏽💳 або ж на реквізити банківської карти:
+👉💳 або ж на реквізити банківської карти:
     4035200042356078 Молоков Є.А.\n\n
 скрін про оплату надішліть сюди😌`,
 
     thanksType: {
       typeOnce: (name: string) => `дякуємо, ${name}🫶🏽
-Ви успішно оплатили разове заняття!\n
+ви успішно оплатили разове заняття!\n
 якщо є питання - звертайтеся сюди:
 +380 97 577 20 93
 @dehto_school\n
 гарного дня!🍓`,
 
       typeStandart: (name: string) => `дякуємо, ${name}🫶🏽
-Ви успішно оплатили пакет “Шпрах-Клуб”!\n
+ви успішно оплатили пакет “Шпрах-Клуб”!\n
 гарного дня!🍓`,
 
-    typePlus: `супер!\n😉 тепер оберіть курс, який Ви хочете отримати`
+    typePlus: `супер!\n\n😉 тепер оберіть курс, який ви хочете отримати`
     },
 
     getMail: `введіть адресу своєї електронної пошти, будь ласка`,
 
     thanksAfterMail: (name: string, course: string) => `дякуємо, ${name}🫶🏽
-найближчим часом із Вами звʼяжеться служба турботи - повідомить про стан оплати та дасть доступ до курсу ${course})\n
+найближчим часом із вами звʼяжеться служба турботи - повідомить про стан оплати та дасть доступ до курсу ${course})\n
 якщо є питання - звертайтеся сюди:
 +380 97 577 20 93
 @dehto_school\n
@@ -370,44 +370,44 @@ UA773220010000026004330103247
     report: {
       showClub: (position: number, title: string, teacher: string, date: string, time: string, addString: string) => `✅${position}
 🗣 ШПРАХ-КЛУБ
-👉🏼 Тема: ${title}
-👉🏼 Викладач: ${teacher}\n
-👉🏼 Коли: ${date}
-👉🏼 На котру: ${time} 🇺🇦\n
+👉 Тема: ${title}
+👉 Викладач: ${teacher}\n
+👉 Коли: ${date}
+👉 На котру: ${time} 🇺🇦\n
 ${addString}`,
 
       showClubTypeAdmin: (position: number, title: string, teacher: string, date: string, time: string, addString: string, recordedUsers: string, link: string) => `✅${position}
 🗣 ШПРАХ-КЛУБ
-👉🏼 <b>Тема</b>: ${title}
-👉🏼 <b>Викладач</b>: ${teacher}\n
-👉🏼 <b>Коли</b>: ${date}
-👉🏼 <b>На котру</b>: ${time} 🇺🇦
+👉 <b>Тема</b>: ${title}
+👉 <b>викладач</b>: ${teacher}\n
+👉 <b>Коли</b>: ${date}
+👉 <b>На котру</b>: ${time} 🇺🇦
 ${recordedUsers}\n
-👉🏼 <b>Посилання</b>: ${link}\n
+👉 <b>Посилання</b>: ${link}\n
 ${addString}`,
 
       showClubTypeTeacher: (position: number, title: string, teacher: string, date: string, time: string, addString: string, recordedUsers: string, link: string) => `✅${position}
 🗣 ШПРАХ-КЛУБ
-👉🏼 <b>Тема</b>: ${title}
-👉🏼 <b>Викладач</b>: ${teacher}\n
-👉🏼 <b>Коли</b>: ${date}
-👉🏼 <b>На котру</b>: ${time} 🇺🇦
+👉 <b>Тема</b>: ${title}
+👉 <b>викладач</b>: ${teacher}\n
+👉 <b>Коли</b>: ${date}
+👉 <b>На котру</b>: ${time} 🇺🇦
 ${recordedUsers}
 ${addString}\n
-👉🏼 <b>Посилання</b>: ${link}`,
+👉 <b>Посилання</b>: ${link}`,
 
       showClubToUser: (title: string, teacher: string, date: string, time: string) => `🗣 ШПРАХ-КЛУБ
-👉🏼 Тема: ${title}
-👉🏼 Викладач: ${teacher}\n
-👉🏼 Коли: ${date}
-👉🏼 На котру: ${time} 🇺🇦`,
+👉 Тема: ${title}
+👉 Викладач: ${teacher}\n
+👉 Коли: ${date}
+👉 На котру: ${time} 🇺🇦`,
 
       showOwnClubToUser: (count: number, title: string, teacher: string, date: string, time: string, link: string) => `✅${count}
 🗣 ШПРАХ-КЛУБ
-👉🏼 Тема: ${title}
-👉🏼 Викладач: ${teacher}\n
-👉🏼 Коли: ${date}
-👉🏼 На котру: ${time} 🇺🇦\n
+👉 Тема: ${title}
+👉 Викладач: ${teacher}\n
+👉 Коли: ${date}
+👉 На котру: ${time} 🇺🇦\n
 Посилання: ${link}`,
 
       showUser: (position: number, name: string, id: number, username: string, phone_number: string, count: number, role: string) => `✅${position}
@@ -429,22 +429,22 @@ Telegram: @${username}
 Кількість доступних занять: ${count > 0 ? count : '❌'}`,
 
       checkClub: (title: string, teacher: string, date: string, time: string, link: string, count: number) => `🗣 ШПРАХ-КЛУБ
-👉🏼 Тема: ${title}
-👉🏼 Викладач: ${teacher}\n
-👉🏼 Коли: ${date}
-👉🏼 На котру: ${time} 🇺🇦\n
+👉 Тема: ${title}
+👉 Викладач: ${teacher}\n
+👉 Коли: ${date}
+👉 На котру: ${time} 🇺🇦\n
 ${count > 0 ? `кількість доступних місць: ${count}` : `❌ немає вільних місць ❌`}\n
 Посилання: ${link}`,
 
-      acceptedTrialLesson: (name: string, date: string, time: string, link: string) => `✅ ${name}, Вашу реєстрацію підтвержено!\n
-😁 Чекатимемо Вас
+      acceptedTrialLesson: (name: string, date: string, time: string, link: string) => `✅ ${name}, вашу реєстрацію підтвержено!\n
+😁 Чекатимемо вас
 ${date} о ${time} 🇺🇦 за ось цим посиланням:\n\n${link}\n\n❗️обов’язково підпишіться своїм іменем\n
 до зустрічі!
 дехто з турботою🍓`,
 
-      acceptedPacketAndClubPayment: (name: string, date: string, time: string, link: string, packet: string) => `✅ ${name}, Вашу реєстрацію підтвержено!
-👉🏽 Ваш активний пакет "${packet}"\n
-😁 Чекатимемо Вас
+      acceptedPacketAndClubPayment: (name: string, date: string, time: string, link: string, packet: string) => `✅ ${name}, вашу реєстрацію підтвержено!
+👉 ваш активний пакет "${packet}"\n
+😁 Чекатимемо вас
 ${date} о ${time} 🇺🇦 за ось цим посиланням:\n\n${link}\n\n❗️обов’язково підпишіться своїм іменем\n
 до зустрічі!
 дехто з турботою🍓`,
@@ -457,7 +457,7 @@ ${date} о ${time} 🇺🇦 за ось цим посиланням:\n\n${link}\
 гарного дня!🍓`,
 
       notEnoughLessons: (name: string, username: string, phone: string, mail: string, club_packet: string) => `❌ Немає проплачених ❌\n
-👉🏽 ${name} (@${username})
+👉 ${name} (@${username})
 ${phone}\n
 📩 ${mail}
 Останній пакет: ${club_packet}`,
@@ -465,56 +465,56 @@ ${phone}\n
       reportToTeacherNewOrder: (title: string, teacher: string, date: string, time: string, count: number, recordedUsers: string) => 
       `${count === 0 ? '✅❌ Вільних місць немає' : '✅ Нова реєстрація'}
 🗣 ШПРАХ-КЛУБ
-👉🏼 Тема: ${title}
-👉🏼 Викладач: ${teacher}\n
-👉🏼 Коли: ${date}
-👉🏼 На котру: ${time} 🇺🇦\n
+👉 Тема: ${title}
+👉 Викладач: ${teacher}\n
+👉 Коли: ${date}
+👉 На котру: ${time} 🇺🇦\n
 Список учасників:
 ${recordedUsers === '' ? 'поки ще немає(\n' : recordedUsers}
 ${count === 0 ? '' : `кількість доступних місць: ${count}`}`,
 
       forAcceptPayment: {
         nonPlus: (name: string, username: string, number: string, date: string) => `💰 Оплата Шпрах-Клуб 💰\n
-👉🏽${name} (@${username})
-👉🏽${number}
-👉🏽Пакет: <b>Шпрах-Клуб</b> (5 занять) - 1400uah\n
-Дата створення заявки: ${date}`,
+👉${name} (@${username})
+${number}
+👉Пакет: <b>Шпрах-Клуб</b> (5 занять) - 1400uah\n
+дата створення заявки: ${date}`,
 
         Plus: (name: string, username: string, number: string, email: string, course: string, date: string) => `💰 Оплата Шпрах-Клуб 💰\n
-👉🏽${name} (@${username})
-👉🏽${number}
-👉🏽Пакет: <b>Шпрах-Клуб+PLUS</b> (5 занять+курс) - 2800uah
-👉🏽<b>Пошта</b>: ${email}
-👉🏽<b>Дати доступ до курсу</b>: ${course}\n\n
-Дата створення заявки: ${date}`,
+👉${name} (@${username})
+${number}
+👉Пакет: <b>Шпрах-Клуб+PLUS</b> (5 занять+курс) - 2800uah
+👉<b>Пошта</b>: ${email}
+👉<b>Дати доступ до курсу</b>: ${course}\n\n
+дата створення заявки: ${date}`,
 
         Once: (name: string, username: string, number: string, date: string) =>
         `💰 Оплата Шпрах-Клуб 💰\n
-👉🏽${name} (@${username})
-👉🏽${number}
-👉🏽Разове заняття - 300uah\n
-Дата створення заявки: ${date}`
+👉${name} (@${username})
+${number}
+👉Разове заняття - 300uah\n
+дата створення заявки: ${date}`
       },
 
       mySpeackingClub: {
-        ifTrue: (name: string) => `✅ ${name}}, ви зареєстровані на такі клуби: `,
+        ifTrue: (name: string) => `✅ ${name}, ви зареєстровані на такі клуби: `,
         ifFalse: (name: string) => `${name}, у вас немає реєстрацій на розмовні клуби😳\n\nхочете зареєструватися?)`
       },
 
       announcementClub: (title: string, teacher: string, date: string, time: string) => `🔥dehto має новий Шпрах-Клуб🔥 \n
 🗣 ШПРАХ-КЛУБ
-👉🏼 Тема: ${title}
-👉🏼 Викладач: ${teacher}\n
+👉 Тема: ${title}
+👉 Викладач: ${teacher}\n
 🕒 Чекаємо тебе <b>${date} о ${time}</b> 🇺🇦`
     },
 
 
     registrationLesson: {
-      paymentRequest: (name: string) => `а хай йому грець..\n${name}, у Вас закінчилися оплачені заняття((
-      \n👉🏼 для того, щоб зареєстуватися Ви маєте оплатити пакет занять`,
+      paymentRequest: (name: string) => `а хай йому грець..\n${name}, у вас закінчилися оплачені заняття((
+      \n👉 для того, щоб зареєстуватися ви маєте оплатити пакет занять\n\nперейти до оплати?`,
 
-      acceptedRegistration: (name: string, date: string, time: string, link: string) => `✅ ${name}, Вашу реєстрацію підтвержено!\n
-😁 Чекатимемо Вас
+      acceptedRegistration: (name: string, date: string, time: string, link: string) => `✅ ${name}, вашу реєстрацію підтвержено!\n
+😁 Чекатимемо вас
 ${date} о ${time} 🇺🇦 за ось цим посиланням:\n\n${link}\n\n❗️обов’язково підпишіться своїм іменем\n
 до зустрічі!
 дехто з турботою🍓`
@@ -532,7 +532,7 @@ ${date} о ${time} 🇺🇦 за ось цим посиланням:\n\n${link}\
 ${name}
 (@${username}); ${phone}\n
 Тип занять: ${typeOfLessons}
-Викладач: ${teacher}
+викладач: ${teacher}
 ✅ Залишок: ${count / 60} занять (${count}хв)\n
 посилання на дошку Miro студента: ${miro}`,
 
@@ -556,7 +556,7 @@ ${name}
 ${number}
 Роль: ${ConvertRole(role)}\n
 ${role !== 'guest'? `👉 Кількість індивід. занять: ${individual_count} (${individual_count * 60}хв)
-Викладач: ${teacher}
+викладач: ${teacher}
 Лінк на дошку: ${miro_link? `${miro_link}\n` : 'Відсутня\n'}` : ''}
 👉 Кількість розм. клубів: ${count} (${clubPacket ? `${ConvertToPrice(clubPacket.toString())}uah` : 'Користувач не брав участі в клубах'})`,
 
@@ -571,7 +571,7 @@ ${role !== 'guest'? `👉 Кількість індивід. занять: ${ind
 ${number}
 Роль: Студент\n
 👉 Кількість індивід. занять: ${individual_count} (${individual_count * 60}хв)
-Викладач: ${teacher}
+викладач: ${teacher}
 Лінк на дошку: ${miro_link? `${miro_link}\n` : 'Відсутня\n'}
 👉 Кількість розм. клубів: ${count} (${clubPacket ? `${ConvertToPrice(clubPacket.toString())}uah` : 'Користувач не брав участі в клубах'})`
 
@@ -594,18 +594,18 @@ ${number}
   },
 
   operationWithGuest: (name: string, teacher: string, miro_link: string, addToTrial?: boolean) => 
-  `✅ користувача ${name} успішно додано ${addToTrial? 'на пробне': ''} до викладача ${teacher}\n\nпосилання на дошку Miro студента: ${miro_link}`,
+  `✅ користувача ${name} успішно додано ${addToTrial? 'на пробне ': ''}до викладача ${teacher}\n\nпосилання на дошку Miro студента: ${miro_link}`,
 
   liveSupport: {
     userRequest: (name: string, telegram: string, phone: string, dateRequest: string) => `Новий запит на підтримку!\n\nІм'я - ${name} (@${telegram})\nТелефон - ${phone}\n\nДата заявки - ${dateRequest}`,
-    userRespond: `Ваш запит прийнято, очікуйте на оператора, а наразі можете задати запитання (одним повідомленням)`
+    userRespond: `будь ласка, поставте своє запитання, ми обов'язково вам допоможемо 🦄`
   },
 
   notification: {
     forStudent: {
       scheduleLesson: (dayOfWeek: string, day: string, month: string, time: string, teacherName: string, miro_link: string, countOfLessons: number) => `📌 Заплановане заняття 📌\n
 Коли: ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦
-Викладач: ${teacherName}\n
+викладач: ${teacherName}\n
 посилання на дошку Miro: ${miro_link}\n
 ${countOfLessons > 0 ? '✅' : '❌'} Залишок: ${countOfLessons / 60} занять (${countOfLessons}хв)`,
 
@@ -616,19 +616,20 @@ ${countOfLessons > 0 ? '✅' : '❌'} Залишок: ${countOfLessons / 60} з�
 👉 заняття з ${oldDayOfWeek} ${oldDay} ${oldMonth} о ${oldTime} перенесено на ${newDayOfWeek}, ${newDay} ${newMonth} о ${newTime} за Києвом 🇺🇦\n\nпосилання на дошку Miro: ${miro_link}\n
 ✅ Залишок: ${count / 60} занять (${count}хв)`,
       deleteIndividualLesson: (dayOfWeek: string, day: string, month: string, time: string, count: number) =>
-      `❌️️ Видалення заняття ❌\n\n👉 заняття в ${dayOfWeek}, ${day} ${month} о ${time} за Києвом 🇺🇦 видалено\n\n✅ Залишок: ${count / 60} занять (${count}хв)`,
+      `❌️️ видалення заняття ❌\n\n👉 заняття в ${dayOfWeek}, ${day} ${month} о ${time} за Києвом 🇺🇦 видалено\n\n✅ Залишок: ${count / 60} занять (${count}хв)`,
 
-      trialLessonByTeacher: (dayOfWeek: string, day: string, month: string, time: string, teacherName: string, miro_link: string) => `📌 Пробне заняття заплановане 📌\n
+      trialLessonByTeacher: (dayOfWeek: string, day: string, month: string, time: string, teacherName: string, miro_link: string, zoom: string) => `📌 Пробне заняття заплановане 📌\n
 Коли: ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦
 Викладач: ${teacherName}\n
-👉 посилання на дошку Miro: ${miro_link}`,
+👉 посилання на дошку Miro: ${miro_link}\n
+👉 посилання на зустріч: ${zoom}`,
 
       addStudentForTeacher: (nameStudent: string, nameTeacher: string, usernameTeacher: string, numberTeacher: string, miro_link: string, count: number) => 
       `🥳 ${nameStudent}, вітаємо у числі студентів dehto\n
 👉 ваш викладач:\n${nameTeacher}
 (@${usernameTeacher}); ${numberTeacher}\n
 👉 ваше посилання на дошку Miro: ${miro_link}\n
-${count > 0 ? '✅' : '❌'} Залишок: ${count / 60} занять (${count}хв)
+${count > 0 ? '✅' : '❌'} Залишок: ${count / 60} занять (${count}хв)\n
 бот - це ваш особистий кабінет. тут можна переглянути залишок занять, свій розклад, оплатити пакет занять, зареєструватися на розмовні клуби, а також поспілкуватися з підтримкою ;)\n\nпобачимося🍓 `,
 
       changeCountStudentIndividualLesson: (teacherName: string, teacherUserName: string, teacherNumber: string, miro_link: string, count: number) =>
@@ -678,38 +679,39 @@ ${count > 0 ? '✅' : '❌'} Залишок: ${count / 60} занять (${count
       `🙂 у вас було прибрано з індивідуальних занять студента:\n
 👉 ${studentName}\n(@${studentUserName}); ${studentNumber}\n
 не забудьте написати йому_їй щось приємне;)\n
-можете скопіювати: ${studentName}, підтримка повідомила, що Ви не будете продовжувати навчання, проте мені було приємно з Вами працювати!🥹\n\n
+можете скопіювати: ${studentName}, підтримка повідомила, що ви не будете продовжувати навчання, проте мені було приємно з вами працювати!🥹\n\n
 Бажаю Вам натхнення та успіхів у вивченні мови!
 Вдалого дня🍓`
     },
     
     forAdmins: {
-      notEnoughCountOfLessons: (name: string, username: string, number: string, teacherName: string) => `🤷‍♂️ Немає оплачених занять 🤷‍♂️\n\nСтудент: ${name} \n(@${username}); ${number}\nВикладач: ${teacherName}`,
+      notEnoughCountOfLessons: (name: string, username: string, number: string, teacherName: string) => `🤷‍♂️ Немає оплачених занять 🤷‍♂️\n\nСтудент: ${name} \n(@${username}); ${number}\nвикладач: ${teacherName}`,
 
       rescheduleLesson: (studentName: string, username: string, number: string, teacherName: string, day: string, month: string, time: string, reason: string, miro_link: string, count: number) => 
       `♻️️️ Перенесення заняття ♻️\n
 Студент: ${studentName}
 (@${username}); ${number}
-Викладач: ${teacherName}\n
+викладач: ${teacherName}\n
 👉 заняття перенесено на субота, ${day} ${month} о ${time} за Києвом 🇺🇦
 Причина: ${reason}
 посилання на дошку Miro: ${miro_link}\n
 ✅ Залишок: ${count / 60} занять (${count}хв)`,
 
       deleteIndividualLesson: (studentName: string, username: string, number: string, teacherName:string, dayOfWeek: string, day: string, month: string, time: string, reason: string, count: number) =>
-      `❌️️ Видалення заняття ❌\n
+      `❌️️ видалення заняття ❌\n
 Студент: ${studentName} 
 (@${username}); ${number}
-Викладач: ${teacherName}\n
+викладач: ${teacherName}\n
 👉 заняття в ${dayOfWeek}, ${day} ${month} о ${time} за Києвом 🇺🇦 видалено
 Причина: ${reason}\n
 ✅ Залишок: ${count / 60} занять (${count}хв)`,
 
-      trialLessonByTeacher: (dayOfWeek: string, day: string, month: string, time: string, studentName: string, teacherName: string, miro_link: string) => `📌 Пробне заняття заплановане 📌\n
+      trialLessonByTeacher: (dayOfWeek: string, day: string, month: string, time: string, studentName: string, teacherName: string, miro_link: string, zoom: string) => `📌 Пробне заняття заплановане 📌\n
 Коли: ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦
 Студент: ${studentName}
 Викладач: ${teacherName}\n
-👉 посилання на дошку Miro: ${miro_link}`
+👉 посилання на дошку Miro: ${miro_link}\n
+👉 посилання на зустріч: ${zoom}`
     }
   },
 

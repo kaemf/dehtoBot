@@ -1,3 +1,5 @@
+import { WithId } from "mongodb";
+
 function formatDate(date: Date, onlyDayOfWeek?: boolean): string {
     const daysOfWeek = ["нд", "пн", "вт", "ср", "чт", "пт", "сб"],
         months = [
@@ -87,4 +89,22 @@ export function DateProcessToPresentView(dateString: string){
         return !isNaN(dateCheck.getTime()) ? [ formatDate(dateCheck, true), `${dateSplitted[2]}.${dateSplitted[1]}.${dateSplitted[0]}` ] : [ 'date_uncorrect' ];
     }
     else return [ 'format_of_date_uncorrect' ];
+}
+
+export function SortSchedule(lessons: any[]){
+    return lessons.sort((a, b) => {
+        const dateA = new Date(a!.date);
+        const dateB = new Date(b!.date);
+        if (dateA < dateB) return -1;
+        if (dateA > dateB) return 1;
+        
+        const timeA = a!.time.split(':').map(Number);
+        const timeB = b!.time.split(':').map(Number);
+        
+        if (timeA[0] !== timeB[0]) {
+            return timeA[0] - timeB[0];
+        } else {
+            return timeA[1] - timeB[1];
+        }
+    })
 }

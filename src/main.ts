@@ -24,7 +24,7 @@ import DateRecord, { DateHistory } from "./base/handlers/getTime";
 import MongoDBReturnType from "./data/general/mongoDBType";
 import { Markup, TelegramError } from "telegraf";
 import { ObjectId } from 'mongodb';
-import { DateProcess, DateProcessToPresentView, TimeProcess, UniversalSingleDataProcess, getDayOfWeek } from "./data/process/dateAndTimeProcess";
+import { DateProcess, DateProcessToPresentView, SortSchedule, TimeProcess, UniversalSingleDataProcess, getDayOfWeek } from "./data/process/dateAndTimeProcess";
 import IndividualArray from "./data/individual/interface";
 import axios from "axios";
 import NotificationReg, { SendNotification } from "./data/notifications/notificationProcess";
@@ -209,7 +209,7 @@ async function main() {
       await set('state')('ChoosingCourses');
     }
     else if (data.text === "Розмовні клуби" && (userI!.role === 'student' || userI!.role === 'guest')){
-      ctx.reply("Виберіть одну із запропонованих кнопок", {
+      ctx.reply("оберіть, що вас цікавить :)", {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -313,7 +313,7 @@ async function main() {
 
         if (allBusy){
           await dbProcess.DeleteServiceCare(objectList.insertedId);
-          ctx.reply("Вибачте, але наразі всі оператори заняті, спробуйте, будь ласка, пізніше. Вибачте за незручності", {
+          ctx.reply("вибачте, але наразі всі оператори заняті, спробуйте, будь ласка, пізніше. Вибачте за незручності", {
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
@@ -459,7 +459,7 @@ async function main() {
     else if (data.text === 'Мій розклад'){
       if (userObject!.role === 'student'){
         if (userObject!.individual_lessons){
-          const lessons = await dbProcess.GetSpecificIndividualLessons(userObject!.individual_lessons);
+          const lessons = SortSchedule(await dbProcess.GetSpecificIndividualLessons(userObject!.individual_lessons));
           let lastDateLoop = '', lessonProcess: IndividualArray = {}
 
           for (let i = 0; i < lessons.length; i++){
@@ -494,7 +494,7 @@ async function main() {
               )
             }
     
-            ctx.reply(message, {
+            await ctx.reply(message, {
               reply_markup: {
                 one_time_keyboard: true,
                 keyboard: keyboards.indiviualMenu(userObject!.role)
@@ -515,7 +515,7 @@ async function main() {
       }
       else if (userObject!.role === 'teacher'){
         if (userObject!.set_individual_lessons){
-          const lessons = await dbProcess.GetSpecificIndividualLessons(userObject!.set_individual_lessons);
+          const lessons = SortSchedule(await dbProcess.GetSpecificIndividualLessons(userObject!.set_individual_lessons));
           let lastDateLoop = '', lessonProcess: IndividualArray = {};
 
           for (let i = 0; i < lessons.length; i++){
@@ -549,7 +549,7 @@ async function main() {
               )
             }
     
-            ctx.reply(message, {
+            await ctx.reply(message, {
               reply_markup: {
                 one_time_keyboard: true,
                 keyboard: keyboards.myScheduleTeacher()
@@ -717,24 +717,16 @@ async function main() {
     else if (CheckException.TextException(data)){
       // For Developer
       SendNotification(notifbot, script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()))
+      const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
       ctx.reply(script.trialLesson.thanksPartTwo(user['graphic']), {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "В МЕНЮ"
-              },
-              // {
-              //   text: '？Про Бота'
-              // }
-            ]
-          ]
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject!.role)
         }
       })
 
-      await set('state')('EndRootManager');
+      await set('state')('FunctionRoot');
     }
     else{
       ctx.reply(script.errorException.chooseButtonError, {
@@ -1381,9 +1373,9 @@ async function main() {
           one_time_keyboard: true,
           keyboard: [
             [
-              {
-                text: 'Замовити ще одну зустріч',
-              },
+              // {
+              //   text: 'Замовити ще одну зустріч',
+              // },
             ],[
               {
                 text: 'В МЕНЮ',
@@ -1572,25 +1564,35 @@ async function main() {
         case "Реєстрація на клуб":
           if (userA!.role !== 'teacher'){
             const results = await dbProcess.ShowAll();
-          
-            for (let i = 0; i < results.length; i++) {
-              let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
-      
-              await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString), {
-                parse_mode: "HTML"
-              });
+          if (!results.length){
+              ctx.reply('наразі актуальних розмовних клубів немає(\nслідкуйте за оновленнями dehto😁', {
+                parse_mode: "HTML",
+                reply_markup: {
+                  one_time_keyboard: true,
+                  keyboard: await keyboards.speakingClubMenu(userA!.role)
+                },
+              })
             }
-      
-            await ctx.reply('виберіть номер клуба для запису:', {
-              reply_markup: {
-                one_time_keyboard: true,
-                keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
-                  return [{ text: `${index + 1}` }];
-                })
+            else{
+              for (let i = 0; i < results.length; i++) {
+                let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
+        
+                await ctx.reply(script.speakingClub.report.showClub(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString), {
+                  parse_mode: "HTML"
+                });
               }
-            })
-      
-            await set('state')('GetClubToRegistrationAndCheckPayment');
+        
+              await ctx.reply('виберіть номер клуба для запису:', {
+                reply_markup: {
+                  one_time_keyboard: true,
+                  keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+                    return [{ text: `${index + 1}` }];
+                  })
+                }
+              })
+        
+              await set('state')('GetClubToRegistrationAndCheckPayment');
+            }
           }
           else{
             ctx.reply('викладачі не можуть записатись.')
@@ -1603,10 +1605,9 @@ async function main() {
               parse_mode: "HTML",
               reply_markup: {
                 one_time_keyboard: true,
-                keyboard: [[{ text: "В МЕНЮ" }]]
+                keyboard: await keyboards.speakingClubMenu(userA!.role)
               },
             });
-            await set('state')('EndRootManager');
           }
           else{
             ctx.reply(script.speakingClub.lessLessons(userA!.count), {
@@ -1635,14 +1636,12 @@ async function main() {
               );
             }
 
-            ctx.reply('це всі ваші клаби :)', {
+            ctx.reply('це всі ваші клуби :)', {
               reply_markup: {
                 one_time_keyboard: true,
-                keyboard: [[{ text: "В МЕНЮ" }]]
+                keyboard: await keyboards.speakingClubMenu(userA!.role)
               }
             });
-
-            await set('state')('EndRootManager');
           }
           else{
             await ctx.reply(script.speakingClub.report.mySpeackingClub.ifFalse(user['name']), {
@@ -1702,7 +1701,7 @@ async function main() {
   onTextMessage('MyClubEmptyHandler', async(ctx, user, set, data) => {
     const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
     if (CheckException.BackRoot(data)){
-      ctx.reply("Виберіть одну із запропонованих кнопок", {
+      ctx.reply("оберіть, що вас цікавить :)", {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -1939,7 +1938,7 @@ async function main() {
       const paymentStatus = await get('paymentStatusClubOrPacket') ?? 'unknown',
         unique_file_id = data.photo[0];
   
-      if (user['club-typeclub'] === 'Разове Заняття'){
+      if (user['club-typeclub'] === 'Разове заняття'){
         const date = DateRecord();
         if (clubIndex !== ''){
           const inline = inlineAcceptOncePayment(id, clubIndex, paymentStatus, date);
@@ -1972,7 +1971,7 @@ async function main() {
           })
         }
 
-        await ctx.reply('Ваше замовлення прийнято, очікуйте на підтвердження', {
+        await ctx.reply(`дякуємо, ${user['name']}🫶 ви успішно оплатили "${user['club-typeclub']}"!, очікуйте на підтвердження`, {
           parse_mode: "Markdown",
           reply_markup: {
             one_time_keyboard: true,
@@ -1981,9 +1980,9 @@ async function main() {
                 {
                   text: 'В МЕНЮ',
                 },
-                {
-                  text: "Назад до реєстрації"
-                }
+                // {
+                //   text: "Назад до реєстрації"
+                // }
                 // {
                 //   text: '？Про Бота'
                 // }
@@ -2031,7 +2030,7 @@ async function main() {
           })
         }
         
-        await ctx.reply('Ваше замовлення прийнято, очікуйте на підтвердження', {
+        await ctx.reply(`дякуємо, ${user['name']}🫶 ви успішно оплатили "${user['club-typeclub']}"!, очікуйте на підтвердження`, {
           parse_mode: "Markdown",
           reply_markup: {
             one_time_keyboard: true,
@@ -2040,9 +2039,9 @@ async function main() {
                 {
                   text: 'В МЕНЮ',
                 },
-                {
-                  text: "Назад до реєстрації"
-                }
+                // {
+                //   text: "Назад до реєстрації"
+                // }
                 // {
                 //   text: '？Про Бота'
                 // }
@@ -2143,7 +2142,7 @@ async function main() {
           })
         }
 
-        ctx.reply('Ваше замовлення прийнято, очікуйте на підтвердження', {
+        ctx.reply(`дякуємо, ${user['name']}🫶 ви успішно оплатили "${user['club-typeclub']}"!, очікуйте на підтвердження`, {
           parse_mode: "Markdown",
           reply_markup: {
             one_time_keyboard: true,
@@ -2152,9 +2151,9 @@ async function main() {
                 {
                   text: 'В МЕНЮ',
                 },
-                {
-                  text: "Назад до реєстрації"
-                }
+                // {
+                //   text: "Назад до реєстрації"
+                // }
                 // {
                 //   text: '？Про Бота'
                 // }
@@ -2310,9 +2309,9 @@ async function main() {
                 {
                   text: "В МЕНЮ",
                 },
-                {
-                  text: "Назад до реєстрації",
-                }
+                // {
+                //   text: "Назад до реєстрації",
+                // }
               ],
             ],
           },
@@ -2394,7 +2393,7 @@ async function main() {
             });
             
             await ctx.telegram.sendDocument(ctx?.chat?.id ?? -1, currentClub!.documentation, {
-              caption: `ось файл із лексикою, яка допоможе Вам на шпрах-клубі ;)`}
+              caption: `ось файл із лексикою, яка допоможе вам на розмовному клубі ;)`}
             )
 
             // await sheets.appendLessonToUser(currentUser!.id, currentUser!.name, currentUser!.number, currentUser!.username, currentUser!.email !== undefined ? currentUser!.email : 'пошта відсутня',
@@ -2403,7 +2402,7 @@ async function main() {
             await set('state')('ActionClubRespondAndRootAction');
           }
           else{
-            ctx.reply('ви вже зареєстровані на цей шпрах! виберіть інший', {
+            ctx.reply('ви вже зареєстровані на цей розмовний клуб! виберіть інший', {
               reply_markup: {
                 one_time_keyboard: true,
                 keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
@@ -2414,7 +2413,7 @@ async function main() {
           }
         }
         else{
-          ctx.reply('у цього шпраху відсутні місця! оберіть, будь ласка, інший', {
+          ctx.reply('у цього клуба відсутні місця! оберіть, будь ласка, інший', {
             reply_markup: {
               one_time_keyboard: true,
               keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
@@ -2462,7 +2461,7 @@ async function main() {
             await set('state')('RegistrationChooseHandlerPayment');
           }
           else{
-            ctx.reply('ви вже зареєстровані на цей шпрах! виберіть інший', {
+            ctx.reply('ви вже зареєстровані на цей розмовний клуб! виберіть інший', {
               reply_markup: {
                 one_time_keyboard: true,
                 keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
@@ -2473,7 +2472,7 @@ async function main() {
           }
         }
         else{
-          ctx.reply('у цього шпраху відсутні місця! оберіть, будь ласка, інший', {
+          ctx.reply('у цього клуба відсутні місця! оберіть, будь ласка, інший', {
             reply_markup: {
               one_time_keyboard: true,
               keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
@@ -2649,94 +2648,118 @@ async function main() {
       const results = await dbProcess.ShowAll(),
         users = await dbProcess.ShowAllUsers();
     
-      for (let i = 0; i < results.length; i++) {
-        let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
-        for (let j = 0; j < users.length; j++) {
-          if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
-            userHaved += `- ${users[j].name} (@${users[j].username}) - ${ConvertToPrice((await db.get(users[j].id)('club-typeclub'))!)} uah.\n📲${users[j].number}\n\n`;
+      if (results.length){
+        for (let i = 0; i < results.length; i++) {
+          let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
+          for (let j = 0; j < users.length; j++) {
+            if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
+              userHaved += `- ${users[j].name} (@${users[j].username}) - ${ConvertToPrice((await db.get(users[j].id)('club-typeclub'))!)} uah.\n📲${users[j].number}\n\n`;
+            }
           }
+            if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
+              userHaved = '';
+            }
+  
+            let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
+  
+          await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved, results[i].link), {
+            parse_mode: "HTML"
+          });
         }
-          if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
-            userHaved = '';
+  
+        await ctx.reply('Виберіть номер шпраха для видалення:', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+              return [{ text: `${index + 1}` }];
+            })
           }
-
-          let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
-
-        await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved, results[i].link), {
-          parse_mode: "HTML"
-        });
+        })
+  
+        await set('state')('DeleteClubAndCheckAction');
       }
-
-      await ctx.reply('Виберіть номер шпраха для видалення:', {
+      else ctx.reply('наразі актуальних розмовних клубів немає(', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
-            return [{ text: `${index + 1}` }];
-          })
+          keyboard: keyboards.spekingClubAdminPanel()
         }
-      })
-
-      await set('state')('DeleteClubAndCheckAction');
+      }) 
     }
     else if (data.text === 'Редагувати'){
       const results = await dbProcess.ShowAll(),
         users = await dbProcess.ShowAllUsers();
     
-      for (let i = 0; i < results.length; i++) {
-        let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
-        for (let j = 0; j < users.length; j++) {
-          if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
-            userHaved += `- ${users[j].name} (@${users[j].username}) - ${ConvertToPrice((await db.get(users[j].id)('club-typeclub'))!)} uah.\n📲${users[j].number}\n\n`;
+      if (results.length){
+        for (let i = 0; i < results.length; i++) {
+          let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
+          for (let j = 0; j < users.length; j++) {
+            if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
+              userHaved += `- ${users[j].name} (@${users[j].username}) - ${ConvertToPrice((await db.get(users[j].id)('club-typeclub'))!)} uah.\n📲${users[j].number}\n\n`;
+            }
           }
+            if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
+              userHaved = '';
+            }
+  
+            let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
+  
+          await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved, results[i].link), {
+            parse_mode: "HTML"
+          });
         }
-          if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
-            userHaved = '';
+  
+        await ctx.reply('Виберіть номер шпраха для редагування:', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+              return [{ text: `${index + 1}` }];
+            })
           }
-
-          let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
-
-        await ctx.reply(script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved, results[i].link), {
-          parse_mode: "HTML"
-        });
+        })
+  
+        await set('state')('RespondKeyDataAndGetChanges');
       }
-
-      await ctx.reply('Виберіть номер шпраха для редагування:', {
+      else ctx.reply('наразі актуальних розмовних клубів немає(', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
-            return [{ text: `${index + 1}` }];
-          })
+          keyboard: keyboards.spekingClubAdminPanel()
         }
-      })
-
-      await set('state')('RespondKeyDataAndGetChanges');
+      }) 
     }
     else if (data.text === 'Показати всі'){
       const results = await dbProcess.ShowAll(),
         users = await dbProcess.ShowAllUsers();
     
-      for (let i = 0; i < results.length; i++) {
-        let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
-        for (let j = 0; j < users.length; j++) {
-          if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
-            userHaved += `- ${users[j].name} (@${users[j].username}) - ${ConvertToPrice((await db.get(users[j].id)('club-typeclub'))!)} uah.\n📲${users[j].number}\n\n`;
+      if (results.length){
+        for (let i = 0; i < results.length; i++) {
+          let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
+          for (let j = 0; j < users.length; j++) {
+            if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
+              userHaved += `- ${users[j].name} (@${users[j].username}) - ${ConvertToPrice((await db.get(users[j].id)('club-typeclub'))!)} uah.\n📲${users[j].number}\n\n`;
+            }
           }
-        }
-        if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
-          userHaved = '';
-        }
-
-        let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
-
-        await ctx.telegram.sendDocument(ctx?.chat?.id ?? -1, results[i].documentation, {
-          parse_mode: "HTML",
-          caption: script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved, results[i].link),
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: keyboards.spekingClubAdminPanel()
+          if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
+            userHaved = '';
           }
-        });
+  
+          let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
+  
+          await ctx.telegram.sendDocument(ctx?.chat?.id ?? -1, results[i].documentation, {
+            parse_mode: "HTML",
+            caption: script.speakingClub.report.showClubTypeAdmin(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved, results[i].link),
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.spekingClubAdminPanel()
+            }
+          });
+        }
       }
+      else ctx.reply('наразі актуальних розмовних клубів немає(', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.spekingClubAdminPanel()
+        }
+      })
     }
     else if (data.text === 'В МЕНЮ'){
       const userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
@@ -3070,17 +3093,11 @@ async function main() {
         parse_mode: "HTML",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "В МЕНЮ",
-              }
-            ],
-          ],
+          keyboard: keyboards.spekingClubAdminPanel()
         },
       })
       
-      await set('state')('EndRootManager');
+      await set('state')('RespondAdminActionAndRootChoose');
     }
     else if (data.text === 'ні'){
       ctx.reply("Тема:");
@@ -3945,7 +3962,7 @@ async function main() {
       });
       await set('state')('ChangeCountUserLessonsAndPacket');
     }
-    else ctx.reply('Вам потрібно ввести число більше або рівне одиниці.');
+    else ctx.reply('вам потрібно ввести число більше або рівне одиниці.');
   })
 
   onTextMessage('ChangeCountUserLessonsAndPacket', async(ctx, user, set, data) => {
@@ -5150,7 +5167,19 @@ async function main() {
           break;
         
         case "Перевести до іншого викладача":
-          ctx.reply('оберіть викладача, до якого ви хочете перевести студента:')
+          const AllUsers = await dbProcess.ShowAllUsers();
+          let keyboardTeacher = []
+          for (let i = 0; i < AllUsers.length; i++){
+            if (AllUsers[i].role === 'teacher'){
+              keyboardTeacher.push([{ text: AllUsers[i].name }]);
+            }
+          }
+          ctx.reply('оберіть викладача, до якого ви хочете перевести студента:', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboardTeacher
+            }
+          })
           await set('admin_parametr_to_change_individual')('translate_to_another_teacher');
           await set('state')('IndividualChangeUserDataHandler');
           break;
@@ -5228,7 +5257,12 @@ async function main() {
             teacher?.name ?? "Відсутній",
             User!.individual_count ?? 0,
             User!.miro_link ?? "Відсутня"
-          ))
+          ), {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.individualFindUser()
+            }
+          })
 
           if (user['admin_parametr_to_change_individual'] === 'translate_to_another_teacher'){
             ctx.telegram.sendMessage(User!.id, script.notification.forStudent.studentTransfer(
@@ -5258,7 +5292,9 @@ async function main() {
           }
           break;
       }
+      await set('state')('IndividualUserChangehandler')
     }
+    else ctx.reply(script.errorException.textGettingError.defaultException);
   })
 
   onTextMessage('DeleteStudentFromTeacherIndividualHandler', async(ctx, user, set, data) => {
@@ -5275,6 +5311,12 @@ async function main() {
             user['admin_parametr_to_change_individual'],
             data.text
           );
+          ctx.telegram.sendMessage(User!.id, script.notification.forStudent.deleteStudent(teacher!.name));
+          ctx.telegram.sendMessage(teacher!.id, script.notification.forTeachers.deleteStudent(
+            User!.name,
+            User!.username,
+            User!.number
+          ));
           ctx.reply(script.indivdual.studentDeleteFromTeacher(teacher!.name, User!.name), {
             reply_markup: {
               one_time_keyboard: true,
@@ -5388,7 +5430,7 @@ async function main() {
       switch(data.text){
         case "Переглянути розклад викладача":
           if (teacher!.set_individual_lessons){
-            const lessons = await dbProcess.GetSpecificIndividualLessons(teacher!.set_individual_lessons);
+            const lessons = SortSchedule(await dbProcess.GetSpecificIndividualLessons(teacher!.set_individual_lessons));
             let lastDateLoop = '', lessonProcess: IndividualArray = {}
   
             for (let i = 0; i < lessons.length; i++){
@@ -5422,7 +5464,7 @@ async function main() {
                 )
               }
       
-              ctx.reply(message, {
+              await ctx.reply(message, {
                 reply_markup: {
                   one_time_keyboard: true,
                   keyboard: keyboards.ourTeachersMenu()
@@ -5448,6 +5490,8 @@ async function main() {
             for (let i = 0; i < teacherStudents.length; i++){
               teachersStudentsObjects.push(await dbProcess.ShowOneUser(await dbProcess.GetUserIDByName(teacherStudents[i])));
             }
+
+            console.log(teachersStudentsObjects);
   
             const sortedStudents = teachersStudentsObjects.slice().sort((a: any, b: any) => a.name.localeCompare(b.name));
             for (let i = 0; i < sortedStudents.length; i++){
@@ -5670,7 +5714,7 @@ async function main() {
           let teachersKeyboard = []
 
           for (let i = 0; i < users.length; i++){
-            if (users[i].role === 'teacher' && !users[i].registered_students.includes(actualStudent)){
+            if (users[i].role === 'teacher' && !users[i].registered_students?.includes(actualStudent)){
               teachersKeyboard.push([{ text: users[i].name }])
             }
           }
@@ -5689,7 +5733,7 @@ async function main() {
           let _teachersKeyboard = []
 
           for (let i = 0; i < _users.length; i++){
-            if (_users[i].role === 'teacher' && !_users[i].registered_students.includes(_actualStudent)){
+            if (_users[i].role === 'teacher' && !_users[i].registered_students?.includes(_actualStudent)){
               _teachersKeyboard.push([{ text: _users[i].name }])
             }
           }
@@ -5756,12 +5800,13 @@ async function main() {
       //back
     }
     else if (CheckException.TextException(data)){
-      const User = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id']))
+      const User = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id'])),
+        userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
       if (User){
         await dbProcess.ChangeKeyData(User, 'name', data.text, false);
         const updatedUser = await dbProcess.ShowOneUser(User.id);
-        await ctx.reply('роль користувача успішно змінена!');
+        await ctx.reply(`ім'я користувача успішно змінено!`);
         if (updatedUser){
           const teacher = await dbProcess.ShowOneUser(User.teacher);
           ctx.reply(script.studentFind.diffUserFind(
@@ -5778,10 +5823,10 @@ async function main() {
           ), {
             reply_markup: {
               one_time_keyboard: true,
-              keyboard: [[{ text: "В МЕНЮ" }]]
+              keyboard: keyboards.usersOperations(userObject!.role)
             }
           })
-          await set('state')('EndRootManager');
+          await set('state')('OperationWithUserHandler');
         }
         else ctx.reply('виникла помилка :( (помилка: не знайдено оновлений образ користувача)');
       }
@@ -5795,7 +5840,7 @@ async function main() {
       let teachersReg = [], teachersKeyboard = [];
 
     for (let i = 0; i < users.length; i++){
-      if (users[i].role === 'teacher' && !users[i].registered_students.includes(actualStudent)){
+      if (users[i].role === 'teacher' && !users[i].registered_students?.includes(actualStudent)){
         teachersKeyboard.push([{ text: users[i].name}]);
       }
     }
@@ -5805,7 +5850,7 @@ async function main() {
     }
     else if (CheckException.TextException(data)){
       for (let i = 0; i < users.length; i++){
-        if (users[i].role === 'teacher' && !users[i].registered_students.includes(actualStudent)){
+        if (users[i].role === 'teacher' && !users[i].registered_students?.includes(actualStudent)){
           teachersReg.push(users[i].name);
         }
       }
@@ -5815,14 +5860,14 @@ async function main() {
         ctx.reply('додайте лінк на дошку студента');
         await set('state')('AdminAddUserToTeacherAndTrial_RespondMiro');
       }
-      ctx.reply(script.errorException.chooseButtonError, {
+      else ctx.reply(script.errorException.chooseButtonError, {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: teachersKeyboard
         }
       })
     }
-    ctx.reply(script.errorException.chooseButtonError, {
+    else ctx.reply(script.errorException.chooseButtonError, {
       reply_markup: {
         one_time_keyboard: true,
         keyboard: teachersKeyboard
@@ -5834,7 +5879,7 @@ async function main() {
     if (CheckException.BackRoot(data)){
       //back
     }
-    else if (data.text.startsWith("https://miro.com/app")){
+    else if (data.text.startsWith("https://miro.com/")){
       const student = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id'])),
         teacher = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_teacher_id'])),
         inline = inlineScheduleTrialLessonTeacher(teacher!.id, student!.id);
@@ -5864,7 +5909,7 @@ async function main() {
       let teachersReg = [], teachersKeyboard = [];
 
     for (let i = 0; i < users.length; i++){
-      if (users[i].role === 'teacher' && !users[i].registered_students.includes(actualStudent)){
+      if (users[i].role === 'teacher' && !users[i].registered_students?.includes(actualStudent)){
         teachersKeyboard.push([{ text: users[i].name}]);
       }
     }
@@ -5874,7 +5919,7 @@ async function main() {
     }
     else if (CheckException.TextException(data)){
       for (let i = 0; i < users.length; i++){
-        if (users[i].role === 'teacher' && !users[i].registered_students.includes(actualStudent)){
+        if (users[i].role === 'teacher' && !users[i].registered_students?.includes(actualStudent)){
           teachersReg.push(users[i].name);
         }
       }
@@ -5903,7 +5948,7 @@ async function main() {
     if (CheckException.BackRoot(data)){
       //back
     }
-    else if (data.text.startsWith("https://miro.com/app")){
+    else if (data.text.startsWith("https://miro.com/")){
       const student = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id'])),
         teacher = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_teacher_id']));
 
@@ -7058,6 +7103,9 @@ async function main() {
               break;
             }
           }
+          else{
+            free = true
+          }
         }
         if (free){
           await set('teacher_time_individual_lesson_set')(time);
@@ -7077,7 +7125,8 @@ async function main() {
     }
     else if (CheckException.TextException(data)){
       const User = await dbProcess.ShowOneUser(parseInt(user['teacher_individual_trial_lesson_user_id'])),
-        date = DateProcessToPresentView(user['teacher_trial_date_of_lesson']);
+        date = DateProcessToPresentView(user['teacher_trial_date_of_lesson']),
+        teacher = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
       await dbProcess.CreateTrialLesson(
         User!.id,
@@ -7105,8 +7154,9 @@ async function main() {
         UniversalSingleDataProcess(new Date(user['teacher_trial_date_of_lesson']), 'day'),
         UniversalSingleDataProcess(new Date(user['teacher_trial_date_of_lesson']), 'month'),
         user['teacher_time_individual_lesson_set'],
-        user['name'],
-        User!.miro_link ?? "відсутнє"
+        teacher!.name,
+        User!.miro_link ?? "відсутнє",
+        data.text
       ));
 
       SendNotification(notifbot, script.notification.forAdmins.trialLessonByTeacher(
@@ -7115,8 +7165,9 @@ async function main() {
         UniversalSingleDataProcess(new Date(user['teacher_trial_date_of_lesson']), 'month'),
         user['teacher_time_individual_lesson_set'],
         User!.name,
-        user['name'],
-        User!.miro_link ?? "відсутнє"
+        teacher!.name,
+        User!.miro_link ?? "відсутнє",
+        data.text
       ))
 
       await set('state')('EndRootManager');
@@ -7525,20 +7576,21 @@ async function main() {
         }
         else await ctx.telegram.editMessageReplyMarkup(chats[n], messages[n], undefined, Markup.inlineKeyboard(liveKeyboard(id, 'busy', ctx.match[2])).reply_markup)
       }
-      ctx.telegram.sendMessage(id, `Ваш запит прийняв оператор ${operator}`, {
+      const userObject = await dbProcess.ShowOneUser(id);
+      ctx.telegram.sendMessage(id, `вітаю, ${userObject!.name}! мене звати ${operator}, служба турботи dehto 💪`, {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.liveSupportProbablyCancel()
         }
       });
-      ctx.reply('Ви успішно прийняли запит користувача, можете працювати', {
+      ctx.reply('ви успішно прийняли запит користувача, можете працювати', {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.liveSupportProbablyCancel()
         }
       })
 
-      if (serviceCare!.quesion !== ''){
+      if (serviceCare?.quesion !== ''){
         console.log('yes');
         ctx.reply(serviceCare!.question, {
           reply_markup: {
@@ -7633,7 +7685,7 @@ async function main() {
   });
 
   // Club Once lesson payment action
-  bot.action(/^acceptPayment:(\d+),(.+),(.+)$/, async (ctx) => {
+  notifbot.action(/^acceptPayment:(\d+),(.+),(.+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]),
       idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2])),
       dateRecord = ctx.match[3],
@@ -7661,7 +7713,7 @@ async function main() {
     await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedTrialLesson((await db.get(idUser)('name'))!.toString(), dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.link));
 
     await ctx.telegram.sendDocument(idUser, idClub!.documentation, {
-      caption: `ось файл із лексикою, яка допоможе Вам на шпрах-клубі ;)`
+      caption: `ось файл із лексикою, яка допоможе вам на шпрах-клубі ;)`
     });
 
     await db.set(idUser)('SC_TrialLessonComplet_active')('true');
@@ -7683,7 +7735,7 @@ async function main() {
     ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}`);
   })
 
-  bot.action(/^acceptPaymentWO:(\d+),(.+)$/, async (ctx) => {
+  notifbot.action(/^acceptPaymentWO:(\d+),(.+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]),
       //dateRecord = ctx.match[2],
       currentUser = await dbProcess.ShowOneUser(idUser);
@@ -7709,7 +7761,7 @@ async function main() {
     ctx.answerCbQuery(`Користувач: ${currentUser!.name}, ПІДТВЕРДЖЕНО`);
   })
 
-  bot.action(/^declinePaymentWO:(\d+),(.+)$/, async (ctx) => {
+  notifbot.action(/^declinePaymentWO:(\d+),(.+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]);
 
     await ctx.telegram.sendMessage(idUser, `вибачте, ${await db.get(idUser)('name')}, але нажаль ваша оплата не успішна.\nповторіть будь ласка змовлення`);
@@ -7728,7 +7780,7 @@ async function main() {
     return ctx.answerCbQuery(`Користувач: ${idUser}, ВІДМІНА`);
   })
 
-  bot.action(/^declinePayment:(\d+),(.+),(.+)$/, async (ctx) => {
+  notifbot.action(/^declinePayment:(\d+),(.+),(.+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]);
     const idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2]));
 
@@ -7748,18 +7800,18 @@ async function main() {
     return ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}`);
   })
 
-  bot.action(/^paidCheckT:(\d+)$/, async (ctx) => {
+  notifbot.action(/^paidCheckT:(\d+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]);
     return ctx.answerCbQuery(`Користувач: ${await db.get(idUser)('name')}, стан: ОПЛАЧЕНО`);
   });
 
-  bot.action(/^nopaidCheckT:(\d+)$/, async (ctx) => {
+  notifbot.action(/^nopaidCheckT:(\d+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]);
     return ctx.answerCbQuery(`Користувач: ${await db.get(idUser)('name')}, стан: НЕ ОПЛАЧЕНО`);
   });
 
   // Club Packet Payment
-  bot.action(/^acceptPaymentP:(\d+),(.+)$/, async (ctx) => {
+  notifbot.action(/^acceptPaymentP:(\d+),(.+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]),
       packetName = ctx.match[2] === 's' ? 'Шпрах-Клуб' : 'Шпрах-Клуб+PLUS',
       currentUser = await dbProcess.ShowOneUser(idUser);
@@ -7784,7 +7836,7 @@ async function main() {
     ctx.answerCbQuery(`Користувач: ${idUser}, Пакет: ${packetName}`);
   })
 
-  bot.action(/^declinePaymentP:(\d+),(.+)$/, async (ctx) => {
+  notifbot.action(/^declinePaymentP:(\d+),(.+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]);
     const packetName = ctx.match[2] === 's' ? 'Шпрах-Клуб' : 'Шпрах-Клуб+PLUS';
 
@@ -7805,7 +7857,7 @@ async function main() {
   })
 
   // Club PacketAndClub Payment
-  bot.action(/^acceptPaymentCP:(\d+),(.+),(.+),(.+)$/, async (ctx) => {
+  notifbot.action(/^acceptPaymentCP:(\d+),(.+),(.+),(.+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]),
       idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2])),
       packetName = ctx.match[3] === 's' ? 'Шпрах-Клуб' : 'Шпрах-Клуб+PLUS',
@@ -7832,7 +7884,7 @@ async function main() {
     await ctx.telegram.sendMessage(idUser, script.speakingClub.report.acceptedPacketAndClubPayment((await db.get(idUser)('name'))!.toString(), dbProcess.getDateClub(new Date(idClub!.date)), idClub!.time, idClub!.link, packetName));
 
     await ctx.telegram.sendDocument(idUser, idClub!.documentation, {
-      caption: `ось файл із лексикою, яка допоможе Вам на шпрах-клубі ;)`
+      caption: `ось файл із лексикою, яка допоможе вам на шпрах-клубі ;)`
     });
     await db.set(idUser)('SC_TrialLessonComplet_active')('true');
 
@@ -7854,7 +7906,7 @@ async function main() {
     ctx.answerCbQuery(`Користувач: ${idUser}, Клуб: ${idClub!.title}, Пакет: ${packetName}`);
   })
 
-  bot.action(/^declinePaymentCP:(\d+),(.+),(.+)$/, async (ctx) => {
+  notifbot.action(/^declinePaymentCP:(\d+),(.+),(.+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]);
     const idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2]));
     const packetName = ctx.match[3] === 's' ? 'Шпрах-Клуб' : 'Шпрах-Клуб+PLUS';
@@ -7933,7 +7985,7 @@ async function main() {
         });
         
         await ctx.telegram.sendDocument(ctx?.chat?.id ?? -1, idClub!.documentation, {
-          caption: `ось файл із лексикою, яка допоможе Вам на шпрах-клубі ;)`}
+          caption: `ось файл із лексикою, яка допоможе вам на шпрах-клубі ;)`}
         )
 
         // await sheets.appendLessonToUser(currentUser!.id, currentUser!.name, currentUser!.number, currentUser!.username, currentUser!.email !== undefined ? currentUser!.email : 'пошта відсутня',
