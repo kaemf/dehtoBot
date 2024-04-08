@@ -1,7 +1,7 @@
 // DehtoBot for dehto German Course
 // Developed by Yaroslav Volkivskyi (TheLaidSon)
 
-// Actual v2.0 Rebirth
+// Actual v2.0 Rebirth Closed Beta
 
 // Main File
 import script from "./data/general/script";
@@ -4434,7 +4434,7 @@ async function main() {
       if (teacherStudents){
         let students = []
         for(let i = 0; i < teacherStudents.length; i++){
-          students.push([{ text: teacherStudents[i] }]);
+          students.push([{ text: (await dbProcess.ShowOneUser(teacherStudents[i]))!.name }]);
         }
 
         ctx.reply('виберіть стундента, котрому адресоване дане завдання', {
@@ -4556,8 +4556,8 @@ async function main() {
      studentsKeyboard = [];
 
     for(let i = 0; i < teacherStudents.length; i++){
-      students.push(teacherStudents[i]);
-      studentsKeyboard.push([{ text: teacherStudents[i] }])
+      students.push((await dbProcess.ShowOneUser(teacherStudents[i]))!.name);
+      studentsKeyboard.push([{ text: (await dbProcess.ShowOneUser(teacherStudents[i]))!.name }])
     }
     if (students.includes(data.text)){
       const userID = await dbProcess.GetUserIDByName(data.text);
@@ -4566,7 +4566,7 @@ async function main() {
           previousTask = userObject!.detask ? userObject!.detask : false,
           message_operation = await dbProcess.WriteNewDeTask(
           ctx?.chat?.id ?? -1, 
-          userID, 
+          userID,
           user['teacher_content_detask'] ? user['teacher_content_detask'].split(',') : false,
           user['teacher_filecontent_detask'] ? user['teacher_filecontent_detask'].split(',') : false,
           user['teacher_typeofcontent_detask'] ? user['teacher_typeofcontent_detask'].split(',') : false
@@ -4754,14 +4754,13 @@ async function main() {
 
         case "Перевірити завдання":
           for (let i = 0; i < teachersStudents.length; i++){
-            const studentID = await dbProcess.GetUserIDByName(teachersStudents[i]),
-              userObject = await dbProcess.ShowOneUser(studentID),
-              task = await dbProcess.GetStudentAnswerForDeTask(studentID);
+            const userObject = await dbProcess.ShowOneUser(teachersStudents[i]),
+              task = await dbProcess.GetStudentAnswerForDeTask(teachersStudents[i]);
 
             if (task){
               for (let j = 0; j < teacherTasks.length; j++){
                 if (teacherTasks[j].toString() === userObject!.detask.toString()){
-                  keyboard.push([{ text: teachersStudents[i]}])
+                  keyboard.push([{ text: (await dbProcess.ShowOneUser(teachersStudents[i]))!.name }])
                 }
               }
             }
@@ -4799,7 +4798,7 @@ async function main() {
 
   onTextMessage('GetStudentForTeacherDeTaskHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-
+      //back
     }
     else if (CheckException.TextException(data)){
       const studentID = await dbProcess.GetUserIDByName(data.text),
@@ -5500,10 +5499,8 @@ async function main() {
             
           if (teacherStudents){
             for (let i = 0; i < teacherStudents.length; i++){
-              teachersStudentsObjects.push(await dbProcess.ShowOneUser(await dbProcess.GetUserIDByName(teacherStudents[i])));
+              teachersStudentsObjects.push(await dbProcess.ShowOneUser(teacherStudents[i]));
             }
-
-            console.log(teachersStudentsObjects);
   
             const sortedStudents = teachersStudentsObjects.slice().sort((a: any, b: any) => a.name.localeCompare(b.name));
             for (let i = 0; i < sortedStudents.length; i++){

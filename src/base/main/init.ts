@@ -1,11 +1,11 @@
 // DehtoBot for dehto German Course
 // Developed by Yaroslav Volkivskyi (TheLaidSon)
 
-// Actual v2.0 Rebirth
+// Actual v2.0 Rebirth Closed Beta
 
 // Initialization File
 
-import { Context, Telegraf } from "telegraf";
+import { Telegraf } from "telegraf";
 import { createClient } from "redis";
 import { MongoClient } from "mongodb";
 import { versionBot } from "../../data/general/chats";
