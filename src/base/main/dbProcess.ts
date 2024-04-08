@@ -546,12 +546,12 @@ export default async function dbProcess(botdb: MongoClient){
                         await this.botdbUsers.updateOne({_id: teacher._id}, {$set: {
                             trial_students: trialStudents? trialStudents.push(student.name): [ student.name ]
                         }})
-                        // await this.ChangeKeyData(teacher, 'trial_students', teachersStudents.push(student.name), false);
                         break;
 
                     case "just_teacher":
                         await this.ChangeKeyData(student, 'teacher', teacher.id, false);
                         await this.ChangeKeyData(student, 'miro_link', miro_link, false);
+                        await this.ChangeKeyData(student, 'role', 'student', false);
                         await this.ChangeKeyData(teacher, 'registered_students', teachersStudents.push(student.name), false);
                         break;
 
@@ -578,11 +578,7 @@ export default async function dbProcess(botdb: MongoClient){
                     if (teacherHaveThisStudent){
                         if (new Date(`${date}T${time}`)){
                             if (duration === 60 || duration === 90 || duration === 30){
-                                let lessonPush = [], lessonTeacherPush = [], actualMCount
-
-                                console.log(student.individual_count - duration > 0)
-                                console.log(student.individual_count - duration === 0)
-                                console.log(student.individual_count - duration)
+                                let lessonPush = [], lessonTeacherPush = [], actualMCount;
 
                                 if (student.individual_count - duration >= 0){
                                     actualMCount = student.individual_count - duration;
@@ -759,6 +755,19 @@ export default async function dbProcess(botdb: MongoClient){
 
         async DeleteServiceCare(idCare: ObjectId){
             await this.liveSupport.deleteOne({_id: idCare});
+        }
+
+        async GetUserTrialLessons(idUser: number){
+            const allLessons = await this.individualdbLessons.find({}).toArray();
+            let returnableObject = [];
+
+            for (let i = 0; i < allLessons.length; i++){
+                if (allLessons[i].type === 'trial' && (allLessons[i].idStudent === idUser || allLessons[i].idTeacher === idUser)){
+                    returnableObject.push(allLessons[i])
+                }
+            }
+
+            return returnableObject;
         }
     }
 

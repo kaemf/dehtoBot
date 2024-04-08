@@ -566,17 +566,17 @@ ${role !== 'guest'? `👉 Кількість індивід. занять: ${ind
           return `👉 Користувач (ID: ${id})\n${name}\n(@${username}); ${number}\n\nТип занять: -`
 
         case "student":
-          return `Ім'я: ${name}
-(@${username})
-${number}
-Роль: Студент\n
-👉 Кількість індивід. занять: ${individual_count} (${individual_count * 60}хв)
-викладач: ${teacher}
-Лінк на дошку: ${miro_link? `${miro_link}\n` : 'Відсутня\n'}
-👉 Кількість розм. клубів: ${count} (${clubPacket ? `${ConvertToPrice(clubPacket.toString())}uah` : 'Користувач не брав участі в клубах'})`
+          return `👉 <b>Студент (ID: 437316791)</b>
+${name}\n(@${username}); ${number}\n
+<b>Тип занять</b>: Індивідуальні
+<b>Викладач</b>: ${teacher}
+${individual_count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${individual_count / 60} (${individual_count}хв)\n
+<b>посилання на дошку Miro студента</b>: ${miro_link? `${miro_link}\n` : 'Відсутня\n'}
+<b>Тип занять</b>: Розмовні клуби
+${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count} заняття (${clubPacket ? `${ConvertToPrice(clubPacket.toString()) ?? `(потрібно змінити, з попередньої версії ${clubPacket})`}uah` : 'Користувач не брав участі в клубах'})`
 
         case "teacher":
-          return `👉 Викладач (ID: ${id})\n${name}\n(@${username}); ${number}\n\n${countOfStudents ? "✅" : "❌"} К-ть студентів: ${countOfStudents}`
+          return `👉 Викладач (ID: ${id})\n${name}\n(@${username}); ${number}\n\n${countOfStudents ? "✅" : "❌"} К-ть студентів: ${countOfStudents ?? 0}`
 
         case "admin":
           return `👉 Адмін (ID: ${id})\n${name}\n(@${username}); ${number}`

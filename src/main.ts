@@ -458,8 +458,12 @@ async function main() {
     }
     else if (data.text === 'Мій розклад'){
       if (userObject!.role === 'student'){
-        if (userObject!.individual_lessons){
-          const lessons = SortSchedule(await dbProcess.GetSpecificIndividualLessons(userObject!.individual_lessons));
+        const trialLessons = await dbProcess.GetUserTrialLessons(ctx?.chat?.id ?? -1);
+        if (userObject!.individual_lessons || trialLessons.length){
+          const lessons = SortSchedule([
+            ...await dbProcess.GetSpecificIndividualLessons(userObject!.individual_lessons),
+            ...trialLessons
+          ]);
           let lastDateLoop = '', lessonProcess: IndividualArray = {}
 
           for (let i = 0; i < lessons.length; i++){
@@ -514,8 +518,12 @@ async function main() {
         }
       }
       else if (userObject!.role === 'teacher'){
-        if (userObject!.set_individual_lessons){
-          const lessons = SortSchedule(await dbProcess.GetSpecificIndividualLessons(userObject!.set_individual_lessons));
+        const trialLessons = await dbProcess.GetUserTrialLessons(ctx?.chat?.id ?? -1);
+        if (userObject!.set_individual_lessons || trialLessons.length){
+          const lessons = SortSchedule([
+            ...await dbProcess.GetSpecificIndividualLessons(userObject!.set_individual_lessons),
+            ...trialLessons
+          ]);
           let lastDateLoop = '', lessonProcess: IndividualArray = {};
 
           for (let i = 0; i < lessons.length; i++){
@@ -5429,8 +5437,12 @@ async function main() {
       const teacher = await dbProcess.ShowOneUser(parseInt(user['admin_teachersoperation_idone']));
       switch(data.text){
         case "Переглянути розклад викладача":
-          if (teacher!.set_individual_lessons){
-            const lessons = SortSchedule(await dbProcess.GetSpecificIndividualLessons(teacher!.set_individual_lessons));
+          const trialLessons = await dbProcess.GetUserTrialLessons(teacher!.id);
+          if (teacher!.set_individual_lessons || trialLessons.length){
+            const lessons = SortSchedule([
+              ...await dbProcess.GetSpecificIndividualLessons(teacher!.set_individual_lessons),
+              ...trialLessons
+            ]);
             let lastDateLoop = '', lessonProcess: IndividualArray = {}
   
             for (let i = 0; i < lessons.length; i++){
@@ -5673,7 +5685,8 @@ async function main() {
           User.individual_count ?? 0,
           User.count ?? 0,
           User.miro_link ?? "відсутнє",
-          await db.get(User.id)('club-typeclub') ?? false
+          await db.get(User.id)('club-typeclub') ?? false,
+          User.registered_students?.length ?? 0
         ), {
           reply_markup: {
             one_time_keyboard: true,

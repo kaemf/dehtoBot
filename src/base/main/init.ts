@@ -5,7 +5,7 @@
 
 // Initialization File
 
-import { Telegraf } from "telegraf";
+import { Context, Telegraf } from "telegraf";
 import { createClient } from "redis";
 import { MongoClient } from "mongodb";
 import { versionBot } from "../../data/general/chats";
@@ -50,6 +50,20 @@ export default async function init() {
   const bot = new Telegraf(token),
     bot_notification = new Telegraf(notiftoken);
   console.log("Done\n");
+
+  bot.use(async (ctx, next) => {
+    const originalSendMessage = ctx.telegram.sendMessage;
+    const originalReply = ctx.reply;
+    ctx.telegram.sendMessage = async (chatId: string | number, text: string, extra?: any) => {
+      return originalSendMessage.call(ctx.telegram, chatId, text, { ...extra, parse_mode: 'HTML' });
+    };
+
+    ctx.reply = async (text: string, extra?: any) => {
+      return originalReply.call(ctx, text, { ...extra, parse_mode: 'HTML' });
+    };
+
+    await next();
+  })
 
   console.warn('\n\n  BOT READY TO WORK!\n\n')
 

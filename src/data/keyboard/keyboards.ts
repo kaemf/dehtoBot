@@ -43,7 +43,7 @@ class Keyboard{
         ]
     ]
     }
-    if (true){
+    if (role === 'teacher'){
       return [
         [
           {
@@ -60,7 +60,7 @@ class Keyboard{
         ]
       ]
       }
-      else if (false){
+      else if (role === 'student'){
         return [
           [
             {
@@ -77,7 +77,7 @@ class Keyboard{
           ]
         ]
       }
-      else if (false){
+      else if (checkChats(currentChatId)){
         return [
             [
               {
@@ -559,10 +559,6 @@ class Keyboard{
     :
     [
       [
-        {
-          text: "Змінити роль користувачу"
-        }
-      ],[
         {
           text: "Змінити ім’я користувачу"
         }
