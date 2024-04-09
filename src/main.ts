@@ -380,7 +380,7 @@ async function main() {
     else if (data.text === 'Баланс моїх занять' && userObject!.role === 'student'){
       const count = userObject!.individual_count;
       if (count > 0){
-        ctx.reply(`✅ Баланс ваших індивідуальних занять ${count/60} занять (${count}хв)`, {
+        ctx.reply(`✅ Баланс ваших індивідуальних занять ${count / 60} занять (${count}хв)`, {
           reply_markup: {
             one_time_keyboard: true,
             keyboard: keyboards.indiviualMenu(userObject!.role)
@@ -511,7 +511,6 @@ async function main() {
               }
             });
           }
-        
         }
         else {
           ctx.reply('на данний момент у вас відсутні заняття', {
@@ -520,7 +519,6 @@ async function main() {
               keyboard: keyboards.indiviualMenu(userObject!.role)
             }
           });
-          await set('state')('TeacherSchduleHandler');
         }
       }
       else if (userObject!.role === 'teacher'){
@@ -4595,12 +4593,19 @@ async function main() {
   })
 
   onTextMessage('RespondStudentDeTaskHandler', async(ctx, user, set, data) => {
+    const student = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply(script.indivdual.entire(student!.role), {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.indiviualMenu(student!.role)
+        }
+      })
+
+      await set('state')('IndividualHandler');
     }
     else if (data.text === 'ВІДПРАВИТИ ВІДПОВІДЬ'){
-      const student = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
-        deTask = await dbProcess.GetDeTaskForStudent(student!.detask);
+      const deTask = await dbProcess.GetDeTaskForStudent(student!.detask);
 
       await dbProcess.WriteAnswerToDeTask(
         deTask!._id, 
@@ -4708,7 +4713,7 @@ async function main() {
       await ctx.reply('добренько, що далі? чи вже готово?', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
         }
       })
     }
@@ -4729,7 +4734,16 @@ async function main() {
 
   onTextMessage('TeacherDeTaskHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
+      const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+      ctx.reply(script.entire.chooseFunction, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject && userObject!.role !== undefined && userObject!.role !== null ? userObject!.role : 'guest')
+        }
+      })
 
+      await set('state')('FunctionRoot');
     }
     else{
       const teacher = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
@@ -4788,7 +4802,20 @@ async function main() {
 
   onTextMessage('GetStudentForTeacherDeTaskHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+      if (userI!.set_detasks){
+        ctx.reply('вітаю в деЗавданнях, що саме вас цікавить?', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.deTaskMenu()
+          }
+        })
+        await set('state')('TeacherDeTaskHandler');
+      }
+      else{
+        ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання')
+        await set('state')('TeachersSetTasksHandler')
+      }
     }
     else if (CheckException.TextException(data)){
       const studentID = await dbProcess.GetUserIDByName(data.text),
@@ -6310,8 +6337,16 @@ async function main() {
   })
 
   onTextMessage('TeacherSchduleHandler', async(ctx, user, set, data) => {
+    const userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply(script.indivdual.entire(userI!.role), {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.indiviualMenu(userI!.role)
+        }
+      })
+
+      await set('state')('IndividualHandler');
     }
     else{
       switch(data.text){
@@ -6382,7 +6417,64 @@ async function main() {
       students.push([{ text: teacherStudents[i] }]);
     }
     if (CheckException.BackRoot(data)){
-      //back
+      const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+        trialLessons = await dbProcess.GetUserTrialLessons(ctx?.chat?.id ?? -1);
+      if (userObject!.set_individual_lessons || trialLessons.length){
+        const lessons = SortSchedule([
+          ...await dbProcess.GetSpecificIndividualLessons(userObject!.set_individual_lessons),
+          ...trialLessons
+        ]);
+        let lastDateLoop = '', lessonProcess: IndividualArray = {};
+
+        for (let i = 0; i < lessons.length; i++){
+          if (lastDateLoop === lessons[i]!.date) continue;
+          else lessonProcess[lessons[i]!.date] = []
+        }
+
+        const keys = Object.keys(lessonProcess);
+        for (let i = 0; i < keys.length; i++){
+          for (let j = 0; j < lessons.length; j++){
+            if (keys[i] === lessons[j]!.date){
+              lessonProcess[keys[i]].push(lessons[j])
+            }
+          }
+        }
+
+        for (let i = 0; i < keys.length; i++){
+          const key = keys[i];
+          let message = `📋 ${getDayOfWeek(new Date(key))} ${key}\n\n`;
+  
+          for (let j = 0; j < lessonProcess[key].length; j++) {
+            const lesson = lessonProcess[key][j],
+              student = await dbProcess.ShowOneUser(lesson.idStudent) ? await dbProcess.ShowOneUser(lesson.idStudent) : false;
+            message += script.indivdual.rescheduleForTeacher(
+              j + 1,
+              lesson.time,
+              lesson.duration,
+              student? student.name : "Не вдалося знайти ім'я в БД :(",
+              student? student.username : "unknown",
+              student? student.number : "не вдалося знайти номеру :("
+            )
+          }
+  
+          await ctx.reply(message, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.myScheduleTeacher()
+            }
+          });
+        }
+        await set('state')('TeacherSchduleHandler');
+      }
+      else {
+        ctx.reply('на данний момент у вас відсутні заняття', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.myScheduleTeacher()
+          }
+        });
+        await set('state')('TeacherSchduleHandler');
+      }
     }
     else if (teacherStudents.includes(data.text)){
       const User = await dbProcess.FindUser(data.text);
@@ -6418,7 +6510,24 @@ async function main() {
 
   onTextMessage('IndividualLessonScheduleRespondDateAndCheckThis', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const teachersStudents = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1)
+      ?
+      (await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1))?.registered_students : false;
+      if (teachersStudents){
+        let studentsKeyboard = [];
+        for (let i = 0; i < teachersStudents.length; i++){
+          studentsKeyboard.push([{ text: teachersStudents[i] }]);
+        }
+        ctx.reply('оберіть студента, з яким плануєте заняття:', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: studentsKeyboard
+          }
+        })
+
+        await set('state')('IndividualLessonScheduleCheckAvailibilityStudentAndGetDateTime')
+      }
+      else ctx.reply('нажаль, на данний момент ви не маєте жодного активного студента');
     }
     else if (CheckException.TextException(data)){
       const date = DateProcess(data.text);
@@ -6446,13 +6555,39 @@ async function main() {
 
   onTextMessage('IndividualLessonScheduleCheckDateAndGetTime', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const teacherStudents = (await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1))?.registered_students;
+      let students = [];
+    
+      for (let i = 0; i < teacherStudents.length; i++){
+        students.push([{ text: teacherStudents[i] }]);
+      }
+      const User = await dbProcess.FindUser(user['teacher_individual_lesson_schedule_student_id']);
+      if (User){
+        await ctx.reply(script.studentFind.checkIndividualCountShowStudent(
+          User.name,
+          User.username,
+          User.number,
+          User.individual_count ?? 0
+        ))
+
+        if (User.individual_count > 0){
+          await ctx.reply('вкажіть день, місяць та рік у форматі:\n23.05.2024');
+          await set('state')('IndividualLessonScheduleRespondDateAndCheckThis')
+        }
+        else await ctx.reply(`не можна запланувати заняття, у ${User.name} немає проплачених занять - повідомте в підтримку та оберіть іншого студента:`, {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: students
+          }
+        })
+      }
+      else ctx.reply(`нажаль, такого користувача як ${data.text} не знайдено в базі данних`)
     }
     else{
       switch(data.text){
         case "так":
           ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
-          await set('state')('IndividualLessonScheduleCheckTimeAndGetDuration')
+          await set('state')('IndividualLessonScheduleCheckTimeAndGetDuration');
           break;
 
         case "ні":
@@ -6474,7 +6609,24 @@ async function main() {
 
   onTextMessage('IndividualLessonScheduleCheckTimeAndGetDuration', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const date = DateProcess((DateProcessToPresentView(user['teacher_date_individual_lesson_set']))[1]);
+
+      if (date[0] === 'date_uncorrect'){
+        ctx.reply('вибачте, але ви не правильно ввели дату :( повторіть, будь ласка, ще раз');
+      }
+      else if (date[0] === 'format_of_date_uncorrect'){
+        ctx.reply('перепрошую, але формат введеної вами дати не є корректним :(\n\nслідуйте, будь ласка, за данним прикладом 19.03.2024');
+      }
+      else{
+        ctx.reply(`перевірте, будь ласка, чи все корректно :)\n\nВи ввели ${date[0]}`, {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.yesNo()
+          }
+        })
+
+        await set('state')('IndividualLessonScheduleCheckDateAndGetTime');
+      }
     }
     else if (CheckException.TextException(data)){
       const time = TimeProcess(data.text);
@@ -6502,7 +6654,8 @@ async function main() {
 
   onTextMessage('IndividualLessonScheduleSetDurationAndCreate', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
+      await set('state')('IndividualLessonScheduleCheckTimeAndGetDuration');
     }
     else if (data.text === '60хв' || data.text === '90хв' || data.text === '30хв'){
       await dbProcess.CreateNewIndividualLesson(
@@ -6572,7 +6725,64 @@ async function main() {
 
   onTextMessage('IndividualLessonRescheduleFindLesson', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+        trialLessons = await dbProcess.GetUserTrialLessons(ctx?.chat?.id ?? -1);
+        if (userObject!.set_individual_lessons || trialLessons.length){
+          const lessons = SortSchedule([
+            ...await dbProcess.GetSpecificIndividualLessons(userObject!.set_individual_lessons),
+            ...trialLessons
+          ]);
+          let lastDateLoop = '', lessonProcess: IndividualArray = {};
+
+          for (let i = 0; i < lessons.length; i++){
+            if (lastDateLoop === lessons[i]!.date) continue;
+            else lessonProcess[lessons[i]!.date] = []
+          }
+
+          const keys = Object.keys(lessonProcess);
+          for (let i = 0; i < keys.length; i++){
+            for (let j = 0; j < lessons.length; j++){
+              if (keys[i] === lessons[j]!.date){
+                lessonProcess[keys[i]].push(lessons[j])
+              }
+            }
+          }
+
+          for (let i = 0; i < keys.length; i++){
+            const key = keys[i];
+            let message = `📋 ${getDayOfWeek(new Date(key))} ${key}\n\n`;
+    
+            for (let j = 0; j < lessonProcess[key].length; j++) {
+              const lesson = lessonProcess[key][j],
+                student = await dbProcess.ShowOneUser(lesson.idStudent) ? await dbProcess.ShowOneUser(lesson.idStudent) : false;
+              message += script.indivdual.rescheduleForTeacher(
+                j + 1,
+                lesson.time,
+                lesson.duration,
+                student? student.name : "Не вдалося знайти ім'я в БД :(",
+                student? student.username : "unknown",
+                student? student.number : "не вдалося знайти номеру :("
+              )
+            }
+    
+            await ctx.reply(message, {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboards.myScheduleTeacher()
+              }
+            });
+          }
+          await set('state')('TeacherSchduleHandler');
+        }
+        else {
+          ctx.reply('на данний момент у вас відсутні заняття', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.myScheduleTeacher()
+            }
+          });
+          await set('state')('TeacherSchduleHandler');
+        }
     }
     else if (CheckException.TextException(data)){
       const date = DateProcess(data.text);
@@ -6635,7 +6845,8 @@ async function main() {
       }
     }
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('вкажіть дату заняття, яке ви хочете перенести у форматі: 23.05.2024');
+      await set('state')('IndividualLessonRescheduleFindLesson');
     }
     else if (!isNaN(parseInt(data.text)) && activeLessons[parseInt(data.text) - 1]){
       await set('teacher_reschedule_lesson_id_of_lesson')(activeLessons[parseInt(data.text) - 1]._id.toString());
@@ -6646,19 +6857,56 @@ async function main() {
   
   onTextMessage('IndividualLessonRescheduleRespondReasonAndGetNewDate', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const date = DateProcess((DateProcessToPresentView(user['teacher_reschedule_lesson_date_of_lesson']))[1]),
+        lessons = await dbProcess.ShowAllInvdividualLessons();
+        let activeLessons = [];
+
+        for (let i = 0; i < lessons.length; i++){
+          if (lessons[i].idTeacher === ctx?.chat?.id && lessons[i].date === date[1]){
+            activeLessons.push(lessons[i]);
+          }
+        }
+
+        if (activeLessons){
+          let messageToSend = `📋 ${getDayOfWeek(new Date(date[1]))} ${DateProcessToPresentView(date[1])}\n\n`,
+            keyboardChoose = [];
+
+          for (let i = 0; i < activeLessons.length; i++){
+            const User = await dbProcess.ShowOneUser(activeLessons[i].idStudent);
+            keyboardChoose.push([{ text: (i + 1).toString() }])
+            messageToSend += script.indivdual.rescheduleForTeacher(
+              i + 1,
+              activeLessons[i].time,
+              activeLessons[i].duration,
+              User!.name,
+              User!.username,
+              User!.number
+            )
+          }
+
+          ctx.reply('оберіть заняття, яке ви хочете перенести:', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboardChoose
+            }
+          })
+
+          await set('state')('IndividualLessonRescheduleRespondLessonAndGetReason');
+        }
+        else ctx.reply('на жаль або на щастя в цей день у вас немає занять - вкажіть іншу дату');
     }
     else if (CheckException.TextException(data)){
       await set('teacher_reschedule_lesson_reason')(data.text);
       ctx.reply('вкажіть дату на коли перенести заняття у форматі: 23.05.2024');
-      await set('state')('IndividualLessonRescheduleRespondDateAndCheckThis')
+      await set('state')('IndividualLessonRescheduleRespondDateAndCheckThis');
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
   })
 
   onTextMessage('IndividualLessonRescheduleRespondDateAndCheckThis', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('вкажіть причину перенесення заняття:');
+      await set('state')('IndividualLessonRescheduleRespondReasonAndGetNewDate')
     }
     else if (CheckException.TextException(data)){
       const date = DateProcess(data.text);
@@ -6686,7 +6934,8 @@ async function main() {
 
   onTextMessage('IndividualLessonRescheduleCheckDateAndGetTime', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('вкажіть дату на коли перенести заняття у форматі: 23.05.2024');
+      await set('state')('IndividualLessonRescheduleRespondDateAndCheckThis');
     }
     else{
       switch(data.text){
@@ -6714,7 +6963,8 @@ async function main() {
   
   onTextMessage('IndividualLessonRescheduleCheckTimeAndGetDuration', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('вкажіть дату на коли перенести заняття у форматі: 23.05.2024');
+      await set('state')('IndividualLessonRescheduleRespondDateAndCheckThis');
     }
     else if (CheckException.TextException(data)){
       const time = TimeProcess(data.text);
@@ -6765,7 +7015,8 @@ async function main() {
 
   onTextMessage('IndividualLessonRescheduleSetDurationAndCreate', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
+      await set('state')('IndividualLessonRescheduleCheckTimeAndGetDuration');
     }
     else if (data.text === '60хв' || data.text === '90хв' || data.text === '30хв'){
       const lesson = (await dbProcess.GetSpecificIndividualLessons([new ObjectId(user['teacher_reschedule_lesson_id_of_lesson'])]))[0],
@@ -6846,7 +7097,64 @@ async function main() {
 
   onTextMessage('IndividualLessonDeleteLessonFindLesson', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+        trialLessons = await dbProcess.GetUserTrialLessons(ctx?.chat?.id ?? -1);
+        if (userObject!.set_individual_lessons || trialLessons.length){
+          const lessons = SortSchedule([
+            ...await dbProcess.GetSpecificIndividualLessons(userObject!.set_individual_lessons),
+            ...trialLessons
+          ]);
+          let lastDateLoop = '', lessonProcess: IndividualArray = {};
+
+          for (let i = 0; i < lessons.length; i++){
+            if (lastDateLoop === lessons[i]!.date) continue;
+            else lessonProcess[lessons[i]!.date] = []
+          }
+
+          const keys = Object.keys(lessonProcess);
+          for (let i = 0; i < keys.length; i++){
+            for (let j = 0; j < lessons.length; j++){
+              if (keys[i] === lessons[j]!.date){
+                lessonProcess[keys[i]].push(lessons[j])
+              }
+            }
+          }
+
+          for (let i = 0; i < keys.length; i++){
+            const key = keys[i];
+            let message = `📋 ${getDayOfWeek(new Date(key))} ${key}\n\n`;
+    
+            for (let j = 0; j < lessonProcess[key].length; j++) {
+              const lesson = lessonProcess[key][j],
+                student = await dbProcess.ShowOneUser(lesson.idStudent) ? await dbProcess.ShowOneUser(lesson.idStudent) : false;
+              message += script.indivdual.rescheduleForTeacher(
+                j + 1,
+                lesson.time,
+                lesson.duration,
+                student? student.name : "Не вдалося знайти ім'я в БД :(",
+                student? student.username : "unknown",
+                student? student.number : "не вдалося знайти номеру :("
+              )
+            }
+    
+            await ctx.reply(message, {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboards.myScheduleTeacher()
+              }
+            });
+          }
+          await set('state')('TeacherSchduleHandler');
+        }
+        else {
+          ctx.reply('на данний момент у вас відсутні заняття', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.myScheduleTeacher()
+            }
+          });
+          await set('state')('TeacherSchduleHandler');
+        }
     }
     else if (CheckException.TextException(data)){
       const date = DateProcess(data.text);
@@ -6909,7 +7217,8 @@ async function main() {
       }
     }
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('вкажіть дату заняття, яке ви хочете видалити у форматі: 23.05.2024');
+      await set('state')('IndividualLessonDeleteLessonFindLesson');
     }
     else if (!isNaN(parseInt(data.text)) && activeLessons[parseInt(data.text) - 1]){
       await set('teacher_delete_lesson_id_of_lesson')(activeLessons[parseInt(data.text) - 1]._id.toString());
@@ -6920,7 +7229,43 @@ async function main() {
 
   onTextMessage('IndividualLessonDeleteRespondReasonAndVerifyDelete', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const date = DateProcess((DateProcessToPresentView(user['teacher_delete_lesson_date_of_lesson']))[1]),
+        lessons = await dbProcess.ShowAllInvdividualLessons();
+        let activeLessons = [];
+
+        for (let i = 0; i < lessons.length; i++){
+          if (lessons[i].idTeacher === ctx?.chat?.id && lessons[i].date === date[1]){
+            activeLessons.push(lessons[i]);
+          }
+        }
+
+        if (activeLessons){
+          let messageToSend = `📋 ${getDayOfWeek(new Date(date[1]))} ${DateProcessToPresentView(date[1])}\n\n`,
+            keyboardChoose = [];
+
+          for (let i = 0; i < activeLessons.length; i++){
+            const User = await dbProcess.ShowOneUser(activeLessons[i].idStudent);
+            keyboardChoose.push([{ text: (i + 1).toString() }])
+            messageToSend += script.indivdual.rescheduleForTeacher(
+              i + 1,
+              activeLessons[i].time,
+              activeLessons[i].duration,
+              User!.name,
+              User!.username,
+              User!.number
+            )
+          }
+
+          ctx.reply('оберіть заняття, яке ви хочете видалити:', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboardChoose
+            }
+          })
+
+          await set('state')('IndividualLessonDeleteLessonRespondLessonAndGetReason');
+        }
+        else ctx.reply('на жаль або на щастя в цей день у вас немає занять - вкажіть іншу дату');
     }
     else if (CheckException.TextException(data)){
       await set('teacher_individual_lesson_delete_reason')(data.text);
@@ -6937,7 +7282,8 @@ async function main() {
 
   onTextMessage('IndividualLessonDeleteFinalHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('вкажіть причину видалення заняття:');
+      await set('state')('IndividualLessonDeleteRespondReasonAndVerifyDelete');
     }
     else{
       switch(data.text){
@@ -7013,7 +7359,64 @@ async function main() {
       keyboardGuest.push([{ text: AllTrials[i] }]);
     }
     if (CheckException.BackRoot(data)){
-      //back
+      const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+        trialLessons = await dbProcess.GetUserTrialLessons(ctx?.chat?.id ?? -1);
+      if (userObject!.set_individual_lessons || trialLessons.length){
+        const lessons = SortSchedule([
+          ...await dbProcess.GetSpecificIndividualLessons(userObject!.set_individual_lessons),
+          ...trialLessons
+        ]);
+        let lastDateLoop = '', lessonProcess: IndividualArray = {};
+
+        for (let i = 0; i < lessons.length; i++){
+          if (lastDateLoop === lessons[i]!.date) continue;
+          else lessonProcess[lessons[i]!.date] = []
+        }
+
+        const keys = Object.keys(lessonProcess);
+        for (let i = 0; i < keys.length; i++){
+          for (let j = 0; j < lessons.length; j++){
+            if (keys[i] === lessons[j]!.date){
+              lessonProcess[keys[i]].push(lessons[j])
+            }
+          }
+        }
+
+        for (let i = 0; i < keys.length; i++){
+          const key = keys[i];
+          let message = `📋 ${getDayOfWeek(new Date(key))} ${key}\n\n`;
+  
+          for (let j = 0; j < lessonProcess[key].length; j++) {
+            const lesson = lessonProcess[key][j],
+              student = await dbProcess.ShowOneUser(lesson.idStudent) ? await dbProcess.ShowOneUser(lesson.idStudent) : false;
+            message += script.indivdual.rescheduleForTeacher(
+              j + 1,
+              lesson.time,
+              lesson.duration,
+              student? student.name : "Не вдалося знайти ім'я в БД :(",
+              student? student.username : "unknown",
+              student? student.number : "не вдалося знайти номеру :("
+            )
+          }
+  
+          await ctx.reply(message, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.myScheduleTeacher()
+            }
+          });
+        }
+        await set('state')('TeacherSchduleHandler');
+      }
+      else {
+        ctx.reply('на данний момент у вас відсутні заняття', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.myScheduleTeacher()
+          }
+        });
+        await set('state')('TeacherSchduleHandler');
+      }
     }
     else if (CheckException.TextException(data)){
       const User = await dbProcess.FindUser(data.text);
@@ -7047,7 +7450,19 @@ async function main() {
 
   onTextMessage('IndividualLessonsTrialLessonRespondDate', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      let keyboardTrials = [];
+      const trialStudents = (await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1))!.trial_students;
+      for (let i = 0; i < trialStudents.length; i++){
+        keyboardTrials.push([{ text: trialStudents[i] }]);
+      }
+      ctx.reply('оберіть студента, з яким потрібно запланувати пробне заняття:', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboardTrials
+        }
+      })
+
+      await set('state')('IndividualLessonsTrialLessonRespondStudent');
     }
     else if (CheckException.TextException(data)){
       const date = DateProcess(data.text);
@@ -7069,7 +7484,25 @@ async function main() {
 
   onTextMessage('IndividualLessonTrialLessonRespondTime', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const User = await dbProcess.FindUser(user['teacher_individual_trial_lesson_user_id']);
+
+      if (User){
+        await ctx.reply(script.studentFind.diffUserFind(
+          User.role,
+          User.id,
+          User.name,
+          User.username,
+          User.number,
+          "відсутній",
+          User.individual_count ?? 0,
+          User.count ?? 0,
+          User.miro_link ?? "відсутнє",
+          await db.get(User.id)('club-typeclub') ?? false
+        ))
+        await ctx.reply('вкажіть день, місяць та рік у форматі:\n23.05.2024');
+        await set('state')('IndividualLessonsTrialLessonRespondDate');
+      }
+      else ctx.reply('такого користувача не знайдено в базі даних');
     }
     else if (CheckException.TextException(data)){
       const time = TimeProcess(data.text);
@@ -7118,7 +7551,9 @@ async function main() {
 
   onTextMessage('IndividualLessonRespondLinkAndCreate', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('вкажіть години та хвилини за Києвом у форматі: 15:45');
+
+      await set('state')('IndividualLessonTrialLessonRespondTime');
     }
     else if (CheckException.TextException(data)){
       const User = await dbProcess.ShowOneUser(parseInt(user['teacher_individual_trial_lesson_user_id'])),
