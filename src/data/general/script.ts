@@ -647,8 +647,13 @@ ${count > 0 ? '✅' : '❌'} Залишок: ${count / 60} занять (${count
 ✅ Залишок: ${count / 60} занять (${count}хв)\n\nпобачимося🍓 `,
 
       deleteStudent: (nameTeacher: string) =>
-      `🙂 вас було прибрано від викладача ${nameTeacher}\n\nбажаємо вам натхнення та успіхів у вивченні мови!\n\nз любовʼю, команда dehto🍓 `
+      `🙂 вас було прибрано від викладача ${nameTeacher}\n\nбажаємо вам натхнення та успіхів у вивченні мови!\n\nз любовʼю, команда dehto🍓 `,
 
+      lessonComingNotification: (minute: number, dayOfWeek: string, day: string, month: string, time: string, teacherName: string, miro_link: string, count: number) =>
+      `🌤 <b>Заняття розпочнеться за ${minute}хв</b> 🌤\n
+<b>Коли</b>: ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦
+<b>Викладач</b>: ${teacherName}\n<b>посилання на дошку Miro</b>: ${miro_link ?? "відстнє"}\n
+${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count / 60} занять (${count}хв)`
     },
 
     forTeachers: {
@@ -681,7 +686,13 @@ ${count > 0 ? '✅' : '❌'} Залишок: ${count / 60} занять (${count
 не забудьте написати йому_їй щось приємне;)\n
 можете скопіювати: ${studentName}, підтримка повідомила, що ви не будете продовжувати навчання, проте мені було приємно з вами працювати!🥹\n\n
 Бажаю Вам натхнення та успіхів у вивченні мови!
-Вдалого дня🍓`
+Вдалого дня🍓`,
+
+      lessonComingNotification: (minute: number, dayOfWeek: string, day: string, month: string, time: string, studentName: string, miro_link: string, count: number) =>
+      `🌤 <b>Заняття розпочнеться за ${minute}хв</b> 🌤\n
+<b>Коли</b>: ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦
+<b>Студент</b>: ${studentName}\n<b>посилання на дошку Miro</b>: ${miro_link ?? "відстнє"}\n
+${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count / 60} занять (${count}хв)`
     },
     
     forAdmins: {

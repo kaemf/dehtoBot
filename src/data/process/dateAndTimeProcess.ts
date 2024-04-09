@@ -1,5 +1,3 @@
-import { WithId } from "mongodb";
-
 function formatDate(date: Date, onlyDayOfWeek?: boolean): string {
     const daysOfWeek = ["нд", "пн", "вт", "ср", "чт", "пт", "сб"],
         months = [
@@ -107,4 +105,21 @@ export function SortSchedule(lessons: any[]){
             return timeA[1] - timeB[1];
         }
     })
+}
+
+export function formatDateWithTime(date: Date): string {
+    const daysOfWeek = ["нд", "пн", "вт", "ср", "чт", "пт", "сб"],
+        months = [
+            "січня", "лютого", "березня", "квітня", "травня", "червня",
+            "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"
+        ],
+
+        dayOfWeek = daysOfWeek[date.getDay()],
+        month = months[date.getMonth()],
+        day = date.getDate(),
+        year = date.getFullYear(),
+        hours = date.getHours().toString().padStart(2, '0'),
+        minutes = date.getMinutes().toString().padStart(2, '0');
+
+    return `${day} ${month} (${dayOfWeek}) ${year}, ${hours}:${minutes}`;
 }

@@ -1,4 +1,7 @@
 import { MongoClient, ObjectId } from "mongodb";
+import { Telegram } from "telegraf";
+import { UniversalSingleDataProcess, formatDateWithTime } from "../../data/process/dateAndTimeProcess"
+import script from "../../data/general/script";
 
 export default async function dbProcess(botdb: MongoClient){
     class DBProcess {
@@ -7,7 +10,6 @@ export default async function dbProcess(botdb: MongoClient){
         private deTaskDB = botdb.db('dehtoBDB').collection('deTask');
         private individualdbLessons = botdb.db('dehtoBDB').collection('individualLessons');
         private liveSupport = botdb.db('dehtoBDB').collection('supportActiveChannels');
-        private notificationTransport = botdb.db('dehtoBDB').collection('notificationTransfer');
 
         async ShowAll() {
             return await this.clubdbLessons.find({}).toArray();
@@ -230,6 +232,17 @@ export default async function dbProcess(botdb: MongoClient){
                     for (let j = 0; j < users.length; j++){
                         this.DeleteClubFromUser(users[j].id, clubs[i]._id);
                     }
+                }
+            }
+        }
+
+        async DeleteExpiredIndividualLessons() {
+            const lessons = await this.individualdbLessons.find({}).toArray();
+
+            for(let i = 0; i < lessons.length; i++){
+                if (this.isTimeExpired(new Date(`${lessons[i].date}T${lessons[i].time}`))){
+                    console.log('\nFounded Expired Individual Lessson and Delete\n')
+                    await this.SystemDeleteIndividualLesson(lessons[i]._id);
                 }
             }
         }
@@ -493,7 +506,7 @@ export default async function dbProcess(botdb: MongoClient){
 
                         if (currentTeacher){
                             const currentStudents = currentTeacher.registered_students,
-                                indexInMassiveOld = currentStudents.indexOf(user.name);
+                                indexInMassiveOld = currentStudents.indexOf(user.id);
 
                             if (indexInMassiveOld !== -1){
                                 currentStudents.splice(indexInMassiveOld, 1);
@@ -544,7 +557,7 @@ export default async function dbProcess(botdb: MongoClient){
                     case "trial_teacher":
                         await this.ChangeKeyData(student, 'miro_link', miro_link, false);
                         await this.botdbUsers.updateOne({_id: teacher._id}, {$set: {
-                            trial_students: trialStudents? trialStudents.push(student.name): [ student.name ]
+                            trial_students: trialStudents? trialStudents.push(student.id): [ student.id ]
                         }})
                         break;
 
@@ -552,7 +565,7 @@ export default async function dbProcess(botdb: MongoClient){
                         await this.ChangeKeyData(student, 'teacher', teacher.id, false);
                         await this.ChangeKeyData(student, 'miro_link', miro_link, false);
                         await this.ChangeKeyData(student, 'role', 'student', false);
-                        await this.ChangeKeyData(teacher, 'registered_students', teachersStudents.push(student.name), false);
+                        await this.ChangeKeyData(teacher, 'registered_students', teachersStudents.push(student.id), false);
                         break;
 
                     default:
@@ -661,6 +674,15 @@ export default async function dbProcess(botdb: MongoClient){
             else throw new Error('\n\nLesson to edit not found');
         }
 
+        private async SystemDeleteIndividualLesson(id: ObjectId){
+            const lesson = await this.individualdbLessons.findOne({_id: id});
+
+            if (lesson){
+                await this.individualdbLessons.deleteOne({_id: id});
+            }
+            else throw new Error('\n\nLesson not found in SystemDeleteIndividualLesson()');
+        }
+
         async DeleteIndividualLesson(id: ObjectId){
             const lesson = await this.individualdbLessons.findOne({_id: id});
 
@@ -750,7 +772,17 @@ export default async function dbProcess(botdb: MongoClient){
         }
 
         async WriteAdditionalQuestionToServiceCare(idCare: ObjectId, question: string){
-            await this.liveSupport.updateOne({_id: idCare}, {$set: {question: question}});
+            const serviceCare = await this.liveSupport.findOne({_id: idCare});
+
+            if (serviceCare){
+                const questions = serviceCare.question;
+
+                if (questions.length){
+                    await this.liveSupport.updateOne({_id: idCare}, {$set: {question: questions.push(question)}});        
+                }
+                else this.liveSupport.updateOne({_id: idCare}, {$set: {question: [ question ]}});
+            }
+            else throw new Error('ServiceCare not Found. In function WriteAdditionalQuestionToServiceCare()');
         }
 
         async DeleteServiceCare(idCare: ObjectId){
@@ -768,6 +800,48 @@ export default async function dbProcess(botdb: MongoClient){
             }
 
             return returnableObject;
+        }
+
+        private Under40Minutes(date: Date){
+            if (date.getTime() - new Date().getTime() <= 40 * 60 * 1000) {
+                return true;
+            }
+            else return false;
+        }
+
+        private TimeLeft(date: Date){
+            return Math.floor((date.getTime() - new Date().getTime()) / 60000);
+        }
+
+        async NotificateUserAboutLesson(ctx: Telegram){
+            const lessons = await this.individualdbLessons.find({}).toArray();
+
+            for (let i = 0; i < lessons.length; i++){
+                const lessonDate = new Date(`${lessons[i].date}T${lessons[i].time}`);
+                if (this.Under40Minutes(lessonDate)){
+                    ctx.sendMessage(lessons[i].idStudent, script.notification.forStudent.lessonComingNotification(
+                        this.TimeLeft(lessonDate),
+                        UniversalSingleDataProcess(lessonDate, 'day_of_week'),
+                        UniversalSingleDataProcess(lessonDate, 'day'),
+                        UniversalSingleDataProcess(lessonDate, 'month'),
+                        lessons[i].time,
+                        (await this.ShowOneUser(lessons[i].idTeacher))?.name ?? "сталась помилка",
+                        (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
+                        (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
+                    ));
+                    ctx.sendMessage(lessons[i].idTeacher, script.notification.forStudent.lessonComingNotification(
+                        this.TimeLeft(lessonDate),
+                        UniversalSingleDataProcess(lessonDate, 'day_of_week'),
+                        UniversalSingleDataProcess(lessonDate, 'day'),
+                        UniversalSingleDataProcess(lessonDate, 'month'),
+                        lessons[i].time,
+                        (await this.ShowOneUser(lessons[i].idStudent))?.name ?? "сталась помилка",
+                        (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
+                        (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
+                    ));
+                    console.log(`\nNotification Sent. Lesson start in ${formatDateWithTime(lessonDate)}`);
+                }
+            }
         }
     }
 
