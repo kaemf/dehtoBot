@@ -169,7 +169,7 @@ ${phone_number}
   },
 
   indivdual: {
-    entire: (role: string) => role === 'admin' || role === 'developer' || role === 'teacher' ? 'що цікавить' : 'оберіть, що вас цікавить :)',
+    entire: (role: string) => role === 'admin' || role === 'developer' || role === 'teacher' ? 'що цікавить?' : 'оберіть, що вас цікавить :)',
 
     studentDeleteFromTeacher: (teacher: string, student: string) => `✅ студента ${student} було успішно видалено від викладача ${teacher}`,
 
@@ -423,10 +423,15 @@ ID: ${id}
 Ім'я: ${name}
 Telegram: @${username}
 Номер телефону: ${phone_number}
-Користувач є: ${role}
 Активний пакет: ${packet}
 Ціна заняття пакету: ${pricePerLesson} uah.
 Кількість доступних занять: ${count > 0 ? count : '❌'}`,
+
+      showUserInClubsToAdmin: (position: number, name: string, id: number, username: string, phone_number: string, count: number, pricePerLesson: number) => `<b>👉${position} (ID: ${id})</b>
+${name}
+(@${username}); ${phone_number}\n
+<b>Тип занять:</b> Розмовні клуби
+✅<b> Залишок:</b> ${count > 0 ? count : '❌'} (${pricePerLesson} uah.)`,
 
       checkClub: (title: string, teacher: string, date: string, time: string, link: string, count: number) => `🗣 ШПРАХ-КЛУБ
 👉 Тема: ${title}
@@ -533,7 +538,7 @@ ${name}
 (@${username}); ${phone}\n
 Тип занять: ${typeOfLessons}
 викладач: ${teacher}
-✅ Залишок: ${count / 60} занять (${count}хв)\n
+${count > 0 ? '✅': '❌'} Залишок: ${count / 60} занять (${count}хв)\n
 посилання на дошку Miro студента: ${miro}`,
 
     showTeacher: (name: string, id: number, role: string, username: string, phone: string, countOfStudents: number) =>
@@ -551,19 +556,20 @@ ${name}
 
     userFind: (position: number, id: number, name: string, username: string, number: number, role: string, teacher: string, individual_count: number, count: number, miro_link: string, clubPacket: string | boolean) => 
     `${position? `✅${position}\n`: ''}ID: ${id}
-Ім'я: ${name}
-(@${username})
+<b>Ім'я:</b> ${name} (@${username})
 ${number}
-Роль: ${ConvertRole(role)}\n
-${role !== 'guest'? `👉 Кількість індивід. занять: ${individual_count} (${individual_count * 60}хв)
-викладач: ${teacher}
-Лінк на дошку: ${miro_link? `${miro_link}\n` : 'Відсутня\n'}` : ''}
-👉 Кількість розм. клубів: ${count} (${clubPacket ? `${ConvertToPrice(clubPacket.toString())}uah` : 'Користувач не брав участі в клубах'})`,
+<b>Роль:</b> ${ConvertRole(role)}\n
+${role !== 'guest'? `👉 <b>Кількість індивід. занять</b>: ${individual_count} (${individual_count * 60}хв)
+<b>Викладач:</b> ${teacher}
+<b>Лінк на дошку:</b> ${miro_link? `${miro_link}\n` : 'Відсутня\n'}` : ''}
+👉 <b>Кількість розм. клубів:</b> ${count} (${clubPacket ? `${ConvertToPrice(clubPacket.toString())}uah` : 'Користувач не брав участі в клубах'})`,
 
     diffUserFind: (role: string, id: number, name: string, username: string, number: number, teacher: string, individual_count: number, count: number, miro_link: string, clubPacket: string | boolean, countOfStudents?: number) => {
       switch(role){
         case "guest":
-          return `👉 Користувач (ID: ${id})\n${name}\n(@${username}); ${number}\n\nТип занять: -`
+          return `👉 <b>Користувач (ID: ${id})</b>\n${name}\n(@${username}); ${number}\n
+<b>Тип занять:</b> ${count <= 0 ? '-' : 'Розмовні клуби'}
+${count > 0 ? '✅' : '❌'} <b>Залишок:</b> ${count} (${ConvertToPrice(clubPacket.toString())}uah)`
 
         case "student":
           return `👉 <b>Студент (ID: 437316791)</b>
@@ -619,10 +625,10 @@ ${countOfLessons > 0 ? '✅' : '❌'} Залишок: ${countOfLessons / 60} з�
       `❌️️ видалення заняття ❌\n\n👉 заняття в ${dayOfWeek}, ${day} ${month} о ${time} за Києвом 🇺🇦 видалено\n\n✅ Залишок: ${count / 60} занять (${count}хв)`,
 
       trialLessonByTeacher: (dayOfWeek: string, day: string, month: string, time: string, teacherName: string, miro_link: string, zoom: string) => `📌 Пробне заняття заплановане 📌\n
-Коли: ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦
-Викладач: ${teacherName}\n
-👉 посилання на дошку Miro: ${miro_link}\n
-👉 посилання на зустріч: ${zoom}`,
+<b>Коли:</b> ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦
+<b>Викладач:</b> ${teacherName}\n
+👉 <b>посилання на дошку Miro:</b> ${miro_link}\n
+👉 <b>посилання на зустріч:</b> ${zoom}`,
 
       addStudentForTeacher: (nameStudent: string, nameTeacher: string, usernameTeacher: string, numberTeacher: string, miro_link: string, count: number) => 
       `🥳 ${nameStudent}, вітаємо у числі студентів dehto\n
@@ -653,7 +659,10 @@ ${count > 0 ? '✅' : '❌'} Залишок: ${count / 60} занять (${count
       `🌤 <b>Заняття розпочнеться за ${minute}хв</b> 🌤\n
 <b>Коли</b>: ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦
 <b>Викладач</b>: ${teacherName}\n<b>посилання на дошку Miro</b>: ${miro_link ?? "відстнє"}\n
-${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count / 60} занять (${count}хв)`
+${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count / 60} занять (${count}хв)`,
+
+      changeCountLessonsOnClub: (count: number) =>
+      `📈 Баланс занять змінено 📈\n\nТип занять: Розмовні клуби\n✅ Залишок: ${count} занять\n\nгарного дня 🙌`
     },
 
     forTeachers: {
@@ -718,11 +727,11 @@ ${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count / 60} занять (
 ✅ Залишок: ${count / 60} занять (${count}хв)`,
 
       trialLessonByTeacher: (dayOfWeek: string, day: string, month: string, time: string, studentName: string, teacherName: string, miro_link: string, zoom: string) => `📌 Пробне заняття заплановане 📌\n
-Коли: ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦
-Студент: ${studentName}
-Викладач: ${teacherName}\n
-👉 посилання на дошку Miro: ${miro_link}\n
-👉 посилання на зустріч: ${zoom}`
+<b>Коли:</b> ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦
+<b>Студент:</b> ${studentName}
+<b>Викладач:</b> ${teacherName}\n
+👉 <b>посилання на дошку Miro:</b> ${miro_link}\n
+👉 <b>посилання на зустріч:</b> ${zoom}`
     }
   },
 

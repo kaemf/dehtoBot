@@ -249,7 +249,7 @@ async function main() {
       await set('state')('AdminNotificationRepondText')
     }
     else if (data.text === "Розмовні клуби" && checkChats(ctx?.chat?.id ?? -1)){
-      ctx.reply("З поверненням, Меркель! :)", {
+      ctx.reply("що цікавить? :)", {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -260,10 +260,6 @@ async function main() {
               },
               {
                 text: "Особові справи"
-              }
-            ],[
-              {
-                text: "В МЕНЮ"
               }
             ]
           ],
@@ -2557,7 +2553,6 @@ async function main() {
 
     if (CheckException.BackRoot(data)){
       ctx.reply(script.entire.chooseFunction, {
-        parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject!.role)
@@ -2567,8 +2562,7 @@ async function main() {
       await set('state')('FunctionRoot');
     }
     else if (data.text === 'Клуби'){
-      ctx.reply("Добренько, і що на цей раз?)", {
-        parse_mode: "Markdown",
+      ctx.reply("добренько, і що на цей раз?)", {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.spekingClubAdminPanel()
@@ -2578,7 +2572,7 @@ async function main() {
       await set('state')('RespondAdminActionAndRootChoose');
     }
     else if (data.text === 'Особові справи'){
-      ctx.reply('Прекрасно, над ким сьогодні будемо знущатись?)', {
+      ctx.reply('прекрасно, над ким сьогодні будемо знущатись?)', {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.personalStudentAdminPanel()
@@ -2626,7 +2620,7 @@ async function main() {
   onTextMessage('RespondAdminActionAndRootChoose', async(ctx, user, set, data) => {
     const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
     if (CheckException.BackRoot(data)){
-      ctx.reply("З поверненням, Меркель! :)", {
+      ctx.reply("що цікавить? :)", {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -2637,7 +2631,7 @@ async function main() {
       await set('state')('AdminRootHandler');
     }
     else if (data.text === 'Додати'){
-      ctx.reply("Тема:");
+      ctx.reply("тема:");
       await set('state')('ADD_RespondTitleAndGetTeacher');
     }
     else if (data.text === 'Видалити'){
@@ -2674,7 +2668,7 @@ async function main() {
   
         await set('state')('DeleteClubAndCheckAction');
       }
-      else ctx.reply('наразі актуальних розмовних клубів немає(', {
+      else ctx.reply('наразі немає актуальних розмовних клубів(', {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.spekingClubAdminPanel()
@@ -2715,7 +2709,7 @@ async function main() {
   
         await set('state')('RespondKeyDataAndGetChanges');
       }
-      else ctx.reply('наразі актуальних розмовних клубів немає(', {
+      else ctx.reply('наразі немає актуальних розмовних клубів(', {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.spekingClubAdminPanel()
@@ -2750,7 +2744,7 @@ async function main() {
           });
         }
       }
-      else ctx.reply('наразі актуальних розмовних клубів немає(', {
+      else ctx.reply('наразі немає актуальних розмовних клубів(', {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.spekingClubAdminPanel()
@@ -2760,7 +2754,6 @@ async function main() {
     else if (data.text === 'В МЕНЮ'){
       const userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
       ctx.reply(script.entire.chooseFunction, {
-        parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
@@ -2771,7 +2764,6 @@ async function main() {
     }
     else{
       ctx.reply(script.errorException.chooseButtonError, {
-        parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.spekingClubAdminPanel()
@@ -2783,7 +2775,7 @@ async function main() {
   //Add Method
   onTextMessage('ADD_RespondTitleAndGetTeacher', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      ctx.reply("Добренько, і що на цей раз?)", {
+      ctx.reply("добренько, і що на цей раз?)", {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -2805,7 +2797,7 @@ async function main() {
         }
       }
 
-      ctx.reply('Вчитель:', {
+      ctx.reply('вчитель:', {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboard
@@ -2820,7 +2812,7 @@ async function main() {
 
   onTextMessage('ADD_RespondTeacherAndGetDate', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      ctx.reply("Тема:", {reply_markup: {remove_keyboard: true}});
+      ctx.reply("тема:", {reply_markup: {remove_keyboard: true}});
       await set('state')('ADD_RespondTitleAndGetTeacher');
     }
     else if (CheckException.TextException(data)){
@@ -2829,8 +2821,8 @@ async function main() {
         await set("AP_teacher_name")(teacher[0]);
         await set("AP_teacher_id")(teacher[1]);
   
-        ctx.reply('Коли (день):');
-        await set('state')('ADD_RespondDateDayAndGetDateMonth');
+        ctx.reply('вкажіть день, місяць та рік у форматі:\n23.05.2024');
+        await set('state')('ADD_RespondDateAndGetCheckThis');
       }
       else{
         const users = await dbProcess.ShowAllUsers();
@@ -2841,7 +2833,7 @@ async function main() {
             keyboard.push([{ text: users[i].name }]);
           }
         }
-          ctx.reply('виберіть, будь ласка вчителя', {
+        ctx.reply('виберіть, будь ласка вчителя', {
           reply_markup: {
             one_time_keyboard: true,
             keyboard: keyboard
@@ -2854,7 +2846,7 @@ async function main() {
     }
   })
 
-  onTextMessage('ADD_RespondDateDayAndGetDateMonth', async(ctx, user, set, data) => {
+  onTextMessage('ADD_RespondDateAndGetCheckThis', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       const users = await dbProcess.ShowAllUsers();
       let keyboard = [];
@@ -2865,7 +2857,7 @@ async function main() {
         }
       }
 
-      ctx.reply('Вчитель:', {
+      ctx.reply('вчитель:', {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboard
@@ -2874,126 +2866,75 @@ async function main() {
 
       await set('state')('ADD_RespondTeacherAndGetDate');
     }
-    else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && dbProcess.isValidInput(data.text, false)){
-      if (parseInt(data.text) <= 31 && parseInt(data.text) >= 1){
-        await set('AP_date_day')(data.text);
-  
-        ctx.reply('Коли (місяць):');
-        await set('state')('ADD_RespondDateMonthAndGetDateYear');
+    else if (CheckException.TextException(data)){
+      const date = DateProcess(data.text);
+
+      if (date[0] === 'date_uncorrect'){
+        ctx.reply('вибачте, але ви не правильно ввели дату :( повторіть, будь ласка, ще раз');
+      }
+      else if (date[0] === 'format_of_date_uncorrect'){
+        ctx.reply('перепрошую, але формат введеної вами дати не є корректним :(\n\nслідуйте, будь ласка, за данним прикладом 19.03.2024');
       }
       else{
-        ctx.reply(`А є такий день, як ${data.text}?\n\nПовторіть, будь ласка, ще раз.`);
-      }
-    }
-    else{
-      ctx.reply('Це повинна бути двухзначна цифра');
-    }
-  })
-
-  onTextMessage('ADD_RespondDateMonthAndGetDateYear', async(ctx, user, set, data) => {
-    if (CheckException.BackRoot(data)){
-      ctx.reply('Коли (день):', {reply_markup: {remove_keyboard: true}});
-      await set('state')('ADD_RespondDateDayAndGetDateMonth');
-    }
-    else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && dbProcess.isValidInput(data.text, false)){
-      if (parseInt(data.text) <= 12 && parseInt(data.text) >=1){
-        await set('AP_date_month')(data.text);
-  
-        ctx.reply('Коли (рік):');
-        await set('state')('ADD_RespondDateAndGetTime');
-      }
-      else{
-        ctx.reply(`Серйозно? Місяць ${data.text}?\n\nПовторіть, будь ласка, ще раз.`);
-      }
-    }
-    else{
-      ctx.reply('Це повинна бути двухзначна цифра');
-    }
-  })
-
-  onTextMessage('ADD_RespondDateAndGetTime', async(ctx, user, set, data) => {
-    if (CheckException.BackRoot(data)){
-      ctx.reply('Коли (місяць):');
-      await set('state')('ADD_RespondDateMonthAndGetDateYear');
-    }
-    else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && dbProcess.isValidInput(data.text, true)){
-      const currentDate = new Date();
-      if (new Date(`${parseInt(data.text)}-${user['AP_date_month']}-${user['AP_date_day']}`) >= new Date(`${currentDate.getFullYear}-${currentDate.getMonth() + 1}-${currentDate.getDate()}`)){
-        if (currentDate.getFullYear() + 1 >= parseInt(data.text)){
-          await set('AP_date_year')(data.text);
-    
-          ctx.reply('Час (години):');
-          await set('state')('ADD_RespondTimeHourAndGetMinute');
-        }
-        else{
-          ctx.reply(`Ого, то це такі будуть клаби в ${data.text}! Дуже цікаво!)\n\nПовторіть, будь ласка, ще раз`);
-        }
-      }
-      else{
-        ctx.reply('О то це клаб з минулого! Приємні спогади)\n\nПовторіть, будь ласка, ще раз');
-      }
-    }
-    else{
-      ctx.reply('Це повинна бути чотрьохзначна цифра');
-    }
-  })
-
-  onTextMessage('ADD_RespondTimeHourAndGetMinute', async(ctx, user, set, data) => {
-    if (CheckException.BackRoot(data)){
-      ctx.reply('Коли (рік):');
-      await set('state')('ADD_RespondDateAndGetTime');
-    }
-    else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && dbProcess.isValidInput(data.text, false)){
-      if (parseInt(data.text) <= 23 && parseInt(data.text) >= 4){
-        await set('AP_time_hour')(data.text);
-  
-        ctx.reply('Час (хвилини):');
+        await set('AP_date')(date[1]);
+        ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
         await set('state')('ADD_RespondTimeAndGetCount');
       }
-      else{
-        ctx.reply(`Скіко? Баба не чує! Як це ${data.text}\n\nПовторіть, будь ласка, ще раз`);
-      }
     }
     else{
-      ctx.reply('Це повинна бути двухзначна цифра');
+      ctx.reply('це повинна бути двухзначна цифра');
     }
   })
 
   onTextMessage('ADD_RespondTimeAndGetCount', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      ctx.reply('Час (години):');
-      await set('state')('ADD_RespondTimeHourAndGetMinute'); 
+      ctx.reply('вкажіть день, місяць та рік у форматі:\n23.05.2024');
+      await set('state')('ADD_RespondDateAndGetCheckThis');
     }
     else if (CheckException.TextException(data)){
-      if (parseInt(data.text) >= 0 && parseInt(data.text) <= 59){
-        await set('AP_time_minute')(data.text);
-  
-        ctx.reply('Кількість місць:');
-        await set('state')('ADD_RespondCountAndGetLink');
+      const time = TimeProcess(data.text);
+
+      if (time === 'time_uncorrect'){
+        ctx.reply('боженьки.. ви ввели не правильний час...\n\nповторіть, будь ласка, ще раз :)')
+      }
+      else if (time === 'format_of_time_uncorrect'){
+        ctx.reply('от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату 15:45\n\nповторіть, будь ласка, ще раз :)')
       }
       else{
-        ctx.reply('Я стільки хвилин ще не бачив...\n\nПовіторіть, будь ласка, ще раз')
+        await set('AP_time')(time);
+        ctx.reply('кількість місць:');
+        await set('state')('ADD_RespondCountAndGetLink');
       }
     }
     else{
-      ctx.reply('Це повинна бути двухзначна цифра');
+      ctx.reply('це повинна бути чотрьохзначна цифра');
     }
   })
 
   onTextMessage('ADD_RespondCountAndGetLink', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      ctx.reply('Час (хвилини):');
-      await set('state')('ADD_RespondTimeAndGetCount');
+      const date = DateProcess((DateProcessToPresentView(user['AP_date']))[1]);
+
+      if (date[0] === 'date_uncorrect'){
+        ctx.reply('вибачте, але ви не правильно ввели дату :( повторіть, будь ласка, ще раз');
+      }
+      else if (date[0] === 'format_of_date_uncorrect'){
+        ctx.reply('перепрошую, але формат введеної вами дати не є корректним :(\n\nслідуйте, будь ласка, за данним прикладом 19.03.2024');
+      }
+      else{
+        ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
+        await set('state')('ADD_RespondTimeAndGetCount');
+      }
     }
     else if (CheckException.TextException(data)){
       if (parseInt(data.text) <= 5 && parseInt(data.text) > 0){
         await set('AP_count')(data.text);
   
-        ctx.reply('Документація:');
+        ctx.reply('документація:');
         await set('state')('ADD_RespondDocumentationAndGetLink');
       }
       else{
-        ctx.reply('Кількість місць не може бути більше 5-ти і менше або 0');
+        ctx.reply('кількість місць не може бути більше 5-ти');
       }
     }
     else{
@@ -3003,33 +2944,37 @@ async function main() {
 
   onDocumentationMessage('ADD_RespondDocumentationAndGetLink', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      ctx.reply('Кількість місць:');
+      ctx.reply('кількість місць:');
       await set('state')('ADD_RespondCountAndGetLink');
     }
     else if (CheckException.FileException(data)){
       await set('AP_documentation')(data.file[0]);
 
-      ctx.reply('Посилання:');
+      ctx.reply('посилання:');
       await set('state')('ADD_RespondLinkAndCheckRight');
     }
     else{
-      ctx.reply('Це не схоже на файл типу PDF');
+      ctx.reply('це не схоже на файл типу PDF');
     }
   })
 
   onTextMessage('ADD_RespondLinkAndCheckRight', async(ctx, user, set, data) => {
-    const datePart = `${user['AP_date_day']}-${user['AP_date_month']}-${user['AP_date_year']} (${dbProcess.getDateClub(new Date(`
-        ${user['AP_date_year']}-${user['AP_date_month']}-${user['AP_date_day']}`))})`;
-
+    const datePart = new Date(user['AP_date']);
     if (CheckException.BackRoot(data)){
-      ctx.reply('Документація:');
+      ctx.reply('документація:');
       await set('state')('ADD_RespondDocumentationAndGetLink');
     }
     else if (CheckException.TextException(data)){
       await set('AP_link')(data.text);
 
-      await ctx.reply(script.speakingClub.report.checkClub(user['AP_title'], user['AP_teacher_name'], datePart, `${user['AP_time_hour']}:${user['AP_time_minute']}`, data.text, parseInt(user['AP_count'])))
-      await ctx.reply("Все вірно?", {
+      await ctx.reply(script.speakingClub.report.checkClub(
+        user['AP_title'],
+        user['AP_teacher_name'],
+        `${UniversalSingleDataProcess(datePart, 'day_of_week')}, ${UniversalSingleDataProcess(datePart, 'day')} ${UniversalSingleDataProcess(datePart, 'month')}, ${UniversalSingleDataProcess(datePart, 'year')}`,
+        user['AP_time'],
+        data.text, 
+        parseInt(user['AP_count'])))
+      await ctx.reply("все вірно?", {
         parse_mode: "HTML",
         reply_markup: {
           one_time_keyboard: true,
@@ -3057,7 +3002,7 @@ async function main() {
     const users = await dbProcess.ShowAllUsers();
 
     if (CheckException.BackRoot(data)){
-      ctx.reply('Посилання:');
+      ctx.reply('посилання:');
       await set('state')('ADD_RespondLinkAndCheckRight');
     }
     else if (data.text === 'так'){
@@ -3065,8 +3010,8 @@ async function main() {
         title: user['AP_title'],
         teacher: user['AP_teacher_name'],
         teacher_id: user['AP_teacher_id'],
-        date: `${user['AP_date_year']}-${user['AP_date_month']}-${user['AP_date_day']}`,
-        time: `${user['AP_time_hour']}:${user['AP_time_minute']}`,
+        date: user['AP_date'],
+        time: user['AP_time'],
         count: parseInt(user['AP_count']),
         link: user['AP_link'],
         documentation: user['AP_documentation']
@@ -3090,13 +3035,13 @@ async function main() {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.spekingClubAdminPanel()
-        },
+        }
       })
       
       await set('state')('RespondAdminActionAndRootChoose');
     }
     else if (data.text === 'ні'){
-      ctx.reply("Тема:");
+      ctx.reply("тема:");
       await set('state')('ADD_RespondTitleAndGetTeacher')
     }
     else{
@@ -3725,7 +3670,7 @@ async function main() {
   onTextMessage('PeronalStudentHandler', async(ctx, user, set, data) => {
     const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
     if (CheckException.BackRoot(data)){
-      ctx.reply("З поверненням, Меркель! :)", {
+      ctx.reply("що цікавить? :)", {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -3741,11 +3686,19 @@ async function main() {
     
       for (let i = 0; i < results.length; i++) {
         if (results[i].count > 0){
-          if (i % 10 === 0 && i != 0){
+          if (userNumber % 10 === 0 && i != 0){
             const messageWaiting = ctx.reply("Почекайте маленько, підгружаю ще...");
             await new Promise(resolve => setTimeout(resolve, 3000));
             ctx.telegram.deleteMessage(ctx?.chat?.id ?? -1, (await messageWaiting).message_id);
-            await ctx.reply(script.speakingClub.report.showUser(userNumber, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()), {
+            await ctx.reply(script.speakingClub.report.showUserInClubsToAdmin(
+              userNumber,
+              results[i].name,
+              results[i].id,
+              results[i].username,
+              results[i].number,
+              results[i].count,
+              ConvertToPrice(await db.get(results[i].id)('club-typeclub') ?? '') ?? 0
+            ), {
               reply_markup: {
                 one_time_keyboard: true,
                 keyboard: keyboards.personalStudentAdminPanel()
@@ -3754,7 +3707,15 @@ async function main() {
             userNumber++;
           }
           else{
-            await ctx.reply(script.speakingClub.report.showUser(userNumber, results[i].name, results[i].id, results[i].username, results[i].number, results[i].count, ConvertRole(results[i].role).toString()), {
+            await ctx.reply(script.speakingClub.report.showUserInClubsToAdmin(
+              userNumber,
+              results[i].name,
+              results[i].id,
+              results[i].username,
+              results[i].number,
+              results[i].count,
+              ConvertToPrice(await db.get(results[i].id)('club-typeclub') ?? '') ?? 0
+            ), {
               reply_markup: {
                 one_time_keyboard: true,
                 keyboard: keyboards.personalStudentAdminPanel()
@@ -3943,7 +3904,6 @@ async function main() {
   })
 
   onTextMessage('CheckAvaibleActivePacketAndChangeCountLesson', async(ctx, user, set, data) => {
-    
     if (CheckException.BackRoot(data)){
       //back
     }
@@ -3953,7 +3913,7 @@ async function main() {
       await ctx.reply('оберіть, за яким пакетом будуть додані заняття:', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.payPacketLessons()
+          keyboard: keyboards.payPacketLessonsClub()
         }
       });
       await set('state')('ChangeCountUserLessonsAndPacket');
@@ -3966,7 +3926,7 @@ async function main() {
       teacher = await dbProcess.ShowOneUser(User!.teacher);
 
     if (CheckException.BackRoot(data)){
-      await ctx.reply('Скільки додамо?', {reply_markup: {remove_keyboard: true}});
+      await ctx.reply(`введіть число занять, яке має бути у користувача  (наразі є: ${User!.count} занять по ${ConvertToPrice(await db.get(User!.id)('club-typeclub') ?? '0')}uah)`);
       await set('state')('CheckAvaibleActivePacketAndChangeCountLesson');
     }
     else if (data.text === 'Разове заняття (300uah)' || data.text === 'Пакет занять (280uah)'){
@@ -3983,7 +3943,7 @@ async function main() {
         User!.number,
         teacher? teacher.name: "відсутній",
         User!.individual_count ?? 0,
-        User!.count ?? 0,
+        toWrite ?? 0,
         User!.miro_link ?? "відсутнє",
         data.text
       ), {
@@ -3993,6 +3953,8 @@ async function main() {
           keyboard: keyboards.usersOperationInTheClub()
         },
       })
+
+      ctx.telegram.sendMessage(User!.id, script.notification.forStudent.changeCountLessonsOnClub(toWrite ?? 0));
 
       await set('state')('AdminSpeakingClubPersonalUserOperationHandler');
     }
@@ -5173,19 +5135,19 @@ async function main() {
 
   onTextMessage('IndividualUserChangehandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-
+      //back
     }
     else{
       const User = await dbProcess.ShowOneUser(parseInt(user['user_to_change_individual_id']));
       switch(data.text){
         case "Редагувати кількість занять":
-          ctx.reply(`введіть число занять, яке має бути у студента (наразі є: ${User!.individual_count ?? 0} занять)`);
+          ctx.reply(`введіть кількість хвилин, яка має бути у студента (наразі є: ${User!.individual_count ?? 0} занять)`);
           await set('admin_parametr_to_change_individual')('individual_count');
           await set('state')('IndividualChangeUserDataHandler');
           break;
 
         case "Редагувати лінк":
-          ctx.reply('вкажіть новий лінк на дошку студента')
+          ctx.reply('вкажіть новий лінк на дошку студента');
           await set('admin_parametr_to_change_individual')('miro_link');
           await set('state')('IndividualChangeUserDataHandler');
           break;
@@ -5256,6 +5218,9 @@ async function main() {
               User!.miro_link ?? "якогось дідька відсутнє",
               User!.individual_count ?? "якогось дідька 0"
             ))
+
+            await ctx.reply('✅ число занять змінено!');
+            
           }
           else{
             ctx.reply('введіть будь ласка цифру рівну або більше 0-ля');
@@ -5850,7 +5815,7 @@ async function main() {
           ), {
             reply_markup: {
               one_time_keyboard: true,
-              keyboard: keyboards.usersOperations(userObject!.role)
+              keyboard: keyboards.usersOperations(updatedUser!.role)
             }
           })
           await set('state')('OperationWithUserHandler');
@@ -6027,7 +5992,7 @@ async function main() {
           User.individual_count ?? 0,
           User.count ?? 0,
           User.miro_link ?? "відсутнє",
-          await db.get(User.id)('type_clubpacket') ?? false
+          await db.get(User.id)('club-typeclub') ?? false
         ), {
           reply_markup: {
             one_time_keyboard: true,
@@ -6058,20 +6023,10 @@ async function main() {
           ctx.reply('оберіть пакет, на який ви хочете змінити актуальний:', {
             reply_markup: {
               one_time_keyboard: true,
-              keyboard: keyboards.payPacketLessons()
+              keyboard: keyboards.payPacketLessonsClub()
             }
           })
           await set('state')('AdminChangeUserActivePacketHandler')
-          break;
-
-        case "Видалити користувача":
-          ctx.reply('ви впевнені, що хочете видалити користувача?', {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: keyboards.yesNo(true)
-            }
-          });
-          await set('state')('AdminClubDeleteUserHandler');
           break;
 
         default:
@@ -6118,58 +6073,6 @@ async function main() {
     else ctx.reply(script.errorException.chooseButtonError);
   })
 
-  onTextMessage('AdminClubDeleteUserHandler', async(ctx, user, set, data) => {
-    const User = await dbProcess.ShowOneUser(parseInt(user['admin_speakingclub_personal_find_user'])),
-      teacher = await dbProcess.ShowOneUser(User!.teacher);
-    if (CheckException.BackRoot(data)){
-      //back
-    }
-    else{
-      switch(data.text){
-        case "Так":
-          // TO DO: LOGIC OF DELETE USER FROM CLUB
-          ctx.reply(`✅ користувача Дмитро Меркель було успішно видалено!`, {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: [[{ text: "В МЕНЮ" }]]
-            }
-          })
-          await set('state')('EndRootManager');
-          break;
-        
-        case "Ні":
-          await ctx.reply('фухх, а то думаємо якась помилка вже..');
-          await ctx.reply(script.studentFind.diffUserFind(
-            User!.role,
-            User!.id,
-            User!.name,
-            User!.username,
-            User!.number,
-            teacher? teacher.name: "відсутній",
-            User!.individual_count ?? 0,
-            User!.count ?? 0,
-            User!.miro_link ?? "відсутнє",
-            data.text
-          ), {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: keyboards.usersOperationInTheClub()
-            }
-          })
-          break;
-
-        default:
-          ctx.reply(script.errorException.chooseButtonError, {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: keyboards.yesNo(true)
-            }
-          })
-          break;
-      }
-    }
-  })
-
   onTextMessage('AdminNotificationRepondText', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       //back
@@ -6199,18 +6102,18 @@ async function main() {
           for (let i = 0; i < AllUsers.length; i++){
             try{
               ctx.telegram.sendMessage(AllUsers[i].id, user['admin_notification_text'])
-              ctx.reply('віправлено ✅', {
-                reply_markup: {
-                  one_time_keyboard: true,
-                  keyboard: [[{ text: "В МЕНЮ" }]]
-                }
-              })
-              await set('state')('EndRootManager')
             } catch (err){
               console.log("Error to send message to user " +AllUsers[i].name +":"+err);
               ctx.reply(`не вдалося надіслати сповіщення користувачу ${AllUsers[i].name} :( Скоріш за все він нас заблокував)`)
             }
           }
+          ctx.reply('віправлено ✅', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: [[{ text: "В МЕНЮ" }]]
+            }
+          })
+          await set('state')('EndRootManager')
           break;
 
         case "Лише викладачам":
@@ -6218,19 +6121,19 @@ async function main() {
             if (AllUsers[i].role === 'teacher'){
               try{
                 ctx.telegram.sendMessage(AllUsers[i].id, user['admin_notification_text']);
-                ctx.reply('віправлено ✅', {
-                  reply_markup: {
-                    one_time_keyboard: true,
-                    keyboard: [[{ text: "В МЕНЮ" }]]
-                  }
-                })
-                await set('state')('EndRootManager')
               } catch (err){
                 console.log("Error to send message to user " +AllUsers[i].name +":"+err);
                 ctx.reply(`не вдалося надіслати сповіщення користувачу ${AllUsers[i].name} :( Скоріш за все він нас заблокував)`)
               }
             }
           }
+          ctx.reply('віправлено ✅', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: [[{ text: "В МЕНЮ" }]]
+            }
+          })
+          await set('state')('EndRootManager')
           break;
 
         case "Лише студентам":
@@ -6238,19 +6141,19 @@ async function main() {
             if (AllUsers[i].role === 'student'){
               try{
                 ctx.telegram.sendMessage(AllUsers[i].id, user['admin_notification_text']);
-                ctx.reply('віправлено ✅', {
-                  reply_markup: {
-                    one_time_keyboard: true,
-                    keyboard: [[{ text: "В МЕНЮ" }]]
-                  }
-                })
-                await set('state')('EndRootManager')
               } catch (err){
                 console.log("Error to send message to user " +AllUsers[i].name +":"+err);
                 ctx.reply(`не вдалося надіслати сповіщення користувачу ${AllUsers[i].name} :( Скоріш за все він нас заблокував)`)
               }
             }
           }
+          ctx.reply('віправлено ✅', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: [[{ text: "В МЕНЮ" }]]
+            }
+          })
+          await set('state')('EndRootManager')
           break;
 
         case "Відправити конкретному юзеру":
@@ -6385,7 +6288,7 @@ async function main() {
           let keyboardTrials = [];
           const trialStudents = (await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1))!.trial_students;
           for (let i = 0; i < trialStudents.length; i++){
-            keyboardTrials.push([{ text: trialStudents[i] }]);
+            keyboardTrials.push([{ text: (await dbProcess.ShowOneUser(trialStudents[i]))!.name } ]);
           }
           ctx.reply('оберіть студента, з яким потрібно запланувати пробне заняття:', {
             reply_markup: {
@@ -7541,7 +7444,7 @@ async function main() {
           await set('teacher_time_individual_lesson_set')(time);
           ctx.reply('додайте посилання на конференцію зі студентом:');
   
-          await set('state')('IndividualLessonRespondLinkAndCreate');
+          await set('state')('IndividualLessonTrialRespondLinkAndCreate');
         }
         else ctx.reply(`на жаль, на цей час у вас заплановане заняття з ${busyBy}(\n\nвкажіть інший час у форматі: 15:45`)
       }
@@ -7549,7 +7452,7 @@ async function main() {
     else ctx.reply(script.errorException.textGettingError.defaultException);
   })
 
-  onTextMessage('IndividualLessonRespondLinkAndCreate', async(ctx, user, set, data) => {
+  onTextMessage('IndividualLessonTrialRespondLinkAndCreate', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       ctx.reply('вкажіть години та хвилини за Києвом у форматі: 15:45');
 

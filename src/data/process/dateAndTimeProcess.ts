@@ -35,6 +35,9 @@ export function UniversalSingleDataProcess(date: Date, parametr: string){
         case "day":
             return date.getDate().toString();
 
+        case "year":
+            return date.getFullYear().toString();
+
         default:
             throw new Error('\n\nUncorrect parametr get in UniversalSingleDataProcess()');
     }

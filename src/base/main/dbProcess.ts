@@ -214,9 +214,9 @@ export default async function dbProcess(botdb: MongoClient){
                     "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"
                 ],
         
-                dayOfWeek = daysOfWeek[date.getUTCDay()],
-                month = months[date.getUTCMonth()],
-                day = date.getUTCDate();
+                dayOfWeek = daysOfWeek[date.getDay()],
+                month = months[date.getMonth()],
+                day = date.getDate();
         
             return `${day} ${month} (${dayOfWeek})`;
         }
@@ -564,7 +564,9 @@ export default async function dbProcess(botdb: MongoClient){
                     case "just_teacher":
                         await this.ChangeKeyData(student, 'teacher', teacher.id, false);
                         await this.ChangeKeyData(student, 'miro_link', miro_link, false);
-                        await this.ChangeKeyData(student, 'role', 'student', false);
+                        await this.botdbUsers.updateOne({_id: student._id}, {$set: {
+                            role: 'student'
+                        }})
                         await this.ChangeKeyData(teacher, 'registered_students', teachersStudents.push(student.id), false);
                         break;
 
@@ -708,7 +710,7 @@ export default async function dbProcess(botdb: MongoClient){
                 let teacherHaveThisStudent = false;
                 if (teachersStudents.length){
                     for (let i = 0; i < teachersStudents.length; i++){
-                        if (teachersStudents[i] === student.name){
+                        if (teachersStudents[i] === student.id){
                             teacherHaveThisStudent = true;
                             break;
                         }
