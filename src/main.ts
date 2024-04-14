@@ -6935,7 +6935,7 @@ async function main() {
 
       const newUserObject = await dbProcess.ShowOneUser(parseInt(user['teacher_individual_lesson_schedule_student_id']));
 
-      notifbot.telegram.sendMessage(User!.id,
+      bot.telegram.sendMessage(User!.id,
         script.notification.forStudent.rescheduleLesson(
           UniversalSingleDataProcess(new Date(lesson!.date), 'day_of_week'),
           UniversalSingleDataProcess(new Date(lesson!.date), 'day'),
