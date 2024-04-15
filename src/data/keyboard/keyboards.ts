@@ -647,6 +647,39 @@ class Keyboard{
       ]
     ]
   }
+
+  checkCorrectCollectedDataWhileAddingClub(){
+    return [
+      [
+        {
+          text: "Тема"
+        },
+        {
+          text: "Викладач"
+        },
+      ],[
+        {
+          text: "Дата"
+        },
+        {
+          text: "Час"
+        },
+      ],[
+        {
+          text: "Місця"
+        },
+        {
+          text: "Посилання"
+        }
+      ],[
+        {
+          text: "Документація"
+        }
+      ],[
+        { text: "Все спочатку" }
+      ]
+    ]
+  }
 }
 
 const keyboards : Keyboard = new Keyboard();

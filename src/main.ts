@@ -2978,16 +2978,7 @@ async function main() {
         parse_mode: "HTML",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "так",
-              },
-              {
-                text: "ні",
-              }
-            ],
-          ],
+          keyboard: keyboards.yesNo()
         },
       })
 
@@ -3015,17 +3006,14 @@ async function main() {
         count: parseInt(user['AP_count']),
         link: user['AP_link'],
         documentation: user['AP_documentation']
-      }
-      const currentData = await dbProcess.AddData(toWrite);
+      },
+      currentData = await dbProcess.AddData(toWrite);
 
       for (let i = 0; i < users.length; i++){
         const inline = inlineEventAnnouncementClub(users[i].id, currentData.insertedId.toString());
         ctx.telegram.sendMessage(users[i].id, script.speakingClub.report.announcementClub(toWrite.title,
           toWrite.teacher, dbProcess.getDateClub(new Date(toWrite.date)), toWrite.time), 
-          {
-            reply_markup: {inline_keyboard: inline},
-            parse_mode: 'HTML',
-          },
+          {reply_markup: {inline_keyboard: inline}}
         )
       }
 
@@ -3041,26 +3029,301 @@ async function main() {
       await set('state')('RespondAdminActionAndRootChoose');
     }
     else if (data.text === 'ні'){
-      ctx.reply("тема:");
-      await set('state')('ADD_RespondTitleAndGetTeacher')
+      ctx.reply('що саме не так?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.checkCorrectCollectedDataWhileAddingClub()
+        }
+      })
+
+      await set('state')('CheckCorrectCollectedDataWhileAddingClub');
     }
     else{
       ctx.reply(script.errorException.chooseButtonError, {
         parse_mode: "HTML",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "так",
-              },
-              {
-                text: "ні",
-              },
-            ],
-          ],
+          keyboard: keyboards.yesNo()
         },
       })
+    }
+  })
+
+  onTextMessage('CheckCorrectCollectedDataWhileAddingClub', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else{
+      switch(data.text){
+        case "Тема":
+          ctx.reply("тема:");
+          await set('CheckCorrectCollectedDataWhileAddingClub_Choose')('Тема');
+          await set('state')('CheckCorrectCollectedDataWhileAddingClubHandler');
+          break;
+
+        case "Викладач":
+          const users = await dbProcess.ShowAllUsers();
+          let keyboard = [];
+
+          for (let i = 0; i < users.length; i++){
+            if (users[i].role === 'teacher'){
+              keyboard.push([{ text: users[i].name }]);
+            }
+          }
+          ctx.reply('виберіть, будь ласка вчителя', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboard
+            }
+          })
+          await set('CheckCorrectCollectedDataWhileAddingClub_Choose')('Викладач');
+          await set('state')('CheckCorrectCollectedDataWhileAddingClubHandler');
+          break;
+
+        case "Дата":
+          ctx.reply('вкажіть день, місяць та рік у форматі:\n23.05.2024');
+          await set('CheckCorrectCollectedDataWhileAddingClub_Choose')('Дата');
+          await set('state')('CheckCorrectCollectedDataWhileAddingClubHandler');
+          break;
+
+        case "Час":
+          ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
+          await set('CheckCorrectCollectedDataWhileAddingClub_Choose')('Час');
+          await set('state')('CheckCorrectCollectedDataWhileAddingClubHandler');
+          break;
+
+        case "Місця":
+          ctx.reply('кількість місць:');
+          await set('CheckCorrectCollectedDataWhileAddingClub_Choose')('Місця');
+          await set('state')('CheckCorrectCollectedDataWhileAddingClubHandler');
+          break;
+
+        case "Посилання":
+          ctx.reply('посилання:');
+          await set('CheckCorrectCollectedDataWhileAddingClub_Choose')('Посилання');
+          await set('state')('CheckCorrectCollectedDataWhileAddingClubHandler');
+          break;
+
+        case "Документація":
+          ctx.reply('документація:');
+          await set('CheckCorrectCollectedDataWhileAddingClub_Choose')('Документація');
+          await set('state')('CheckCorrectCollectedDataWhileAddingClubHandlerDocumentaion');
+          break;
+
+        case "Все спочатку":
+          ctx.reply("тема:");
+          await set('state')('ADD_RespondTitleAndGetTeacher');
+          break;
+      }
+    }
+  })
+
+  onTextMessage('CheckCorrectCollectedDataWhileAddingClubHandler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else{
+      const datePart = new Date(user['AP_date']);
+      switch(user['CheckCorrectCollectedDataWhileAddingClub_Choose']){
+        case "Тема":
+          await set('AP_title')(data.text);
+          await ctx.reply(script.speakingClub.report.checkClub(
+            user['AP_title'],
+            user['AP_teacher_name'],
+            `${UniversalSingleDataProcess(datePart, 'day_of_week')}, ${UniversalSingleDataProcess(datePart, 'day')} ${UniversalSingleDataProcess(datePart, 'month')}, ${UniversalSingleDataProcess(datePart, 'year')}`,
+            user['AP_time'],
+            data.text, 
+            parseInt(user['AP_count'])))
+          await ctx.reply("все вірно?", {
+            parse_mode: "HTML",
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.yesNo()
+            },
+          })
+    
+          await set('state')('ADD_CheckHandlerAndRoot');
+          break;
+
+        case "Викладач":
+          if (await dbProcess.GetTeacherBool(data.text)){
+            const teacher = await dbProcess.GetTeacherNameAndID(data.text, true);
+            await set("AP_teacher_name")(teacher[0]);
+            await set("AP_teacher_id")(teacher[1]);
+      
+            await ctx.reply(script.speakingClub.report.checkClub(
+              user['AP_title'],
+              user['AP_teacher_name'],
+              `${UniversalSingleDataProcess(datePart, 'day_of_week')}, ${UniversalSingleDataProcess(datePart, 'day')} ${UniversalSingleDataProcess(datePart, 'month')}, ${UniversalSingleDataProcess(datePart, 'year')}`,
+              user['AP_time'],
+              data.text, 
+              parseInt(user['AP_count'])))
+            await ctx.reply("все вірно?", {
+              parse_mode: "HTML",
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboards.yesNo()
+              },
+            })
+      
+            await set('state')('ADD_CheckHandlerAndRoot');
+          }
+          else{
+            const users = await dbProcess.ShowAllUsers();
+            let keyboard = [];
+    
+            for (let i = 0; i < users.length; i++){
+              if (users[i].role === 'teacher'){
+                keyboard.push([{ text: users[i].name }]);
+              }
+            }
+            ctx.reply('виберіть, будь ласка вчителя', {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboard
+              }
+            })
+          }
+          await set('state')('CheckCorrectCollectedDataWhileAddingClubHandler');
+          break;
+
+        case "Дата":
+          const date = DateProcess(data.text);
+
+          if (date[0] === 'date_uncorrect'){
+            ctx.reply('вибачте, але ви не правильно ввели дату :( повторіть, будь ласка, ще раз');
+          }
+          else if (date[0] === 'format_of_date_uncorrect'){
+            ctx.reply('перепрошую, але формат введеної вами дати не є корректним :(\n\nслідуйте, будь ласка, за данним прикладом 19.03.2024');
+          }
+          else{
+            await set('AP_date')(date[1]);
+          }
+          await ctx.reply(script.speakingClub.report.checkClub(
+            user['AP_title'],
+            user['AP_teacher_name'],
+            `${UniversalSingleDataProcess(new Date(date[0]), 'day_of_week')}, ${UniversalSingleDataProcess(new Date(date[0]), 'day')} ${UniversalSingleDataProcess(new Date(date[0]), 'month')}, ${UniversalSingleDataProcess(new Date(date[0]), 'year')}`,
+            user['AP_time'],
+            data.text, 
+            parseInt(user['AP_count'])))
+          await ctx.reply("все вірно?", {
+            parse_mode: "HTML",
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.yesNo()
+            },
+          })
+    
+          await set('state')('ADD_CheckHandlerAndRoot');;
+          break;
+
+        case "Час":
+          const time = TimeProcess(data.text);
+
+          if (time === 'time_uncorrect'){
+            ctx.reply('боженьки.. ви ввели не правильний час...\n\nповторіть, будь ласка, ще раз :)')
+          }
+          else if (time === 'format_of_time_uncorrect'){
+            ctx.reply('от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату 15:45\n\nповторіть, будь ласка, ще раз :)')
+          }
+          else{
+            await set('AP_time')(time);
+          }
+          
+          await ctx.reply(script.speakingClub.report.checkClub(
+            user['AP_title'],
+            user['AP_teacher_name'],
+            `${UniversalSingleDataProcess(datePart, 'day_of_week')}, ${UniversalSingleDataProcess(datePart, 'day')} ${UniversalSingleDataProcess(datePart, 'month')}, ${UniversalSingleDataProcess(datePart, 'year')}`,
+            user['AP_time'],
+            data.text, 
+            parseInt(user['AP_count'])))
+          await ctx.reply("все вірно?", {
+            parse_mode: "HTML",
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.yesNo()
+            },
+          })
+    
+          await set('state')('ADD_CheckHandlerAndRoot');
+          break;
+
+        case "Місця":
+          if (parseInt(data.text) <= 5 && parseInt(data.text) > 0){
+            await set('AP_count')(data.text);
+            await ctx.reply(script.speakingClub.report.checkClub(
+              user['AP_title'],
+              user['AP_teacher_name'],
+              `${UniversalSingleDataProcess(datePart, 'day_of_week')}, ${UniversalSingleDataProcess(datePart, 'day')} ${UniversalSingleDataProcess(datePart, 'month')}, ${UniversalSingleDataProcess(datePart, 'year')}`,
+              user['AP_time'],
+              data.text, 
+              parseInt(user['AP_count'])))
+            await ctx.reply("все вірно?", {
+              parse_mode: "HTML",
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboards.yesNo()
+              },
+            })
+      
+            await set('state')('ADD_CheckHandlerAndRoot');
+          }
+          else{
+            ctx.reply('кількість місць не може бути більше 5-ти');
+          }
+          break;
+
+        case "Посилання":
+          await set('AP_link')(data.text);
+          await ctx.reply(script.speakingClub.report.checkClub(
+            user['AP_title'],
+            user['AP_teacher_name'],
+            `${UniversalSingleDataProcess(datePart, 'day_of_week')}, ${UniversalSingleDataProcess(datePart, 'day')} ${UniversalSingleDataProcess(datePart, 'month')}, ${UniversalSingleDataProcess(datePart, 'year')}`,
+            user['AP_time'],
+            data.text, 
+            parseInt(user['AP_count'])))
+          await ctx.reply("все вірно?", {
+            parse_mode: "HTML",
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.yesNo()
+            },
+          })
+    
+          await set('state')('ADD_CheckHandlerAndRoot');
+          break;
+      }
+    }
+  })
+
+  onDocumentationMessage('CheckCorrectCollectedDataWhileAddingClubHandlerDocumentaion', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      //back
+    }
+    else if (CheckException.FileException(data)){
+      await set('AP_documentation')(data.file[0]);
+
+      const datePart = new Date(user['AP_date']);
+
+      await ctx.reply(script.speakingClub.report.checkClub(
+        user['AP_title'],
+        user['AP_teacher_name'],
+        `${UniversalSingleDataProcess(datePart, 'day_of_week')}, ${UniversalSingleDataProcess(datePart, 'day')} ${UniversalSingleDataProcess(datePart, 'month')}, ${UniversalSingleDataProcess(datePart, 'year')}`,
+        user['AP_time'],
+        data.text, 
+        parseInt(user['AP_count'])))
+      await ctx.reply("все вірно?", {
+        parse_mode: "HTML",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.yesNo()
+        },
+      })
+
+      await set('state')('ADD_CheckHandlerAndRoot');
+    }
+    else{
+      ctx.reply('це не схоже на файл типу PDF');
     }
   })
 
@@ -5204,23 +5467,40 @@ async function main() {
               teacher = await dbProcess.ShowOneUser(User.teacher);
 
             ctx.telegram.sendMessage(teacher!.id, script.notification.forTeachers.changeCountStudentIndividualLesson(
-              User!.name,
-              User!.username,
-              User!.number,
-              User!.miro_link ?? "якогось дідька відсутнє",
-              User!.individual_count ?? "якогось дідька 0"
+              User.name,
+              User.username,
+              User.number,
+              User.miro_link ?? "якогось дідька відсутнє",
+              User.individual_count ?? "якогось дідька 0"
             ));
 
             ctx.telegram.sendMessage(User!.id, script.notification.forStudent.changeCountStudentIndividualLesson(
               teacher!.name,
               teacher!.username,
               teacher!.number,
-              User!.miro_link ?? "якогось дідька відсутнє",
-              User!.individual_count ?? "якогось дідька 0"
+              User.miro_link ?? "якогось дідька відсутнє",
+              User.individual_count ?? "якогось дідька 0"
             ))
 
             await ctx.reply('✅ число занять змінено!');
-            
+            ctx.reply(script.studentFind.generalFind(
+              User.name,
+              User.id,
+              User.role,
+              User.username,
+              User.number,
+              User.typeOfLessons ?? "Індивідуальні",
+              teacher?.name ?? "Відсутній",
+              User.individual_count ?? 0,
+              User.miro_link ?? "Відсутня"
+            ), {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboards.individualFindUser()
+              }
+            })
+
+            await set('state')('IndividualUserChangehandler');
           }
           else{
             ctx.reply('введіть будь ласка цифру рівну або більше 0-ля');
@@ -5237,15 +5517,15 @@ async function main() {
             teacher = await dbProcess.ShowOneUser(User.teacher);
           ctx.reply('успішно!');
           ctx.reply(script.studentFind.generalFind(
-            User!.name,
-            User!.id,
-            User!.role,
-            User!.username,
-            User!.number,
-            User!.typeOfLessons ?? "Індивідуальні",
+            User.name,
+            User.id,
+            User.role,
+            User.username,
+            User.number,
+            User.typeOfLessons ?? "Індивідуальні",
             teacher?.name ?? "Відсутній",
-            User!.individual_count ?? 0,
-            User!.miro_link ?? "Відсутня"
+            User.individual_count ?? 0,
+            User.miro_link ?? "Відсутня"
           ), {
             reply_markup: {
               one_time_keyboard: true,
@@ -5270,6 +5550,24 @@ async function main() {
               User!.miro_link ?? "відсутнє",
               User!.individual_count ?? 0
             ))
+
+            await ctx.reply('студента переведено!');
+            await ctx.reply(script.studentFind.generalFind(
+              User.name,
+              User.id,
+              User.role,
+              User.username,
+              User.number,
+              User.typeOfLessons ?? "Індивідуальні",
+              teacher?.name ?? "Відсутній",
+              User.individual_count ?? 0,
+              User.miro_link ?? "Відсутня"
+            ), {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboards.individualFindUser()
+              }
+            })
           }
           else if (user['admin_parametr_to_change_individual'] === 'delete_student'){
             ctx.telegram.sendMessage(User!.id, script.notification.forStudent.deleteStudent(returnable_result!.name));
@@ -5278,10 +5576,30 @@ async function main() {
               User!.username,
               User!.number
             ))
+            ctx.reply(`✅ студента ${User.name} було успішно видалено від викладача ${returnable_result!.name}`)
           }
+          else{
+            await ctx.reply('лінк змінено!');
+            await ctx.reply(script.studentFind.generalFind(
+              User.name,
+              User.id,
+              User.role,
+              User.username,
+              User.number,
+              User.typeOfLessons ?? "Індивідуальні",
+              teacher?.name ?? "Відсутній",
+              User.individual_count ?? 0,
+              User.miro_link ?? "Відсутня"
+            ), {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboards.individualFindUser()
+              }
+            })
+          }
+          await set('state')('IndividualUserChangehandler');
           break;
       }
-      await set('state')('IndividualUserChangehandler')
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
   })

@@ -130,3 +130,6 @@ export type UserScriptState =
   | "UserLiveSupportHandler"
   | 'OperatorLiveSupportHandler'
   | "CareServiceQuestionHandler"
+  | "CheckCorrectCollectedDataWhileAddingClub"
+  | "CheckCorrectCollectedDataWhileAddingClubHandler"
+  | "CheckCorrectCollectedDataWhileAddingClubHandlerDocumentaion"
