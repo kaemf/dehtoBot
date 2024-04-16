@@ -122,6 +122,16 @@ class Keyboard{
       }
   }
 
+  toMenu(){
+    return [
+      [
+        {
+          text: "В МЕНЮ"
+        }
+      ]
+    ]
+  }
+
   coursesTeacherOnHour(){
       return [
           [

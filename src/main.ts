@@ -27,7 +27,7 @@ import { Context, Markup, TelegramError } from "telegraf";
 import { ObjectId } from 'mongodb';
 import { DateProcess, DateProcessToPresentView, SortSchedule, TimeProcess, UniversalSingleDataProcess, getDayOfWeek } from "./data/process/dateAndTimeProcess";
 import IndividualArray from "./data/individual/interface";
-import NotificationReg, { SendNotification } from "./data/notifications/notificationProcess";
+import NotificationReg, { SendNotification, SendNotificationWithMedia } from "./data/notifications/notificationProcess";
 import { Update } from "telegraf/typings/core/types/typegram";
 
 async function main() {
@@ -230,7 +230,7 @@ async function main() {
         parse_mode: "HTML",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: 'В МЕНЮ'}]]
+          keyboard: keyboards.toMenu()
         }
       })
     }
@@ -272,15 +272,14 @@ async function main() {
               userHaved += `- ${users[j].name} (@${users[j].username})\n📲${users[j].number}\n\n`;
             }
           }
-            if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
-              userHaved = '';
-            }
+          
+          if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
+            userHaved = '';
+          }
 
-            let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
+          let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
   
-          await ctx.telegram.sendDocument(ctx?.chat?.id ?? -1, results[i].documentation, { caption: script.speakingClub.report.showClubTypeTeacher(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved, results[i].link), 
-            parse_mode: "HTML"
-          });
+          await ctx.telegram.sendDocument(ctx?.chat?.id ?? -1, results[i].documentation, { caption: script.speakingClub.report.showClubTypeTeacher(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved, results[i].link)});
         }
       }
     }
@@ -863,31 +862,17 @@ async function main() {
     }
     else if (data.text === 'sysinfo'){
       ctx.reply(script.about(versionBot), {
-        parse_mode: 'HTML',
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: 'В МЕНЮ'
-              }
-            ]
-          ]
+          keyboard: keyboards.toMenu()
         }
       })
     }
     else{
       ctx.reply(script.errorException.chooseMenuButtonError, {
-        parse_mode: 'HTML',
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: 'В МЕНЮ'
-              }
-            ]
-          ]
+          keyboard: keyboards.toMenu()
         }
       })
     }
@@ -911,7 +896,12 @@ async function main() {
   
       await set('courseLevel')(data.text);
   
-      ctx.reply(script.payInvidualLesson.choosePacket(showLevel['🔵']['price'], showLevel['🔴']['price'], showLevel['🟢']['price'], showLevel['🟡']['price']), {
+      ctx.reply(script.payInvidualLesson.choosePacket(
+        showLevel['🔵 Мінімальний: 5 занять']['price'], 
+        showLevel['🔴 Економний: 10 занять']['price'],
+        showLevel['🟢 Популярний: 20 занять']['price'], 
+        showLevel['🟡 Вигідний: 50 занять']['price']),
+      {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -945,22 +935,18 @@ async function main() {
       await set('state')('RespondCourseAndGetPacket');
     }
     else if (data.text === '🟡 Вигідний: 50 занять' 
-    || data.text === '🟢 Популярний: 20 занять' 
-    || data.text === '🔴 Економний: 10 занять' 
-    || data.text === '🔵 Мінімальний: 5 занять'){
+      || data.text === '🟢 Популярний: 20 занять' 
+      || data.text === '🔴 Економний: 10 занять' 
+      || data.text === '🔵 Мінімальний: 5 занять'){
       const answer = data.text,
       showPacket = packet[user['courseLevel'] as keyof typeof packet][answer];
 
-      console.log(answer);
-
       await set('choosedPacketColor')(answer);
-  
       await set('choosedPacket')(`${user['courseLevel']}, ${showPacket.name} (${showPacket.countOfLessons} занять) - ${showPacket.price}`);
   
-      await ctx.reply(script.payInvidualLesson.statsAboutChoosedPacket(showPacket.name, showPacket.price, showPacket.countOfLessons))
+      await ctx.reply(script.payInvidualLesson.statsAboutChoosedPacket(showPacket.name, showPacket.price, showPacket.countOfLessons));
       await ctx.reply(script.payInvidualLesson.payment.require);
-      await ctx.reply(script.payInvidualLesson.payment.proofRequest, {reply_markup: {remove_keyboard: true}
-      });
+      await ctx.reply(script.payInvidualLesson.payment.proofRequest, {reply_markup: {remove_keyboard: true}});
       await set('state')('RespondPaymentAndSendData');
     }
     else{
@@ -1000,49 +986,18 @@ async function main() {
         inline = inlineApprovePayment(id, paymentStatus),
         unique_file_id = data.photo[0];
 
-      // For Developer
-      notifbot.telegram.sendPhoto(devChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
-        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()), 
-        parse_mode: 'HTML',
-        // ...Markup.inlineKeyboard(inline)
-        }
-      )
-      
-      // notifbot.telegram.sendPhoto(confirmationChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
-      //   caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()), 
-      //   parse_mode: 'HTML',
-      //   // ...Markup.inlineKeyboard(inline)
-      //   }
-      // )
-  
-      // notifbot.telegram.sendPhoto(supportChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
-      //   caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()),
-      //   parse_mode: 'HTML', 
-      //   // ...Markup.inlineKeyboard(inline)
-      //   }
-      // )
-
-      // notifbot.telegram.sendPhoto(eugeneChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
-      //   caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()),
-      //   parse_mode: 'HTML', 
-      //   ...Markup.inlineKeyboard(inline)
-      //   }
-      // )
+      SendNotificationWithMedia(
+        notifbot,
+        script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()),
+        (await NotificationReg(ctx, notiftoken, unique_file_id)).url,
+        'photo'
+      );
   
       ctx.reply(script.payInvidualLesson.endWork(await name ?? "учень"), {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: 'В МЕНЮ',
-              },
-              // {
-              //   text: '？Про Бота'
-              // }
-            ],
-          ],
+          keyboard: keyboards.toMenu()
         },
       });
 
@@ -1054,49 +1009,17 @@ async function main() {
         inline = inlineApprovePayment(id, paymentStatus),
         unique_file_id = data.file[0];
   
-      // For Developer
-      notifbot.telegram.sendDocument(devChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
-        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()), 
-        parse_mode: 'HTML',
-        // ...Markup.inlineKeyboard(inline)
-        }
-      )
-      
-      notifbot.telegram.sendDocument(confirmationChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
-        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()), 
-        parse_mode: 'HTML',
-        // ...Markup.inlineKeyboard(inline)
-        }
-      )
-  
-      notifbot.telegram.sendDocument(supportChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
-        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()),
-        parse_mode: 'HTML', 
-        // ...Markup.inlineKeyboard(inline)
-        }
-      )
-
-      notifbot.telegram.sendDocument(eugeneChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
-        caption: script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()),
-        parse_mode: 'HTML', 
-        // ...Markup.inlineKeyboard(inline)
-        }
-      )
+      SendNotificationWithMedia(
+        notifbot,
+        script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()),
+        (await NotificationReg(ctx, notiftoken, unique_file_id)).url,
+        'document'
+      );
   
       ctx.reply(script.payInvidualLesson.endWork(await name ?? "учень"), {
-        parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: 'В МЕНЮ',
-              },
-              // {
-              //   text: '？Про Бота'
-              // }
-            ],
-          ],
+          keyboard: keyboards.toMenu()
         },
       });
 
@@ -1325,33 +1248,11 @@ async function main() {
         inline = inlineApprovePayment(id, paymentStatus),
         unique_file_id = data.photo[0];
       
-      // For Developer
-      notifbot.telegram.sendPhoto(devChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
-        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
-        parse_mode: 'HTML', 
-        // ...Markup.inlineKeyboard(inline)
-        }
-      )
-      
-      notifbot.telegram.sendPhoto(confirmationChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
-        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
-        parse_mode: 'HTML', 
-        // ...Markup.inlineKeyboard(inline)
-        }
-      )
-  
-      notifbot.telegram.sendPhoto(supportChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
-        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
-        parse_mode: 'HTML',
-        // ...Markup.inlineKeyboard(inline)
-        }
-      )
-
-      notifbot.telegram.sendPhoto(eugeneChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
-        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
-        parse_mode: 'HTML',
-        // ...Markup.inlineKeyboard(inline)
-        }
+      SendNotificationWithMedia(
+        notifbot,
+        script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
+        (await NotificationReg(ctx, notiftoken, unique_file_id)).url,
+        'photo'
       )
   
       await ctx.reply(script.teacherOnHour.payment.paymentSent(await name ?? 'учень'));
@@ -1359,20 +1260,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              // {
-              //   text: 'Замовити ще одну зустріч',
-              // },
-            ],[
-              {
-                text: 'В МЕНЮ',
-              },
-              // {
-              //   text: '？Про Бота'
-              // }
-            ],
-          ],
+          keyboard: keyboards.toMenu()
         },
       });
   
@@ -1385,33 +1273,11 @@ async function main() {
         inline = inlineApprovePayment(id, paymentStatus),
         unique_file_id = data.file[0];
       
-      // For Developer
-      notifbot.telegram.sendDocument(devChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
-        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
-        parse_mode: 'HTML', 
-        // ...Markup.inlineKeyboard(inline)
-        }
-      )
-      
-      notifbot.telegram.sendDocument(confirmationChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
-        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
-        parse_mode: 'HTML', 
-        // ...Markup.inlineKeyboard(inline)
-        }
-      )
-  
-      notifbot.telegram.sendDocument(supportChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
-        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
-        parse_mode: 'HTML',
-        // ...Markup.inlineKeyboard(inline)
-        }
-      )
-
-      notifbot.telegram.sendDocument(eugeneChat, await NotificationReg(ctx, notiftoken, unique_file_id), {
-        caption: script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
-        parse_mode: 'HTML',
-        // ...Markup.inlineKeyboard(inline)
-        }
+      SendNotificationWithMedia(
+        notifbot,
+        script.teacherOnHour.report(user['name'], user['username'], user['phone_number'], user['course'], user['lecture'], user['question'], DateRecord()),
+        (await NotificationReg(ctx, notiftoken, unique_file_id)).url,
+        'document'
       )
   
       await ctx.reply(script.teacherOnHour.payment.paymentSent(await name ?? 'учень'));
@@ -1422,18 +1288,15 @@ async function main() {
           keyboard: [
             [
               {
-                text: 'Замовити ще одну зустріч',
-              },
+                text: 'Замовити ще одну зустріч'
+              }
             ],[
               {
-                text: 'В МЕНЮ',
-              },
-              // {
-              //   text: '？Про Бота'
-              // }
-            ],
-          ],
-        },
+                text: 'В МЕНЮ'
+              }
+            ]
+          ]
+        }
       });
   
       set('state')('EndRootManager');
@@ -1491,24 +1354,14 @@ async function main() {
     else if (CheckException.TextException(data)){
       await set('_addquesttrial')(data.text);
       
-      // For Developer
       SendNotification(notifbot, script.registrationLesson.report(user['name'], user['username'], user['phone_number'], user['_graphic'], user['_languagelevel'], data.text, DateRecord()));
   
       ctx.reply(script.registrationLesson.end, {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "В МЕНЮ",
-              },
-              // {
-              //   text: '？Про Бота'
-              // }
-            ],
-          ],
-        },
+          keyboard: keyboards.toMenu()
+        }
       })
   
       await set('state')('EndRootManager');
@@ -1632,7 +1485,7 @@ async function main() {
             parse_mode: "HTML",
             reply_markup: {
               one_time_keyboard: true,
-              keyboard: [[{ text: "В МЕНЮ" }]]
+              keyboard: keyboards.toMenu()
             }
           })
     
@@ -1709,13 +1562,7 @@ async function main() {
       ctx.reply(script.speakingClub.defaultDecline, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: 'В МЕНЮ'
-              }
-            ]
-          ]
+          keyboard: keyboards.toMenu()
         }
       })
 
@@ -1725,16 +1572,7 @@ async function main() {
       ctx.reply(script.errorException.chooseButtonError, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: 'так'
-              },
-              {
-                text: 'ні'
-              }
-            ]
-          ]
+          keyboard: keyboards.yesNo()
         }
       });
     }
@@ -1770,17 +1608,19 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "В МЕНЮ"
-              }
-            ],
-          ],
+          keyboard: keyboards.toMenu()
         },
       });
 
       await set('state')('EndRootManager');
+    }
+    else{
+      ctx.reply(script.errorException.chooseButtonError, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.yesNo()
+        }
+      });
     }
   })
 
@@ -1833,13 +1673,7 @@ async function main() {
           parse_mode: "HTML",
           reply_markup: {
             one_time_keyboard: true,
-            keyboard: [
-              [
-                {
-                  text: "В МЕНЮ"
-                },
-              ]
-            ],
+            keyboard: keyboards.toMenu()
           },
         });
         await set('state')('EndRootManager');
@@ -1849,16 +1683,7 @@ async function main() {
           parse_mode: "HTML",
           reply_markup: {
             one_time_keyboard: true,
-            keyboard: [
-              [
-                {
-                  text: "так"
-                },
-                {
-                  text: "ні"
-                }
-              ]
-            ],
+            keyboard: keyboards.yesNo()
           },
         });
         await set('state')('RespondCheckLessonsAndGetLessons');
@@ -1947,19 +1772,7 @@ async function main() {
           parse_mode: "Markdown",
           reply_markup: {
             one_time_keyboard: true,
-            keyboard: [
-              [
-                {
-                  text: 'В МЕНЮ',
-                },
-                // {
-                //   text: "Назад до реєстрації"
-                // }
-                // {
-                //   text: '？Про Бота'
-                // }
-              ],
-            ],
+            keyboard: keyboards.toMenu()
           },
         })
 
@@ -2006,19 +1819,7 @@ async function main() {
           parse_mode: "Markdown",
           reply_markup: {
             one_time_keyboard: true,
-            keyboard: [
-              [
-                {
-                  text: 'В МЕНЮ',
-                },
-                // {
-                //   text: "Назад до реєстрації"
-                // }
-                // {
-                //   text: '？Про Бота'
-                // }
-              ],
-            ],
+            keyboard: keyboards.toMenu()
           },
         })
 
@@ -2118,19 +1919,7 @@ async function main() {
           parse_mode: "Markdown",
           reply_markup: {
             one_time_keyboard: true,
-            keyboard: [
-              [
-                {
-                  text: 'В МЕНЮ',
-                },
-                // {
-                //   text: "Назад до реєстрації"
-                // }
-                // {
-                //   text: '？Про Бота'
-                // }
-              ],
-            ],
+            keyboard: keyboards.toMenu()
           },
         })
         await set('state')('EndRootManager');
@@ -2276,16 +2065,7 @@ async function main() {
           parse_mode: "HTML",
           reply_markup: {
             one_time_keyboard: true,
-            keyboard: [
-              [
-                {
-                  text: "В МЕНЮ",
-                },
-                // {
-                //   text: "Назад до реєстрації",
-                // }
-              ],
-            ],
+            keyboard: keyboards.toMenu()
           },
         });
   
@@ -2510,13 +2290,7 @@ async function main() {
       ctx.reply(script.speakingClub.defaultDecline, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "В МЕНЮ"
-              }
-            ]
-          ]
+          keyboard: keyboards.toMenu()
         }
       });
 
@@ -4755,7 +4529,7 @@ async function main() {
         ctx.reply(`${message_operation === 'student_task_rewrited' ? 'попереднє деЗавдання було видалено у студента, та додане нове успішно!' : 'завдання успішно додано студенту!'}`, {
           reply_markup: {
             one_time_keyboard: true,
-            keyboard: [[{text: "В МЕНЮ"}]]
+            keyboard: keyboards.toMenu()
           }
         });
         ctx.telegram.sendMessage(userID, "егей! у вас нове деЗавдання!");
@@ -4815,7 +4589,7 @@ async function main() {
       ctx.reply('завдання успішно здані!', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{ text: "В МЕНЮ" }]]
+          keyboard: keyboards.toMenu()
         }
       })
 
@@ -5211,7 +4985,7 @@ async function main() {
         ctx.reply(`${message_operation === 'student_task_rewrited' ? 'попереднє деЗавдання було видалено у студента, та додане нове успішно!' : 'завдання успішно додано студенту!'}`, {
           reply_markup: {
             one_time_keyboard: true,
-            keyboard: [[{text: "В МЕНЮ"}]]
+            keyboard: keyboards.toMenu()
           }
         });
         ctx.telegram.sendMessage(userID, "егей! у вас нове деЗавдання!");
@@ -5220,7 +4994,7 @@ async function main() {
       else ctx.reply('нажаль... виникла помилка, студент якого ви обрали на початку не знайдено в базі даних :(\n\nповторіть, будь ласка, знову', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{ text: "В МЕНЮ" }]]
+          keyboard: keyboards.toMenu()
         }
       })
 
@@ -5594,7 +5368,7 @@ async function main() {
           ctx.reply(script.indivdual.studentDeleteFromTeacher(teacher!.name, User!.name), {
             reply_markup: {
               one_time_keyboard: true,
-              keyboard: [[{ text: "В МЕНЮ" }]]
+              keyboard: keyboards.toMenu()
             }
           });
           await set('state')('EndRootManager');
@@ -5615,7 +5389,7 @@ async function main() {
             ), {
               reply_markup: {
                 one_time_keyboard: true,
-                keyboard: [[{ text: "В МЕНЮ" }]]
+                keyboard: keyboards.toMenu()
               }
             })
             await set('state')('EndRootManager');
@@ -5825,14 +5599,14 @@ async function main() {
           ctx.reply('✅ викладача Мякишева катерина було успішно видалено', {
             reply_markup: {
               one_time_keyboard: true,
-              keyboard: [[{ text: "В МЕНЮ"} ]]
+              keyboard: keyboards.toMenu()
             }
           })
           :
           ctx.reply('✅ помилка при видаленні викладача', {
             reply_markup: {
               one_time_keyboard: true,
-              keyboard: [[{ text: "В МЕНЮ"} ]]
+              keyboard: keyboards.toMenu()
             }
           })
           await set('state')('EndFunctionManager')
@@ -6061,7 +5835,7 @@ async function main() {
           ), {
             reply_markup: {
               one_time_keyboard: true,
-              keyboard: [[{ text: "В МЕНЮ" }]]
+              keyboard: keyboards.toMenu()
             }
           })
           await set('state')('EndRootManager');
@@ -6172,7 +5946,7 @@ async function main() {
       ctx.reply(script.operationWithGuest(student!.name, teacher!.name, data.text, true), {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{ text: "В МЕНЮ" }]]
+          keyboard: keyboards.toMenu()
         }
       });
       await set('state')('EndRootManager');
@@ -6249,7 +6023,7 @@ async function main() {
       ctx.reply(script.operationWithGuest(student!.name, teacher!.name, data.text), {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{ text: "В МЕНЮ" }]]
+          keyboard: keyboards.toMenu()
         }
       });
       await set('state')('EndRootManager');
@@ -6395,7 +6169,7 @@ async function main() {
           ctx.reply('віправлено ✅', {
             reply_markup: {
               one_time_keyboard: true,
-              keyboard: [[{ text: "В МЕНЮ" }]]
+              keyboard: keyboards.toMenu()
             }
           })
           await set('state')('EndRootManager')
@@ -6415,7 +6189,7 @@ async function main() {
           ctx.reply('віправлено ✅', {
             reply_markup: {
               one_time_keyboard: true,
-              keyboard: [[{ text: "В МЕНЮ" }]]
+              keyboard: keyboards.toMenu()
             }
           })
           await set('state')('EndRootManager')
@@ -6435,7 +6209,7 @@ async function main() {
           ctx.reply('віправлено ✅', {
             reply_markup: {
               one_time_keyboard: true,
-              keyboard: [[{ text: "В МЕНЮ" }]]
+              keyboard: keyboards.toMenu()
             }
           })
           await set('state')('EndRootManager')
@@ -6501,7 +6275,7 @@ async function main() {
           ctx.reply('віправлено ✅', {
             reply_markup: {
               one_time_keyboard: true,
-              keyboard: [[{ text: "В МЕНЮ" }]]
+              keyboard: keyboards.toMenu()
             }
           })
           await set('state')('EndRootManager')
@@ -7522,7 +7296,7 @@ async function main() {
           ctx.reply('фуух, так і знали, що це якась помилка)', {
             reply_markup: {
               one_time_keyboard: true,
-              keyboard: [[{ text: "В МЕНЮ" }]]
+              keyboard: keyboards.toMenu()
             }
           })
           await set('state')('EndRootManager');
@@ -7765,7 +7539,7 @@ async function main() {
       ), {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{ text: "В МЕНЮ" }]]
+          keyboard: keyboards.toMenu()
         }
       })
       
@@ -7806,14 +7580,14 @@ async function main() {
       ctx.reply('Канал успішно закрито, сподіваємося ваше питання було вирішено!', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{ text: "В МЕНЮ" }]]
+          keyboard: keyboards.toMenu()
         }
       });
 
       ctx.telegram.sendMessage(user['activeHelperLiveSupport'], "Користувач закрив канал.", {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{ text: "В МЕНЮ" }]]
+          keyboard: keyboards.toMenu()
         }
       })
 
@@ -7964,14 +7738,14 @@ async function main() {
       ctx.reply('Прекрасно, тепер можете відпочивати', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{ text: "В МЕНЮ" }]]
+          keyboard: keyboards.toMenu()
         }
       })
 
       ctx.telegram.sendMessage(user['activeUserLiveSupport'], "Оператор закрив канал, сподіваємося ваше питання було вирішено.", {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{ text: "В МЕНЮ" }]]
+          keyboard: keyboards.toMenu()
         }
       })
 
@@ -8118,7 +7892,7 @@ async function main() {
       ctx.reply('добренько, гадаємо це була помилка, гарного дня', {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{ text: "В МЕНЮ" }]]
+          keyboard: keyboards.toMenu()
         }
       })
 

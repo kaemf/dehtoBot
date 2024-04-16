@@ -16,3 +16,30 @@ export function SendNotification(notifbot: Telegraf<Context<Update>>, message: s
 
     notifbot.telegram.sendMessage(eugeneChat, message, {parse_mode: "HTML"});
 }
+
+export function SendNotificationWithMedia(notifbot: Telegraf<Context<Update>>, message: string, url: string, type: string){
+    switch(type){
+        case "photo":
+            notifbot.telegram.sendPhoto(devChat, url, {caption: message, parse_mode: "HTML"});
+    
+            notifbot.telegram.sendPhoto(confirmationChat, url, {caption: message, parse_mode: "HTML"});
+        
+            notifbot.telegram.sendPhoto(supportChat, url, {caption: message, parse_mode: "HTML"});
+        
+            notifbot.telegram.sendPhoto(eugeneChat, url, {caption: message, parse_mode: "HTML"});
+            break;
+
+        case "document":
+            notifbot.telegram.sendDocument(devChat, url, {caption: message, parse_mode: "HTML"});
+    
+            notifbot.telegram.sendDocument(confirmationChat, url, {caption: message, parse_mode: "HTML"});
+        
+            notifbot.telegram.sendDocument(supportChat, url, {caption: message, parse_mode: "HTML"});
+        
+            notifbot.telegram.sendDocument(eugeneChat, url, {caption: message, parse_mode: "HTML"});
+            break;
+
+        default:
+            throw new Error('Uncorrect parametr in SendNotificationWithMedia(). Parametr type: ' + type);
+    }
+}
