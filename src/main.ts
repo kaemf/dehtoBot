@@ -253,16 +253,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Клуби"
-              },
-              {
-                text: "Особові справи"
-              }
-            ]
-          ],
+          keyboard: keyboards.speakingClubStartAdminMenu()
         },
       })
 
@@ -703,8 +694,8 @@ async function main() {
 
   onTextMessage('LevelRespondAndRequestQuestions', async (ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      ctx.reply(script.trialLesson.niceWhatATime, {reply_markup: {remove_keyboard: true}});
-      await set('state')('GraphicRespondAndLevelRequest')
+      ctx.reply(script.trialLesson.countOfLessonsRequest, {reply_markup: {remove_keyboard: true}})
+      await set('state')('CountRespondAndLevelRequest');
     }
     else if (CheckException.TextException(data)){
       await set('languagelevel')(data.text);
@@ -723,7 +714,6 @@ async function main() {
       await set('state')('LevelRespondAndRequestQuestions');
     }
     else if (CheckException.TextException(data)){
-      // For Developer
       SendNotification(notifbot, script.trialLesson.report(user['name'], user['username'], user['phone_number'], user['graphic'], user['languagelevel'], data.text, DateRecord()))
       const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
@@ -737,22 +727,7 @@ async function main() {
       await set('state')('FunctionRoot');
     }
     else{
-      ctx.reply(script.errorException.chooseButtonError, {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "так, є",
-              },
-            ],[
-              {
-                text: "ні, немає",
-              },
-            ],
-          ],
-        }
-      })
+      ctx.reply(script.errorException.textGettingError.defaultException);
     }
   })
 
@@ -969,9 +944,14 @@ async function main() {
 
       await set('state')('RespondCourseAndGetPacket');
     }
-    else if (data.text === '🟡' || data.text === '🟢' || data.text === '🔴' || data.text === '🔵'){
+    else if (data.text === '🟡 Вигідний: 50 занять' 
+    || data.text === '🟢 Популярний: 20 занять' 
+    || data.text === '🔴 Економний: 10 занять' 
+    || data.text === '🔵 Мінімальний: 5 занять'){
       const answer = data.text,
       showPacket = packet[user['courseLevel'] as keyof typeof packet][answer];
+
+      console.log(answer);
 
       await set('choosedPacketColor')(answer);
   
@@ -2597,20 +2577,7 @@ async function main() {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [
-            [
-              {
-                text: "Шпрах-Клуби"
-              },
-              {
-                text: "Особові справи"
-              }
-            ],[
-              {
-                text: "В МЕНЮ"
-              }
-            ]
-          ],
+          keyboard: keyboards.speakingClubStartAdminMenu()
         }}
       );
     }

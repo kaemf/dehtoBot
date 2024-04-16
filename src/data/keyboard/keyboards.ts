@@ -192,6 +192,19 @@ class Keyboard{
     ]
   }
 
+  speakingClubStartAdminMenu(){
+    return [
+      [
+        {
+          text: "Клуби"
+        },
+        {
+          text: "Особові справи"
+        }
+      ]
+    ]
+  }
+
   spekingClubAdminPanel(){
     return [
       [
@@ -631,18 +644,19 @@ class Keyboard{
     return [
       [
         {
-          text: "🔵",
-        },
+          text: "🔵 Мінімальний: 5 занять",
+        }
+      ],[
         {
-          text: "🔴",
+          text: "🔴 Економний: 10 занять",
         },
-      ],
-      [
+      ],[
         {
-          text: "🟢",
-        },
+          text: "🟢 Популярний: 20 занять",
+        }
+      ],[
         {
-          text: "🟡",
+          text: "🟡 Вигідний: 50 занять",
         }
       ]
     ]
