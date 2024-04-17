@@ -246,7 +246,7 @@ async function main() {
     }
     else if (data.text === 'Відправити сповіщення' && (userI!.role === 'admin' || userI!.role === 'developer')){
       ctx.reply('напишіть текст сповіщення, який ви хочете віправити');
-      await set('state')('AdminNotificationRepondText')
+      await set('state')('AdminNotificationRepondText');
     }
     else if (data.text === "Розмовні клуби" && checkChats(ctx?.chat?.id ?? -1)){
       ctx.reply("що цікавить? :)", {
@@ -594,7 +594,7 @@ async function main() {
           keyboard: teachersKeyboard
         }
       });
-      await set('state')('AdminTeachersOperationHandler')
+      await set('state')('AdminTeachersOperationHandler');
     }
     else if (data.text === 'Показати усіх наших студентів' && (userObject!.role === 'admin' || userObject!.role === 'developer')){
       const users = await dbProcess.ShowAllUsers();
@@ -1383,6 +1383,8 @@ async function main() {
           keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userA!.role),
         },
       });
+
+      await set('state')('FunctionRoot');
     }
     else{
       switch(data.text){
@@ -2792,7 +2794,23 @@ async function main() {
 
   onTextMessage('CheckCorrectCollectedDataWhileAddingClub', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const datePart = new Date(user['AP_date']);
+      await ctx.reply(script.speakingClub.report.checkClub(
+        user['AP_title'],
+        user['AP_teacher_name'],
+        `${UniversalSingleDataProcess(datePart, 'day_of_week')}, ${UniversalSingleDataProcess(datePart, 'day')} ${UniversalSingleDataProcess(datePart, 'month')}, ${UniversalSingleDataProcess(datePart, 'year')}`,
+        user['AP_time'],
+        user['AP_link'], 
+        parseInt(user['AP_count'])))
+      await ctx.reply("все вірно?", {
+        parse_mode: "HTML",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.yesNo()
+        },
+      })
+
+      await set('state')('ADD_CheckHandlerAndRoot');
     }
     else{
       switch(data.text){
@@ -2861,7 +2879,14 @@ async function main() {
 
   onTextMessage('CheckCorrectCollectedDataWhileAddingClubHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('що саме не так?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.checkCorrectCollectedDataWhileAddingClub()
+        }
+      })
+
+      await set('state')('CheckCorrectCollectedDataWhileAddingClub');
     }
     else{
       const datePart = new Date(user['AP_date']);
@@ -2873,7 +2898,7 @@ async function main() {
             user['AP_teacher_name'],
             `${UniversalSingleDataProcess(datePart, 'day_of_week')}, ${UniversalSingleDataProcess(datePart, 'day')} ${UniversalSingleDataProcess(datePart, 'month')}, ${UniversalSingleDataProcess(datePart, 'year')}`,
             user['AP_time'],
-            data.text, 
+            user['AP_link'], 
             parseInt(user['AP_count'])))
           await ctx.reply("все вірно?", {
             parse_mode: "HTML",
@@ -2894,10 +2919,10 @@ async function main() {
       
             await ctx.reply(script.speakingClub.report.checkClub(
               user['AP_title'],
-              user['AP_teacher_name'],
+              teacher[0],
               `${UniversalSingleDataProcess(datePart, 'day_of_week')}, ${UniversalSingleDataProcess(datePart, 'day')} ${UniversalSingleDataProcess(datePart, 'month')}, ${UniversalSingleDataProcess(datePart, 'year')}`,
               user['AP_time'],
-              data.text, 
+              user['AP_link'], 
               parseInt(user['AP_count'])))
             await ctx.reply("все вірно?", {
               parse_mode: "HTML",
@@ -2943,9 +2968,9 @@ async function main() {
           await ctx.reply(script.speakingClub.report.checkClub(
             user['AP_title'],
             user['AP_teacher_name'],
-            `${UniversalSingleDataProcess(new Date(date[0]), 'day_of_week')}, ${UniversalSingleDataProcess(new Date(date[0]), 'day')} ${UniversalSingleDataProcess(new Date(date[0]), 'month')}, ${UniversalSingleDataProcess(new Date(date[0]), 'year')}`,
+            `${UniversalSingleDataProcess(new Date(date[1]), 'day_of_week')}, ${UniversalSingleDataProcess(new Date(date[1]), 'day')} ${UniversalSingleDataProcess(new Date(date[1]), 'month')}, ${UniversalSingleDataProcess(new Date(date[1]), 'year')}`,
             user['AP_time'],
-            data.text, 
+            user['AP_link'], 
             parseInt(user['AP_count'])))
           await ctx.reply("все вірно?", {
             parse_mode: "HTML",
@@ -2975,8 +3000,8 @@ async function main() {
             user['AP_title'],
             user['AP_teacher_name'],
             `${UniversalSingleDataProcess(datePart, 'day_of_week')}, ${UniversalSingleDataProcess(datePart, 'day')} ${UniversalSingleDataProcess(datePart, 'month')}, ${UniversalSingleDataProcess(datePart, 'year')}`,
-            user['AP_time'],
-            data.text, 
+            time,
+            user['AP_link'], 
             parseInt(user['AP_count'])))
           await ctx.reply("все вірно?", {
             parse_mode: "HTML",
@@ -2997,8 +3022,9 @@ async function main() {
               user['AP_teacher_name'],
               `${UniversalSingleDataProcess(datePart, 'day_of_week')}, ${UniversalSingleDataProcess(datePart, 'day')} ${UniversalSingleDataProcess(datePart, 'month')}, ${UniversalSingleDataProcess(datePart, 'year')}`,
               user['AP_time'],
-              data.text, 
-              parseInt(user['AP_count'])))
+              user['AP_link'], 
+              parseInt(data.text)
+            ))
             await ctx.reply("все вірно?", {
               parse_mode: "HTML",
               reply_markup: {
@@ -3039,7 +3065,14 @@ async function main() {
 
   onDocumentationMessage('CheckCorrectCollectedDataWhileAddingClubHandlerDocumentaion', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('що саме не так?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.checkCorrectCollectedDataWhileAddingClub()
+        }
+      })
+
+      await set('state')('CheckCorrectCollectedDataWhileAddingClub');
     }
     else if (CheckException.FileException(data)){
       await set('AP_documentation')(data.file[0]);
@@ -3732,7 +3765,7 @@ async function main() {
     }
     else if (data.text === 'Знайти користувача за даними'){
       ctx.reply('введіть його ID / повне ім’я / номер телефону / нік в телеграмі');
-      await set('state')('AdminSpeakingClubPersonalFindUser')
+      await set('state')('AdminSpeakingClubPersonalFindUser');
     }
     else if (data.text === 'Змінити імʼя користувачу'){
       ctx.reply('Введіть id користувача, якому потрібно змінити імʼя', {reply_markup: {remove_keyboard: true}});
@@ -3909,7 +3942,23 @@ async function main() {
 
   onTextMessage('CheckAvaibleActivePacketAndChangeCountLesson', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const results = await dbProcess.ShowAllUsers();
+    
+      for (let i = 0; i < results.length; i++) {
+        await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, 
+          results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!), ConvertToPrice((await db.get(results[i].id)('club-typeclub'))!)!));
+      }
+
+      await ctx.reply('Виберіть номер студента, якому потрібно додати заняття', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+            return [{ text: `${index + 1}` }];
+          })
+        }
+      })
+
+      await set('state')('AddLessonForStudent');
     }
     else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1){
       await set('AP_UserChangeCountLesson_New')(data.text);
@@ -4380,7 +4429,16 @@ async function main() {
 
   onTextMessage('TeachersSetTasksHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+      ctx.reply(script.entire.chooseFunction, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject && userObject!.role !== undefined && userObject!.role !== null ? userObject!.role : 'guest')
+        }
+      })
+
+      await set('state')('FunctionRoot');
     }
     else if (data.text === 'ОБРАТИ СТУДЕНТА'){
       const teacher = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
@@ -4921,7 +4979,13 @@ async function main() {
 
   onTextMessage('EndTeacherDeTaskHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('вітаю в деЗавданнях, що саме вас цікавить?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.deTaskMenu()
+        }
+      })
+      await set('state')('TeacherDeTaskHandler');
     }
     else{
       switch(data.text){
@@ -4966,7 +5030,13 @@ async function main() {
 
   onTextMessage('AnotherTeachersSetTasksHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('вітаю в деЗавданнях, що саме вас цікавить?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.deTaskMenu()
+        }
+      })
+      await set('state')('TeacherDeTaskHandler');
     }
     else if (data.text === 'НАЗНАЧИТИ ЗАВДАННЯ'){
       const userID = parseInt(user['tmp_userid_detask']),
@@ -5107,7 +5177,16 @@ async function main() {
 
   onTextMessage('StudentFindHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+      ctx.reply(script.entire.chooseFunction, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject && userObject!.role !== undefined && userObject!.role !== null ? userObject!.role : 'guest')
+        }
+      })
+
+      await set('state')('FunctionRoot');
     }
     else if (CheckException.TextException(data)){
       const User = await dbProcess.FindUser(data.text);
@@ -5135,11 +5214,21 @@ async function main() {
       }
       else ctx.reply('такого студента в базі даних немає, спробуйте ще раз');
     }
+    else ctx.reply(script.errorException.textGettingError.defaultException);
   })
 
   onTextMessage('IndividualUserChangehandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+      ctx.reply(script.entire.chooseFunction, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject && userObject!.role !== undefined && userObject!.role !== null ? userObject!.role : 'guest')
+        }
+      })
+
+      await set('state')('FunctionRoot');
     }
     else{
       const User = await dbProcess.ShowOneUser(parseInt(user['user_to_change_individual_id']));
@@ -5193,7 +5282,28 @@ async function main() {
 
   onTextMessage('IndividualChangeUserDataHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const User = await dbProcess.FindUser(user['user_to_change_individual_id']);
+      if (User){
+        const teacher = await dbProcess.ShowOneUser(User.teacher);
+        ctx.reply(script.studentFind.generalFind(
+          User.name,
+          User.id,
+          User.role,
+          User.username,
+          User.number,
+          User.typeOfLessons ?? "Індивідуальні",
+          teacher?.name ?? "Відсутній",
+          User.individual_count ?? 0,
+          User.miro_link ?? "Відсутня"
+        ), {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.individualFindUser()
+          }
+        })
+
+        await set('state')('IndividualUserChangehandler');
+      }
     }
     else if (CheckException.TextException(data)){
       switch(user['admin_parametr_to_change_individual']){
@@ -5347,7 +5457,29 @@ async function main() {
 
   onTextMessage('DeleteStudentFromTeacherIndividualHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const User = await dbProcess.FindUser(user['user_to_change_individual_id']);
+      if (User){
+        const teacher = await dbProcess.ShowOneUser(User.teacher);
+        ctx.reply(script.studentFind.generalFind(
+          User.name,
+          User.id,
+          User.role,
+          User.username,
+          User.number,
+          User.typeOfLessons ?? "Індивідуальні",
+          teacher?.name ?? "Відсутній",
+          User.individual_count ?? 0,
+          User.miro_link ?? "Відсутня"
+        ), {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.individualFindUser()
+          }
+        })
+
+        await set('state')('IndividualUserChangehandler');
+      }
+      else ctx.reply('такого студента в базі даних немає, спробуйте ще раз');
     }
     else{
       const User = await dbProcess.FindUser(user['user_to_change_individual_id']),
@@ -5408,7 +5540,15 @@ async function main() {
 
   onTextMessage('AdminTeachersOperationHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+      ctx.reply(script.indivdual.entire(userI!.role), {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.indiviualMenu(userI!.role)
+        }
+      })
+
+      await set('state')('IndividualHandler');
     }
     else if (CheckException.TextException(data)){
       const userID = await dbProcess.GetUserIDByName(data.text);
@@ -5471,7 +5611,21 @@ async function main() {
 
   onTextMessage('AdminOurTeachersHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const teachers = await dbProcess.ShowAllUsers();
+      let teachersKeyboard = [];
+
+      for (let i = 0; i < teachers.length; i++){
+        if (teachers[i].role === 'teacher'){
+          teachersKeyboard.push([{ text: teachers[i].name }]);
+        }
+      }
+      ctx.reply('оберіть зі списку викладача з яким ви хочете щось зробити:', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: teachersKeyboard
+        }
+      });
+      await set('state')('AdminTeachersOperationHandler');
     }
     else{
       const teacher = await dbProcess.ShowOneUser(parseInt(user['admin_teachersoperation_idone']));
@@ -5588,7 +5742,22 @@ async function main() {
 
   onTextMessage('AdminTeacherDeleteFromPost', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const teacher = await dbProcess.ShowOneUser(parseInt(user['admin_teachersoperation_idone']));
+      ctx.reply(script.studentFind.showTeacher(
+        teacher!.name,
+        teacher!.id,
+        teacher!.role,
+        teacher!.username,
+        teacher!.number,
+        teacher?.registered_students?.length ?? 0
+      ), {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.ourTeachersMenu()
+        }
+      })
+
+      await set('state')('AdminOurTeachersHandler');
     }
     else{
       const teacher = await dbProcess.ShowOneUser(parseInt(user['admin_teachersoperation_idone']));
@@ -5644,7 +5813,16 @@ async function main() {
 
   onTextMessage('AdminUsersOperationHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+      ctx.reply(script.entire.chooseFunction, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject && userObject!.role !== undefined && userObject!.role !== null ? userObject!.role : 'guest')
+        }
+      })
+
+      await set('state')('FunctionRoot');
     }
     else{
       switch(data.text){
@@ -5702,7 +5880,14 @@ async function main() {
 
   onTextMessage('FindUserAndGoToOperationWithHim', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('оберіть одну із кнопок нижче:', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.usersMenu()
+        }
+      })
+
+      await set('state')('AdminUsersOperationHandler');
     }
     else if (CheckException.TextException(data)){
       const User = await dbProcess.FindUser(data.text);
@@ -5740,7 +5925,8 @@ async function main() {
 
   onTextMessage('OperationWithUserHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('введіть його ID / повне ім’я / номер телефону / нік в телеграмі');
+      await set('state')('FindUserAndGoToOperationWithHim');
     }
     else{
       switch(data.text){
@@ -5794,7 +5980,7 @@ async function main() {
               keyboard: _teachersKeyboard
             }
           })
-          await set('state')('AdminAddUserToTeacher_RespondTeacher')
+          await set('state')('AdminAddUserToTeacher_RespondTeacher');
           break;
 
         default:
@@ -5810,7 +5996,33 @@ async function main() {
 
   onTextMessage('AdminChangeRoleForUserHadnler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const User = await dbProcess.FindUser(user['admin_tmp_usersoperation_user_id']);
+
+      if (User){
+        const teacher = await dbProcess.ShowOneUser(User.teacher);
+
+        ctx.reply(script.studentFind.diffUserFind(
+          User.role,
+          User.id,
+          User.name,
+          User.username,
+          User.number,
+          teacher? teacher.name: "відсутній",
+          User.individual_count ?? 0,
+          User.count ?? 0,
+          User.miro_link ?? "відсутнє",
+          await db.get(User.id)('club-typeclub') ?? false,
+          User.registered_students?.length ?? 0
+        ), {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.usersOperations(User.role)
+          }
+        })
+
+        await set('state')('OperationWithUserHandler')
+      }
+      else ctx.reply('такого користувача в базі даних немає, або ви неправильно ввели дані, спробуйте ще раз');
     }
     else if (CheckException.TextException(data)){
       const User = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id']))
@@ -5848,7 +6060,33 @@ async function main() {
 
   onTextMessage('AdminChangeNameForUserHadnler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const User = await dbProcess.FindUser(user['admin_tmp_usersoperation_user_id']);
+
+      if (User){
+        const teacher = await dbProcess.ShowOneUser(User.teacher);
+
+        ctx.reply(script.studentFind.diffUserFind(
+          User.role,
+          User.id,
+          User.name,
+          User.username,
+          User.number,
+          teacher? teacher.name: "відсутній",
+          User.individual_count ?? 0,
+          User.count ?? 0,
+          User.miro_link ?? "відсутнє",
+          await db.get(User.id)('club-typeclub') ?? false,
+          User.registered_students?.length ?? 0
+        ), {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.usersOperations(User.role)
+          }
+        })
+
+        await set('state')('OperationWithUserHandler')
+      }
+      else ctx.reply('такого користувача в базі даних немає, або ви неправильно ввели дані, спробуйте ще раз');
     }
     else if (CheckException.TextException(data)){
       const User = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id'])),
@@ -5897,7 +6135,33 @@ async function main() {
     }
 
     if (CheckException.BackRoot(data)){
-      //back
+      const User = await dbProcess.FindUser(user['admin_tmp_usersoperation_user_id']);
+
+      if (User){
+        const teacher = await dbProcess.ShowOneUser(User.teacher);
+
+        ctx.reply(script.studentFind.diffUserFind(
+          User.role,
+          User.id,
+          User.name,
+          User.username,
+          User.number,
+          teacher? teacher.name: "відсутній",
+          User.individual_count ?? 0,
+          User.count ?? 0,
+          User.miro_link ?? "відсутнє",
+          await db.get(User.id)('club-typeclub') ?? false,
+          User.registered_students?.length ?? 0
+        ), {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.usersOperations(User.role)
+          }
+        })
+
+        await set('state')('OperationWithUserHandler')
+      }
+      else ctx.reply('такого користувача в базі даних немає, або ви неправильно ввели дані, спробуйте ще раз');
     }
     else if (CheckException.TextException(data)){
       for (let i = 0; i < users.length; i++){
@@ -5928,7 +6192,22 @@ async function main() {
 
   onTextMessage('AdminAddUserToTeacherAndTrial_RespondMiro', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const users = await dbProcess.ShowAllUsers(),
+        actualStudent = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id']))
+      let teachersKeyboard = []
+
+      for (let i = 0; i < users.length; i++){
+        if (users[i].role === 'teacher' && !users[i].registered_students?.includes(actualStudent)){
+          teachersKeyboard.push([{ text: users[i].name }])
+        }
+      }
+      ctx.reply('оберіть викладача, до якого ви хочете додати студента:', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: teachersKeyboard
+        }
+      })
+      await set('state')('AdminAddUserToTeacherAndTrial_RespondTeacher');
     }
     else if (data.text.startsWith("https://miro.com/")){
       const student = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id'])),
@@ -5966,7 +6245,33 @@ async function main() {
     }
 
     if (CheckException.BackRoot(data)){
-      //back
+      const User = await dbProcess.FindUser(user['admin_tmp_usersoperation_user_id']);
+
+      if (User){
+        const teacher = await dbProcess.ShowOneUser(User.teacher);
+
+        ctx.reply(script.studentFind.diffUserFind(
+          User.role,
+          User.id,
+          User.name,
+          User.username,
+          User.number,
+          teacher? teacher.name: "відсутній",
+          User.individual_count ?? 0,
+          User.count ?? 0,
+          User.miro_link ?? "відсутнє",
+          await db.get(User.id)('club-typeclub') ?? false,
+          User.registered_students?.length ?? 0
+        ), {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.usersOperations(User.role)
+          }
+        })
+
+        await set('state')('OperationWithUserHandler')
+      }
+      else ctx.reply('такого користувача в базі даних немає, або ви неправильно ввели дані, спробуйте ще раз');
     }
     else if (CheckException.TextException(data)){
       for (let i = 0; i < users.length; i++){
@@ -5997,7 +6302,22 @@ async function main() {
 
   onTextMessage('AdminAddUserToTeacher_RespondMiro', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const _users = await dbProcess.ShowAllUsers(),
+        _actualStudent = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id']))
+      let _teachersKeyboard = []
+
+      for (let i = 0; i < _users.length; i++){
+        if (_users[i].role === 'teacher' && !_users[i].registered_students?.includes(_actualStudent)){
+          _teachersKeyboard.push([{ text: _users[i].name }])
+        }
+      }
+      ctx.reply('оберіть викладача, до якого ви хочете додати студента:', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: _teachersKeyboard
+        }
+      })
+      await set('state')('AdminAddUserToTeacher_RespondTeacher');
     }
     else if (data.text.startsWith("https://miro.com/")){
       const student = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id'])),
@@ -6033,7 +6353,14 @@ async function main() {
 
   onTextMessage('AdminSpeakingClubPersonalFindUser', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('прекрасно, над ким сьогодні будемо знущатись?)', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.personalStudentAdminPanel()
+        }
+      })
+
+      await set('state')('PeronalStudentHandler');
     }
     else if (CheckException.TextException(data)){
       const User = await dbProcess.FindUser(data.text);
@@ -6068,7 +6395,8 @@ async function main() {
 
   onTextMessage('AdminSpeakingClubPersonalUserOperationHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('введіть його ID / повне ім’я / номер телефону / нік в телеграмі');
+      await set('state')('AdminSpeakingClubPersonalFindUser');
     }
     else{
       switch(data.text){
@@ -6102,7 +6430,31 @@ async function main() {
 
   onTextMessage('AdminChangeUserActivePacketHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const User = await dbProcess.FindUser(user['admin_speakingclub_personal_find_user']);
+
+      if (User){
+        const teacher = await dbProcess.ShowOneUser(User.teacher);
+        ctx.reply(script.studentFind.diffUserFind(
+          User.role,
+          User.id,
+          User.name,
+          User.username,
+          User.number,
+          teacher? teacher.name : "відсутній",
+          User.individual_count ?? 0,
+          User.count ?? 0,
+          User.miro_link ?? "відсутнє",
+          await db.get(User.id)('club-typeclub') ?? false
+        ), {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.usersOperationInTheClub()
+          }
+        })
+
+        await set('state')('AdminSpeakingClubPersonalUserOperationHandler')
+      }
+      else ctx.reply('такого користувача в базі даних немає або ви неправильно ввели дані, спробуйте ще раз');
     }
     else if (data.text === 'Разове заняття (300uah)' || data.text === 'Пакет занять (280uah)'){
       const User = await dbProcess.ShowOneUser(parseInt(user['admin_speakingclub_personal_find_user'])),
@@ -6134,7 +6486,16 @@ async function main() {
 
   onTextMessage('AdminNotificationRepondText', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+      ctx.reply(script.entire.chooseFunction, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject && userObject!.role !== undefined && userObject!.role !== null ? userObject!.role : 'guest')
+        }
+      })
+
+      await set('state')('FunctionRoot');
     }
     else if (CheckException.TextException(data)){
       await set('admin_notification_text')(data.text);
@@ -6153,7 +6514,8 @@ async function main() {
   onTextMessage('AdminNotificationHandler', async(ctx, user, set, data) => {
     const AllUsers = await dbProcess.ShowAllUsers();
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('напишіть текст сповіщення, який ви хочете віправити');
+      await set('state')('AdminNotificationRepondText');
     }
     else{
       switch(data.text){
@@ -6217,14 +6579,31 @@ async function main() {
 
         case "Відправити конкретному юзеру":
           ctx.reply('введіть його ID / повне ім’я / номер телефону / нік в телеграмі');
-          await set('state')('AdminSendNotificationSpecificUser')
+          await set('state')('AdminSendNotificationSpecificUser');
+          break;
+
+        default:
+          ctx.reply(script.errorException.chooseButtonError, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.notificationSenders()
+            }
+          })
+          break;
       }
     }
   })
 
   onTextMessage('AdminSendNotificationSpecificUser', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('кому ви хочете віправити це сповіщення?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.notificationSenders()
+        }
+      })
+
+      await set('state')('AdminNotificationHandler');
     }
     else if (CheckException.TextException(data)){
       const User = await dbProcess.FindUser(data.text);
@@ -6259,7 +6638,8 @@ async function main() {
 
   onTextMessage('AdminSendNotificationSpecificUserHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      //back
+      ctx.reply('введіть його ID / повне ім’я / номер телефону / нік в телеграмі');
+      await set('state')('AdminSendNotificationSpecificUser');
     }
     else{
       switch(data.text){
