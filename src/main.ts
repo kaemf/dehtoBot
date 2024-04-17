@@ -259,9 +259,10 @@ async function main() {
 
       await set('state')('AdminRootHandler');
     }
-    else if (data.text === 'Мої Розмовні клуби' && userI!.role === 'teacher'){
+    else if (data.text === 'Мої розмовні клуби' && userI!.role === 'teacher'){
       const results = await dbProcess.ShowAll(),
         users = await dbProcess.ShowAllUsers();
+      let haveClubs = false;
 
       // For Teachers
       for (let i = 0; i < results.length; i++){
@@ -280,7 +281,18 @@ async function main() {
           let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
   
           await ctx.telegram.sendDocument(ctx?.chat?.id ?? -1, results[i].documentation, { caption: script.speakingClub.report.showClubTypeTeacher(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved, results[i].link)});
+          haveClubs = true;
         }
+      }
+      if (!haveClubs){
+        const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+        ctx.reply('на данний момент у вас немає клубів', {
+          parse_mode: "Markdown",
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject && userObject!.role !== undefined && userObject!.role !== null ? userObject!.role : 'guest')
+          }
+        });
       }
     }
     else if ((data.text === 'Служба турботи' || data.text === 'Моя служба турботи') && (userI!.role === 'guest' || userI!.role === 'student' || userI!.role === 'developer')){
@@ -577,7 +589,7 @@ async function main() {
     }
     else if (data.text === 'Знайти студента' && (userObject!.role === 'admin' || userObject!.role === 'developer')){
       ctx.reply('введіть його ID / повне ім’я / номер телефону / нік в телеграмі');
-      await set('state')('StudentFindHandler')
+      await set('state')('StudentFindHandler');
     }
     else if (data.text === 'Наші викладачі' && (userObject!.role === 'admin' || userObject!.role === 'developer')){
       const teachers = await dbProcess.ShowAllUsers();
@@ -5177,16 +5189,15 @@ async function main() {
 
   onTextMessage('StudentFindHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
-      ctx.reply(script.entire.chooseFunction, {
-        parse_mode: "Markdown",
+      const userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+      ctx.reply(script.indivdual.entire(userI!.role), {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject && userObject!.role !== undefined && userObject!.role !== null ? userObject!.role : 'guest')
+          keyboard: keyboards.indiviualMenu(userI!.role)
         }
       })
 
-      await set('state')('FunctionRoot');
+      await set('state')('IndividualHandler');
     }
     else if (CheckException.TextException(data)){
       const User = await dbProcess.FindUser(data.text);
@@ -5219,16 +5230,8 @@ async function main() {
 
   onTextMessage('IndividualUserChangehandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
-      ctx.reply(script.entire.chooseFunction, {
-        parse_mode: "Markdown",
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject && userObject!.role !== undefined && userObject!.role !== null ? userObject!.role : 'guest')
-        }
-      })
-
-      await set('state')('FunctionRoot');
+      ctx.reply('введіть його ID / повне ім’я / номер телефону / нік в телеграмі');
+      await set('state')('StudentFindHandler');
     }
     else{
       const User = await dbProcess.ShowOneUser(parseInt(user['user_to_change_individual_id']));
@@ -5925,8 +5928,14 @@ async function main() {
 
   onTextMessage('OperationWithUserHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      ctx.reply('введіть його ID / повне ім’я / номер телефону / нік в телеграмі');
-      await set('state')('FindUserAndGoToOperationWithHim');
+      ctx.reply('оберіть одну із кнопок нижче:', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.usersMenu()
+        }
+      })
+
+      await set('state')('AdminUsersOperationHandler');
     }
     else{
       switch(data.text){
@@ -6699,7 +6708,7 @@ async function main() {
           if (teachersStudents){
             let studentsKeyboard = [];
             for (let i = 0; i < teachersStudents.length; i++){
-              studentsKeyboard.push([{ text: teachersStudents[i] }]);
+              studentsKeyboard.push([{ text: (await dbProcess.ShowOneUser(teachersStudents[i]))!.name }]);
             }
             ctx.reply('оберіть студента, з яким плануєте заняття:', {
               reply_markup: {
@@ -6726,17 +6735,26 @@ async function main() {
         case "Запланувати пробне заняття":
           let keyboardTrials = [];
           const trialStudents = (await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1))!.trial_students;
-          for (let i = 0; i < trialStudents.length; i++){
-            keyboardTrials.push([{ text: (await dbProcess.ShowOneUser(trialStudents[i]))!.name } ]);
+
+          if (trialStudents?.length){
+            for (let i = 0; i < trialStudents.length; i++){
+              keyboardTrials.push([{ text: (await dbProcess.ShowOneUser(trialStudents[i]))!.name } ]);
+            }
+            ctx.reply('оберіть студента, з яким потрібно запланувати пробне заняття:', {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboardTrials
+              }
+            })
+  
+            await set('state')('IndividualLessonsTrialLessonRespondStudent');
           }
-          ctx.reply('оберіть студента, з яким потрібно запланувати пробне заняття:', {
+          else ctx.reply('на данний момент ви не маєте студентів для проведення пробних занять', {
             reply_markup: {
               one_time_keyboard: true,
-              keyboard: keyboardTrials
+              keyboard: keyboards.myScheduleTeacher()
             }
-          })
-
-          await set('state')('IndividualLessonsTrialLessonRespondStudent');
+          });
           break;
 
         default:

@@ -18,31 +18,6 @@ function CheckDeveloper(currentChatId: number){
 
 class Keyboard{
   mainMenu(currentChatId: number, role: string){
-    if (false){
-      return [
-        [
-          {
-            text: "Індивідуальні заняття"
-          }
-        ],[
-          {
-            text: "Шпрах-Клуби"
-          }
-        ],[
-          {
-            text: "Вчитель на годину",
-          },
-        ],[
-          {
-            text: "Мої Шпрах-клуби"
-          }  
-        ],[
-          {
-            text: "Адмін Панель"
-          }
-        ]
-    ]
-    }
     if (role === 'teacher'){
       return [
         [
@@ -59,8 +34,8 @@ class Keyboard{
           }
         ]
       ]
-      }
-      else if (role === 'student'){
+    }
+    else if (role === 'student'){
         return [
           [
             {
@@ -76,50 +51,50 @@ class Keyboard{
             }
           ]
         ]
-      }
-      else if (checkChats(currentChatId)){
-        return [
-            [
-              {
-                text: "Користувачі"
-              }
-            ],[
-              {
-                text: "Індивідуальні заняття"
-              }
-            ],[
-              {
-                text: "Розмовні клуби",
-              },
-            ],[
-              {
-                text: "Відправити сповіщення"
-              }
-            ]
+    }
+    else if (checkChats(currentChatId)){
+      return [
+        [
+          {
+            text: "Користувачі"
+          }
+        ],[
+          {
+            text: "Індивідуальні заняття"
+          }
+        ],[
+          {
+            text: "Розмовні клуби",
+          },
+        ],[
+          {
+            text: "Відправити сповіщення"
+          }
         ]
-      }
-      else{
-          return [
-            [
-              {
-                text: "Індивідуальні заняття"
-              }
-            ],[
-              {
-                text: "Розмовні клуби"
-              }
-            ],[
-              {
-                text: "Вчитель на годину",
-              }
-            ],
-            [
-              {
-                text: "Служба турботи"
-              }
-            ]
-          ]
-      }
+      ]
+    }
+    else{
+      return [
+        [
+          {
+            text: "Індивідуальні заняття"
+          }
+        ],[
+          {
+            text: "Розмовні клуби"
+          }
+        ],[
+          {
+            text: "Вчитель на годину",
+          }
+        ],
+        [
+          {
+            text: "Служба турботи"
+          }
+        ]
+      ]
+    }
   }
 
   toMenu(){
