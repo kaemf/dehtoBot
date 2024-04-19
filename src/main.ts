@@ -6820,9 +6820,9 @@ async function main() {
         trialLessons = await dbProcess.GetUserTrialLessons(ctx?.chat?.id ?? -1);
       if (userObject!.set_individual_lessons || trialLessons.length){
         const lessons = SortSchedule([
-          ...await dbProcess.GetSpecificIndividualLessons(userObject!.set_individual_lessons),
-          ...trialLessons
-        ]);
+          ...(userObject?.set_individual_lessons?.length ? await dbProcess.GetSpecificIndividualLessons(userObject?.set_individual_lessons) : []),
+          ...(trialLessons?.length ? trialLessons : [])
+        ].filter((lesson: any) => Object.keys(lesson).length));
         let lastDateLoop = '', lessonProcess: IndividualArray = {};
 
         for (let i = 0; i < lessons.length; i++){
@@ -7418,9 +7418,9 @@ async function main() {
         trialLessons = await dbProcess.GetUserTrialLessons(ctx?.chat?.id ?? -1);
         if (userObject!.set_individual_lessons || trialLessons.length){
           const lessons = SortSchedule([
-            ...await dbProcess.GetSpecificIndividualLessons(userObject!.set_individual_lessons),
-            ...trialLessons
-          ]);
+            ...(userObject?.set_individual_lessons?.length ? await dbProcess.GetSpecificIndividualLessons(userObject?.set_individual_lessons) : []),
+            ...(trialLessons?.length ? trialLessons : [])
+          ].filter((lesson: any) => Object.keys(lesson).length));
           let lastDateLoop = '', lessonProcess: IndividualArray = {};
 
           for (let i = 0; i < lessons.length; i++){
@@ -7683,9 +7683,9 @@ async function main() {
         trialLessons = await dbProcess.GetUserTrialLessons(ctx?.chat?.id ?? -1);
       if (userObject!.set_individual_lessons || trialLessons.length){
         const lessons = SortSchedule([
-          ...await dbProcess.GetSpecificIndividualLessons(userObject!.set_individual_lessons),
-          ...trialLessons
-        ]);
+          ...(userObject?.set_individual_lessons?.length ? await dbProcess.GetSpecificIndividualLessons(userObject?.set_individual_lessons) : []),
+          ...(trialLessons?.length ? trialLessons : [])
+        ].filter((lesson: any) => Object.keys(lesson).length));
         let lastDateLoop = '', lessonProcess: IndividualArray = {};
 
         for (let i = 0; i < lessons.length; i++){
@@ -7840,9 +7840,12 @@ async function main() {
         let free = false,
           busyBy = '';
 
+        pointer
         for (let i = 0; i < allLessons.length; i++){
           if (allLessons[i].idTeacher === ctx?.chat?.id && allLessons[i].date === user['teacher_date_individual_lesson_set']){
-            const timeFromActiveLesson = parseInt(allLessons[i].time.split(':')[0]);
+            const endTime = new Date(`${allLessons[i].date}T${allLessons[i].time}` + allLessons[i].duration * 60000),
+              startTime = new Date(new Date(`${allLessons[i].date}T${allLessons[i].time}`).getTime() - 1800000),
+              timeFromActiveLesson = parseInt(allLessons[i].time.split(':')[0]);
 
             if (timeFromActiveLesson + 1 >= timeSplitted || timeFromActiveLesson - 1 <= timeSplitted){
               free = true;
