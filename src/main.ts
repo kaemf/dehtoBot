@@ -6889,7 +6889,7 @@ async function main() {
         if (User.individual_count > 0){
           await set('teacher_individual_lesson_schedule_student_id')(User.id);
           await ctx.reply('вкажіть день, місяць та рік у форматі:\n23.05.2024');
-          await set('state')('IndividualLessonScheduleRespondDateAndCheckThis')
+          await set('state')('IndividualLessonScheduleRespondDateAndCheckThis');
         }
         else await ctx.reply(`не можна запланувати заняття, у ${User.name} немає проплачених занять - повідомте в підтримку та оберіть іншого студента:`, {
           reply_markup: {
@@ -6898,7 +6898,7 @@ async function main() {
           }
         })
       }
-      else ctx.reply(`нажаль, такого користувача як ${data.text} не знайдено в базі данних`)
+      else ctx.reply(`нажаль, такого користувача як ${data.text} не знайдено в базі данних`);
     }
     else ctx.reply(script.errorException.chooseButtonError, {
       reply_markup: {
@@ -6940,24 +6940,18 @@ async function main() {
       }
       else{
         await set('teacher_date_individual_lesson_set')(date[1]);
-        ctx.reply(`перевірте, будь ласка, чи все корректно :)\n\nВи ввели ${date[0]}`, {
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: keyboards.yesNo()
-          }
-        })
-
-        await set('state')('IndividualLessonScheduleCheckDateAndGetTime');
+        ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
+        await set('state')('IndividualLessonScheduleCheckTimeAndGetDuration');
       }
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
   })
 
-  onTextMessage('IndividualLessonScheduleCheckDateAndGetTime', async(ctx, user, set, data) => {
+  onTextMessage('IndividualLessonScheduleCheckTimeAndGetDuration', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
       const teacherStudents = (await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1))?.registered_students;
       let students = [];
-    
+      
       for (let i = 0; i < teacherStudents.length; i++){
         students.push([{ text: teacherStudents[i] }]);
       }
@@ -6972,7 +6966,7 @@ async function main() {
 
         if (User.individual_count > 0){
           await ctx.reply('вкажіть день, місяць та рік у форматі:\n23.05.2024');
-          await set('state')('IndividualLessonScheduleRespondDateAndCheckThis')
+          await set('state')('IndividualLessonScheduleRespondDateAndCheckThis');
         }
         else await ctx.reply(`не можна запланувати заняття, у ${User.name} немає проплачених занять - повідомте в підтримку та оберіть іншого студента:`, {
           reply_markup: {
@@ -6981,52 +6975,7 @@ async function main() {
           }
         })
       }
-      else ctx.reply(`нажаль, такого користувача як ${data.text} не знайдено в базі данних`)
-    }
-    else{
-      switch(data.text){
-        case "так":
-          ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
-          await set('state')('IndividualLessonScheduleCheckTimeAndGetDuration');
-          break;
-
-        case "ні":
-          ctx.reply('хай йому грець! давайте знову, напишіть дату в форматі 19.03.2024');
-          await set('state')('IndividualLessonScheduleRespondDateAndCheckThis');
-          break;
-
-        default:
-          ctx.reply(script.errorException.chooseButtonError, {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: keyboards.yesNo()
-            }
-          })
-          break;
-      }
-    }
-  })
-
-  onTextMessage('IndividualLessonScheduleCheckTimeAndGetDuration', async(ctx, user, set, data) => {
-    if (CheckException.BackRoot(data)){
-      const date = DateProcess((DateProcessToPresentView(user['teacher_date_individual_lesson_set']))[1]);
-
-      if (date[0] === 'date_uncorrect'){
-        ctx.reply('вибачте, але ви не правильно ввели дату :( повторіть, будь ласка, ще раз');
-      }
-      else if (date[0] === 'format_of_date_uncorrect'){
-        ctx.reply('перепрошую, але формат введеної вами дати не є корректним :(\n\nслідуйте, будь ласка, за данним прикладом 19.03.2024');
-      }
-      else{
-        ctx.reply(`перевірте, будь ласка, чи все корректно :)\n\nВи ввели ${date[0]}`, {
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: keyboards.yesNo()
-          }
-        })
-
-        await set('state')('IndividualLessonScheduleCheckDateAndGetTime');
-      }
+      else ctx.reply(`нажаль, такого користувача як ${data.text} не знайдено в базі данних`);
     }
     else if (CheckException.TextException(data)){
       const time = TimeProcess(data.text);
@@ -7322,46 +7271,11 @@ async function main() {
       }
       else{
         await set('teacher_date_individual_lesson_set')(date[1]);
-        ctx.reply(`перевірте, будь ласка, чи все корректно :)\n\nВи ввели ${date[0]}`, {
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: keyboards.yesNo()
-          }
-        })
-
-        await set('state')('IndividualLessonRescheduleCheckDateAndGetTime');
+        ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
+          await set('state')('IndividualLessonRescheduleCheckTimeAndGetDuration');
       }
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
-  })
-
-  onTextMessage('IndividualLessonRescheduleCheckDateAndGetTime', async(ctx, user, set, data) => {
-    if (CheckException.BackRoot(data)){
-      ctx.reply('вкажіть дату на коли перенести заняття у форматі: 23.05.2024');
-      await set('state')('IndividualLessonRescheduleRespondDateAndCheckThis');
-    }
-    else{
-      switch(data.text){
-        case "так":
-          ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
-          await set('state')('IndividualLessonRescheduleCheckTimeAndGetDuration');
-          break;
-
-        case "ні":
-          ctx.reply('хай йому грець! давайте знову, напишіть дату в форматі 19.03.2024');
-          await set('state')('IndividualLessonRescheduleRespondDateAndCheckThis');
-          break;
-
-        default:
-          ctx.reply(script.errorException.chooseButtonError, {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: keyboards.yesNo()
-            }
-          })
-          break;
-      }
-    }
   })
   
   onTextMessage('IndividualLessonRescheduleCheckTimeAndGetDuration', async(ctx, user, set, data) => {
