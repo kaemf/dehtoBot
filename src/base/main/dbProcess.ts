@@ -516,9 +516,9 @@ export default async function dbProcess(botdb: MongoClient){
                                 }}
 
                                 await this.botdbUsers.updateOne({_id: currentTeacher._id}, updateObjectTeacher);
-                                await this.botdbUsers.updateOne({_id: user._id}, {$set: {teacher: false, role: 'guest'}})
                             }
-                            else throw new Error('\n\nUser not found in Teacher');
+                            console.log('\n\nUser not found in Teacher');
+                            await this.botdbUsers.updateOne({_id: user._id}, {$set: {teacher: false, role: 'guest'}});
                         }
                         return currentTeacher;
 

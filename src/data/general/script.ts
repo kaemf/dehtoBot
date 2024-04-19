@@ -176,8 +176,8 @@ ${phone_number}
     individualLessonCreated: (name: string, date: string, dayOfWeek: string, time: string, count: number) => `чудово!\n\nзаняття з ${name} заплановано на:
 👉 ${date} (${dayOfWeek}) о ${time} за Києвом🇺🇦\n\n${count > 0 ? '✅' : '❌'} Залишок: ${count / 60} занять (${count}хв)`,
 
-    rescheduleForTeacher: (position: number, time: string, duration: number, studentName: string, username: string, number: number) =>
-    `👉 ${position}\n${time} за Києвом 🇺🇦 (${duration}хв)\n${studentName}\n(@${username}); ${number}\n\n`,
+    rescheduleForTeacher: (position: number, time: string, duration: number, studentName: string, username: string, number: number, type: string) =>
+    `👉 <b>${position} ${type === 'trial' ? '- Пробне' : ''}</b>\n<b>${time} за Києвом 🇺🇦 (${duration}хв)</b>\n${studentName}\n(@${username}); ${number}\n\n`,
 
     scheduleShowStudent: (time: string, duration: number, teacherName: string, teacherUsername: string, teacherNumber: number, miro_link: string) =>
     `👉 ${time} за Києвом 🇺🇦 (${duration}хв)\n\nвикладач: ${teacherName}\n(@${teacherUsername});${teacherNumber}\n
@@ -537,7 +537,7 @@ ${date} о ${time} 🇺🇦 за ось цим посиланням:\n\n${link}\
 ${name}
 (@${username}); ${phone}\n
 Тип занять: ${typeOfLessons}
-викладач: ${teacher}
+Викладач: ${teacher}
 ${count > 0 ? '✅': '❌'} Залишок: ${count / 60} занять (${count}хв)\n
 посилання на дошку Miro студента: ${miro}`,
 
@@ -553,6 +553,12 @@ ${name}
 (@${username}); ${phone}\n
 ✅ Залишок: ${count / 60} занять (${count}хв)\n
 посилання на дошку Miro студента: ${miro}`,
+
+      individualShow: (position: number, name: string, username: string, phone: string, count: number, miro: string) =>
+      `👉${position}\n${name}
+(@${username}); ${phone}\n
+${count > 0 ? '✅': '❌'} <b>Залишок:</b> ${count / 60} занять (${count}хв)\n
+<b>посилання на дошку Miro студента:</b> ${miro}`,
 
     userFind: (position: number, id: number, name: string, username: string, number: number, role: string, teacher: string, individual_count: number, count: number, miro_link: string, clubPacket: string | boolean) => 
     `${position? `✅${position}\n`: ''}ID: ${id}

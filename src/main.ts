@@ -396,6 +396,42 @@ async function main() {
         await set('state')('NotEnoughIndividualLessonsHandler');
       }
     }
+    else if (data.text === 'Мої студенти' && userObject!.role === 'teacher'){
+      const userData = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+        students = userData ? userData.registered_students : false;
+      let studentsObjects = [];
+
+      if (students && students.length){
+        for (let i = 0; i < students.length; i++){
+          studentsObjects.push(await dbProcess.ShowOneUser(students[i]));
+        }
+        const sortedStudents = studentsObjects.slice().sort((a: any, b: any) => a.name.localeCompare(b.name));
+
+        for (let i = 0; i < sortedStudents.length; i++){
+          await ctx.reply(script.studentFind.individualShow(
+            i + 1,
+            sortedStudents[i]!.name,
+            sortedStudents[i]!.username,
+            sortedStudents[i]!.number,
+            sortedStudents[i]!.individual_count ?? 0,
+            sortedStudents[i]!.miro_link ?? 'відсутнє'
+          ), {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.indiviualMenu(userData!.role)
+            }
+          });
+        }
+      }
+      else{
+        ctx.reply('у вас відсутні студенти', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.indiviualMenu(userData!.role)
+          }
+        })
+      }
+    }
     else if (data.text === 'Мої деЗавдання' && userObject!.role === 'student'){
       const userData = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
         actualTask = userData ? userData.detask : false;
@@ -463,11 +499,11 @@ async function main() {
     else if (data.text === 'Мій розклад'){
       if (userObject!.role === 'student'){
         const trialLessons = await dbProcess.GetUserTrialLessons(ctx?.chat?.id ?? -1);
-        if (userObject!.individual_lessons || trialLessons.length){
+        if (userObject!.individual_lessons || trialLessons?.length){
           const lessons = SortSchedule([
-            ...await dbProcess.GetSpecificIndividualLessons(userObject!.individual_lessons),
-            ...trialLessons
-          ]);
+            ...(userObject?.set_individual_lessons?.length ? await dbProcess.GetSpecificIndividualLessons(userObject?.set_individual_lessons) : []),
+            ...(trialLessons?.length ? trialLessons : [])
+          ].filter((lesson: any) => Object.keys(lesson).length));
           let lastDateLoop = '', lessonProcess: IndividualArray = {}
 
           for (let i = 0; i < lessons.length; i++){
@@ -521,11 +557,12 @@ async function main() {
       }
       else if (userObject!.role === 'teacher'){
         const trialLessons = await dbProcess.GetUserTrialLessons(ctx?.chat?.id ?? -1);
-        if (userObject!.set_individual_lessons || trialLessons.length){
+        if (userObject?.set_individual_lessons?.length || trialLessons?.length){
           const lessons = SortSchedule([
-            ...await dbProcess.GetSpecificIndividualLessons(userObject!.set_individual_lessons),
-            ...trialLessons
-          ]);
+            ...(userObject?.set_individual_lessons?.length ? await dbProcess.GetSpecificIndividualLessons(userObject?.set_individual_lessons) : []),
+            ...(trialLessons?.length ? trialLessons : [])
+          ].filter((lesson: any) => Object.keys(lesson).length));
+
           let lastDateLoop = '', lessonProcess: IndividualArray = {};
 
           for (let i = 0; i < lessons.length; i++){
@@ -544,7 +581,7 @@ async function main() {
 
           for (let i = 0; i < keys.length; i++){
             const key = keys[i];
-            let message = `📋 ${getDayOfWeek(new Date(key))} ${key}\n\n`;
+            let message = `📋 <b>${getDayOfWeek(new Date(key))} ${(DateProcessToPresentView(key))[1]}</b>\n\n`;
     
             for (let j = 0; j < lessonProcess[key].length; j++) {
               const lesson = lessonProcess[key][j],
@@ -552,10 +589,11 @@ async function main() {
               message += script.indivdual.rescheduleForTeacher(
                 j + 1,
                 lesson.time,
-                lesson.duration,
+                lesson.duration ?? 60,
                 student? student.name : "Не вдалося знайти ім'я в БД :(",
                 student? student.username : "unknown",
-                student? student.number : "не вдалося знайти номеру :("
+                student? student.number : "не вдалося знайти номеру :(",
+                lesson.type
               )
             }
     
@@ -5637,9 +5675,9 @@ async function main() {
           const trialLessons = await dbProcess.GetUserTrialLessons(teacher!.id);
           if (teacher!.set_individual_lessons || trialLessons.length){
             const lessons = SortSchedule([
-              ...await dbProcess.GetSpecificIndividualLessons(teacher!.set_individual_lessons),
-              ...trialLessons
-            ]);
+              ...(teacher?.set_individual_lessons?.length ? await dbProcess.GetSpecificIndividualLessons(teacher?.set_individual_lessons) : []),
+              ...(trialLessons?.length ? trialLessons : [])
+            ].filter((lesson: any) => Object.keys(lesson).length));
             let lastDateLoop = '', lessonProcess: IndividualArray = {}
   
             for (let i = 0; i < lessons.length; i++){
@@ -5658,7 +5696,7 @@ async function main() {
   
             for (let i = 0; i < keys.length; i++){
               const key = keys[i];
-              let message = `📋 ${getDayOfWeek(new Date(key))} ${key}\n\n`;
+              let message = `📋 <b>${getDayOfWeek(new Date(key))} ${(DateProcessToPresentView(key))[1]}</b>\n\n`;
       
               for (let j = 0; j < lessonProcess[key].length; j++) {
                 const lesson = lessonProcess[key][j],
@@ -5666,10 +5704,11 @@ async function main() {
                 message += script.indivdual.rescheduleForTeacher(
                   j + 1,
                   lesson.time,
-                  lesson.duration,
+                  lesson.duration ?? 60,
                   student? student.name : "Не вдалося знайти ім'я в БД :(",
                   student? student.username : "unknown",
-                  student? student.number : "не вдалося знайти номеру :("
+                  student? student.number : "не вдалося знайти номеру :(",
+                  lesson.type
                 )
               }
       
@@ -6802,7 +6841,7 @@ async function main() {
 
         for (let i = 0; i < keys.length; i++){
           const key = keys[i];
-          let message = `📋 ${getDayOfWeek(new Date(key))} ${key}\n\n`;
+          let message = `📋 ${getDayOfWeek(new Date(key))} ${(DateProcessToPresentView(key))[1]}\n\n`;
   
           for (let j = 0; j < lessonProcess[key].length; j++) {
             const lesson = lessonProcess[key][j],
@@ -6813,7 +6852,8 @@ async function main() {
               lesson.duration,
               student? student.name : "Не вдалося знайти ім'я в БД :(",
               student? student.username : "unknown",
-              student? student.number : "не вдалося знайти номеру :("
+              student? student.number : "не вдалося знайти номеру :(",
+              lesson.type
             )
           }
   
@@ -7089,9 +7129,9 @@ async function main() {
         trialLessons = await dbProcess.GetUserTrialLessons(ctx?.chat?.id ?? -1);
         if (userObject!.set_individual_lessons || trialLessons.length){
           const lessons = SortSchedule([
-            ...await dbProcess.GetSpecificIndividualLessons(userObject!.set_individual_lessons),
-            ...trialLessons
-          ]);
+            ...(userObject?.set_individual_lessons?.length ? await dbProcess.GetSpecificIndividualLessons(userObject?.set_individual_lessons) : []),
+            ...(trialLessons?.length ? trialLessons : [])
+          ].filter((lesson: any) => Object.keys(lesson).length));
           let lastDateLoop = '', lessonProcess: IndividualArray = {};
 
           for (let i = 0; i < lessons.length; i++){
@@ -7110,7 +7150,7 @@ async function main() {
 
           for (let i = 0; i < keys.length; i++){
             const key = keys[i];
-            let message = `📋 ${getDayOfWeek(new Date(key))} ${key}\n\n`;
+            let message = `📋 ${getDayOfWeek(new Date(key))} ${(DateProcessToPresentView(key))[1]}\n\n`;
     
             for (let j = 0; j < lessonProcess[key].length; j++) {
               const lesson = lessonProcess[key][j],
@@ -7121,7 +7161,8 @@ async function main() {
                 lesson.duration,
                 student? student.name : "Не вдалося знайти ім'я в БД :(",
                 student? student.username : "unknown",
-                student? student.number : "не вдалося знайти номеру :("
+                student? student.number : "не вдалося знайти номеру :(",
+                lesson.type
               )
             }
     
@@ -7164,7 +7205,7 @@ async function main() {
         }
 
         if (activeLessons){
-          let messageToSend = `📋 ${getDayOfWeek(new Date(date[1]))} ${DateProcessToPresentView(date[1])}\n\n`,
+          let messageToSend = `📋 ${getDayOfWeek(new Date(date[1]))} ${(DateProcessToPresentView(date[1]))[1]}\n\n`,
             keyboardChoose = [];
 
           for (let i = 0; i < activeLessons.length; i++){
@@ -7176,7 +7217,8 @@ async function main() {
               activeLessons[i].duration,
               User!.name,
               User!.username,
-              User!.number
+              User!.number,
+              activeLessons[i].type
             )
           }
 
@@ -7228,7 +7270,7 @@ async function main() {
         }
 
         if (activeLessons){
-          let messageToSend = `📋 ${getDayOfWeek(new Date(date[1]))} ${DateProcessToPresentView(date[1])}\n\n`,
+          let messageToSend = `📋 ${getDayOfWeek(new Date(date[1]))} ${(DateProcessToPresentView(date[1]))[1]}\n\n`,
             keyboardChoose = [];
 
           for (let i = 0; i < activeLessons.length; i++){
@@ -7240,7 +7282,8 @@ async function main() {
               activeLessons[i].duration,
               User!.name,
               User!.username,
-              User!.number
+              User!.number,
+              activeLessons[i].type
             )
           }
 
@@ -7482,7 +7525,7 @@ async function main() {
 
           for (let i = 0; i < keys.length; i++){
             const key = keys[i];
-            let message = `📋 ${getDayOfWeek(new Date(key))} ${key}\n\n`;
+            let message = `📋 ${getDayOfWeek(new Date(key))} ${(DateProcessToPresentView(key))[1]}\n\n`;
     
             for (let j = 0; j < lessonProcess[key].length; j++) {
               const lesson = lessonProcess[key][j],
@@ -7493,7 +7536,8 @@ async function main() {
                 lesson.duration,
                 student? student.name : "Не вдалося знайти ім'я в БД :(",
                 student? student.username : "unknown",
-                student? student.number : "не вдалося знайти номеру :("
+                student? student.number : "не вдалося знайти номеру :(",
+                lesson.type
               )
             }
     
@@ -7536,7 +7580,7 @@ async function main() {
         }
 
         if (activeLessons){
-          let messageToSend = `📋 ${getDayOfWeek(new Date(date[1]))} ${DateProcessToPresentView(date[1])}\n\n`,
+          let messageToSend = `📋 ${getDayOfWeek(new Date(date[1]))} ${(DateProcessToPresentView(date[1]))[1]}\n\n`,
             keyboardChoose = [];
 
           for (let i = 0; i < activeLessons.length; i++){
@@ -7548,7 +7592,8 @@ async function main() {
               activeLessons[i].duration,
               User!.name,
               User!.username,
-              User!.number
+              User!.number,
+              activeLessons[i].type
             )
           }
 
@@ -7600,7 +7645,7 @@ async function main() {
         }
 
         if (activeLessons){
-          let messageToSend = `📋 ${getDayOfWeek(new Date(date[1]))} ${DateProcessToPresentView(date[1])}\n\n`,
+          let messageToSend = `📋 ${getDayOfWeek(new Date(date[1]))} ${(DateProcessToPresentView(date[1]))[1]}\n\n`,
             keyboardChoose = [];
 
           for (let i = 0; i < activeLessons.length; i++){
@@ -7612,7 +7657,8 @@ async function main() {
               activeLessons[i].duration,
               User!.name,
               User!.username,
-              User!.number
+              User!.number,
+              activeLessons[i].type
             )
           }
 
@@ -7744,7 +7790,7 @@ async function main() {
 
         for (let i = 0; i < keys.length; i++){
           const key = keys[i];
-          let message = `📋 ${getDayOfWeek(new Date(key))} ${key}\n\n`;
+          let message = `📋 ${getDayOfWeek(new Date(key))} ${(DateProcessToPresentView(key))[1]}\n\n`;
   
           for (let j = 0; j < lessonProcess[key].length; j++) {
             const lesson = lessonProcess[key][j],
@@ -7755,7 +7801,8 @@ async function main() {
               lesson.duration,
               student? student.name : "Не вдалося знайти ім'я в БД :(",
               student? student.username : "unknown",
-              student? student.number : "не вдалося знайти номеру :("
+              student? student.number : "не вдалося знайти номеру :(",
+              lesson.type
             )
           }
   
