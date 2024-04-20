@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        const timeInputed = '16:00';
+        const date = '2024-05-19',
+            time = '16:00',
+            duration = 60 * 60000;
+        let free = false,
+          busyBy = '';
+            const endTime = new Date(new Date(`${date}T${time}`).getTime() + duration * 60000),
+              startTime = new Date(new Date(`${date}T${time}`).getTime() - 1800000),
+                timeInputted_ =  new Date(`${date}T${timeInputed}`);
+
+            if ((timeInputted_ >= startTime && timeInputted_ < endTime) ||
+                (startTime >= timeInputted_ && startTime < timeInputted_ + duration)){
+              free = true;
+            }
+            else{
+              busyBy = 'Alexa';
+              free = false;
+            }
+        if (free){
+            console.log(`Не занято`);
+            console.log(`Дата и время занятия: ${date} ${time}, ${timeInputted_}}`);
+            console.log(`Сколько идет занятие: ${duration}`);
+            console.log(`EndTime Когда заканчивается занятие (+duration): ${endTime}`);
+            console.log(`StartTime Время начала занятия (-30): ${startTime}`);
+            console.log(`endTime <= timeInputed: ${endTime <= timeInputted_}`);
+            console.log(`startTime >= timeInputed: ${startTime >= timeInputted_}`);
+        }
+        else{
+            console.log('busy '+busyBy)
+            console.log(`Дата и время занятия: ${date} ${time}, ${timeInputted_}`);
+            console.log(`Сколько идет занятие: ${duration}`);
+            console.log(`EndTime Когда заканчивается занятие (+duration): ${endTime}`);
+            console.log(`StartTime Время начала занятия (-30): ${startTime}`);
+            console.log(`endTime <= timeInputed: ${endTime <= timeInputted_}`);
+            console.log(`startTime >= timeInputed: ${startTime >= timeInputted_}`);
+        }
+    </script>
+</body>
+</html>
