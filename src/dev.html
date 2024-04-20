@@ -7,42 +7,119 @@
 </head>
 <body>
     <script>
-        const timeInputed = '16:00';
-        const date = '2024-05-19',
-            time = '16:00',
-            duration = 60 * 60000;
+      function checkAvailabilityForLesson(timeInputed, date, time, duration, part, newDuration) {
+        duration = duration * 60000;
         let free = false,
           busyBy = '';
-            const endTime = new Date(new Date(`${date}T${time}`).getTime() + duration * 60000),
-              startTime = new Date(new Date(`${date}T${time}`).getTime() - 1800000),
-                timeInputted_ =  new Date(`${date}T${timeInputed}`);
 
-            if ((timeInputted_ >= startTime && timeInputted_ < endTime) ||
-                (startTime >= timeInputted_ && startTime < timeInputted_ + duration)){
-              free = true;
+        switch(part){
+          case "part_1":
+            const endTime = new Date(new Date(`${date}T${time}`).getTime() + duration),
+              startTime = new Date(new Date(`${date}T${time}`).getTime() - 1800000),
+              lessonTime = new Date(`${date}T${time}`),
+              timeInputted_ =  new Date(`${date}T${timeInputed}`);
+
+            if (lessonTime <= timeInputted_){
+              console.log(`(P1) Trigger on: lessonTime <= timeInputted_`)
+              if (endTime <= timeInputted_){
+                console.log(`(P1) Trigger on: endTime <= timeInputted_`)
+                free = false;
+              }
+              else{
+                free = true;
+                console.log(`(P1) Trigger on like else: endTime <= timeInputted_`)
+                busyBy = 'Alexa';
+              }
+            }
+            else if (lessonTime >= timeInputted_){
+              console.log(`(P1) Trigger on: lessonTime >= timeInputted_`)
+              if (startTime >= timeInputted_){
+                console.log(`(P1) Trigger on: startTime >= timeInputted_`)
+                free = false;
+              }
+              else{
+                console.log(`(P1) Trigger on like else: startTime >= timeInputted_`)
+                free = true;
+                busyBy = 'Alexa';
+              }
+            }
+            if (free){
+              console.warn(`(P1) Busy: ${busyBy}`);
+              console.log(`(P1) Дата и время занятия: ${date} ${time}, \n\n${timeInputted_}`);
+              console.log(`(P1) Сколько идет занятие: ${duration / 60000}`);
+              console.log(`(P1) EndTime Когда заканчивается занятие (+duration): ${endTime}`);
+              console.log(`(P1) StartTime Время начала занятия (-30): ${startTime}`);
             }
             else{
-              busyBy = 'Alexa';
-              free = false;
+              console.warn(`(P1) No Busy`);
+              console.log(`(P1) Дата и время занятия: ${date} ${time}, \n\n${timeInputted_}`);
+              console.log(`(P1) Сколько идет занятие: ${duration / 60000}`);
+              console.log(`(P1) EndTime Когда заканчивается занятие (+duration): ${endTime}`);
+              console.log(`(P1) StartTime Время начала занятия (-30): ${startTime}`);
             }
-        if (free){
-            console.log(`Не занято`);
-            console.log(`Дата и время занятия: ${date} ${time}, ${timeInputted_}}`);
-            console.log(`Сколько идет занятие: ${duration}`);
-            console.log(`EndTime Когда заканчивается занятие (+duration): ${endTime}`);
-            console.log(`StartTime Время начала занятия (-30): ${startTime}`);
-            console.log(`endTime <= timeInputed: ${endTime <= timeInputted_}`);
-            console.log(`startTime >= timeInputed: ${startTime >= timeInputted_}`);
+            break;
+
+          case "part_2":
+            if (newDuration === undefined) throw new Error('newDuration is undefined');
+            const newDuration_ = newDuration * 60000,
+              _endTime = new Date(new Date(`${date}T${time}`).getTime() + duration),
+              _startTime = new Date(new Date(`${date}T${time}`).getTime() - newDuration_),
+              _lessonTime = new Date(`${date}T${time}`),
+              _timeInputted_ =  new Date(`${date}T${timeInputed}`);
+
+            if (_lessonTime <= _timeInputted_){
+              console.log(`(P2) Trigger on: lessonTime <= timeInputted_`)
+              if (_endTime <= _timeInputted_){
+                console.log(`(P2) Trigger on: endTime <= timeInputted_`)
+                free = false;
+              }
+              else{
+                free = true;
+                console.log(`(P2) Trigger on like else: endTime <= timeInputted_`)
+                busyBy = 'Alexa';
+              }
+            }
+            else if (_lessonTime >= _timeInputted_){
+              console.log(`(P2) Trigger on: lessonTime >= timeInputted_`)
+              if (_startTime >= _timeInputted_){
+                console.log(`(P2) Trigger on: startTime >= timeInputted_`)
+                free = false;
+              }
+              else{
+                console.log(`(P2) Trigger on like else: startTime >= timeInputted_`)
+                free = true;
+                busyBy = 'Alexa';
+              }
+            }
+            if (free){
+              console.warn(`(P2) Busy: ${busyBy}`);
+              console.log(`(P2) Дата и время занятия: ${date} ${time}, \n\n${_timeInputted_}`);
+              console.log(`(P2) Сколько идет занятие: ${duration / 60000}`);
+              console.log(`(P2) EndTime Когда заканчивается занятие (+duration): ${_endTime}`);
+              console.log(`(P2) StartTime Время начала занятия (-30): ${_startTime}`);
+            }
+            else{
+              console.warn(`(P2) No Busy`);
+              console.log(`(P2) Дата и время занятия: ${date} ${time}, \n\n${_timeInputted_}`);
+              console.log(`(P2) Сколько идет занятие: ${duration / 60000}`);
+              console.log(`(P2) EndTime Когда заканчивается занятие (+duration): ${_endTime}`);
+              console.log(`(P2) StartTime Время начала занятия (-30): ${_startTime}`);
+            }
+            break;
+
+          default:
+            throw new Error('Wrong part parametr');
         }
-        else{
-            console.log('busy '+busyBy)
-            console.log(`Дата и время занятия: ${date} ${time}, ${timeInputted_}`);
-            console.log(`Сколько идет занятие: ${duration}`);
-            console.log(`EndTime Когда заканчивается занятие (+duration): ${endTime}`);
-            console.log(`StartTime Время начала занятия (-30): ${startTime}`);
-            console.log(`endTime <= timeInputed: ${endTime <= timeInputted_}`);
-            console.log(`startTime >= timeInputed: ${startTime >= timeInputted_}`);
-        }
+      }
+
+      const timeInputed = '15:30',
+        newDuration = 60;
+
+      const date = '2024-05-19',
+        time = '16:00',
+        duration = 90;
+
+      checkAvailabilityForLesson(timeInputed, date, time, duration, 'part_2', newDuration);
     </script>
 </body>
 </html>
