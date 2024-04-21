@@ -175,6 +175,8 @@ ${phone_number}
 
     individualLessonCreated: (name: string, date: string, dayOfWeek: string, time: string, count: number) => `чудово!\n\nзаняття з ${name} заплановано на:
 👉 ${date} (${dayOfWeek}) о ${time} за Києвом🇺🇦\n\n${count > 0 ? '✅' : '❌'} Залишок: ${count / 60} занять (${count}хв)`,
+      individualTrialLessonReschduled: (name: string, date: string, dayOfWeek: string, time: string) => `чудово!\n\n👉 заняття з ${name} заплановано на:
+${date} (${dayOfWeek}) о ${time} за Києвом🇺🇦`,
 
     rescheduleForTeacher: (position: number, time: string, duration: number, studentName: string, username: string, number: number, type: string) =>
     `👉 <b>${position} ${type === 'trial' ? '- Пробне' : ''}</b>\n<b>${time} за Києвом 🇺🇦 (${duration}хв)</b>\n${studentName}\n(@${username}); ${number}\n\n`,
@@ -628,8 +630,15 @@ ${countOfLessons > 0 ? '✅' : '❌'} <b>Залишок:</b> ${countOfLessons / 
 👉 заняття з ${oldDayOfWeek} ${oldDay} ${oldMonth} о ${oldTime} перенесено на ${newDayOfWeek}, ${newDay} ${newMonth} о ${newTime} за Києвом 🇺🇦\n\n<b>посилання на дошку Miro:</b> ${miro_link}\n
 ✅ <b>Залишок:</b> ${count / 60} занять (${count}хв)`,
 
+      rescheduleTrialLesson: (oldDayOfWeek: string, oldDay: string, oldMonth: string, oldTime: string, newDayOfWeek: string, newDay: string, newMonth: string, newTime: string, miro_link: string) => 
+      `♻️️️ <b>Перенесення пробного заняття</b> ♻️\n
+👉 заняття з ${oldDayOfWeek} ${oldDay} ${oldMonth} о ${oldTime} перенесено на ${newDayOfWeek}, ${newDay} ${newMonth} о ${newTime} за Києвом 🇺🇦\n\n<b>посилання на дошку Miro:</b> ${miro_link}`,
+
       deleteIndividualLesson: (dayOfWeek: string, day: string, month: string, time: string, count: number) =>
       `❌️️ <b>Видалення заняття</b> ❌\n\n👉 заняття в ${dayOfWeek}, ${day} ${month} о ${time} за Києвом 🇺🇦 видалено\n\n✅ <b>Залишок:</b> ${count / 60} занять (${count}хв)`,
+
+      deleteIndividualTrialLesson: (dayOfWeek: string, day: string, month: string, time: string) =>
+      `❌️️ <b>Видалення пробного заняття</b> ❌\n\n👉 заняття в ${dayOfWeek}, ${day} ${month} о ${time} за Києвом 🇺🇦 видалено`,
 
       trialLessonByTeacher: (dayOfWeek: string, day: string, month: string, time: string, teacherName: string, miro_link: string, zoom: string) => `📌 Пробне заняття заплановане 📌\n
 <b>Коли:</b> ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦
@@ -662,11 +671,11 @@ ${count > 0 ? '✅' : '❌'} <b>Залишок:</b> ${count / 60} занять (
       deleteStudent: (nameTeacher: string) =>
       `🙂 <b>вас було прибрано від викладача ${nameTeacher}</b>\n\nбажаємо вам натхнення та успіхів у вивченні мови!\n\nз любовʼю, команда dehto🍓 `,
 
-      lessonComingNotification: (minute: number, dayOfWeek: string, day: string, month: string, time: string, teacherName: string, miro_link: string, count: number) =>
-      `🌤 <b>Заняття розпочнеться за ${minute}хв</b> 🌤\n
+      lessonComingNotification: (classType: string, minute: number, dayOfWeek: string, day: string, month: string, time: string, teacherName: string, miro_link: string, count: number) =>
+      `🌤 <b> ${classType === 'trial' ? 'Пробне заняття' : 'Заняття'} розпочнеться за ${minute}хв</b> 🌤\n
 <b>Коли</b>: ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦
 <b>Викладач</b>: ${teacherName}\n<b>посилання на дошку Miro</b>: ${miro_link ?? "відстнє"}\n
-${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count / 60} занять (${count}хв)`,
+${classType !== 'trial' ? `${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count / 60} занять (${count}хв)` : ''}`,
 
       changeCountLessonsOnClub: (count: number) =>
       `📈 <b>Баланс занять змінено</b> 📈\n\n<b>Тип занять:</b> Розмовні клуби\n✅ <b>Залишок:</b> ${count} занять\n\nгарного дня 🙌`
@@ -724,6 +733,15 @@ ${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count / 60} занять (
 <b>посилання на дошку Miro:</b> ${miro_link}\n
 ✅ <b>Залишок:</b> ${count / 60} занять (${count}хв)`,
 
+      rescheduleTrialLesson: (studentName: string, username: string, number: string, teacherName: string, day: string, month: string, time: string, reason: string, miro_link: string) => 
+      `♻️️️ <b>Перенесення пробного заняття</b> ♻️\n
+<b>Студент:</b> ${studentName}
+(@${username}); ${number}
+<b>Викладач:</b> ${teacherName}\n
+👉 заняття перенесено на субота, ${day} ${month} о ${time} за Києвом 🇺🇦
+<b>Причина:</b> ${reason}
+<b>посилання на дошку Miro:</b> ${miro_link}`,
+
       deleteIndividualLesson: (studentName: string, username: string, number: string, teacherName:string, dayOfWeek: string, day: string, month: string, time: string, reason: string, count: number) =>
       `❌️️ <b>Видалення заняття</b> ❌\n
 <b>Студент:</b> ${studentName} 
@@ -732,6 +750,14 @@ ${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count / 60} занять (
 👉 заняття в ${dayOfWeek}, ${day} ${month} о ${time} за Києвом 🇺🇦 видалено
 <b>Причина:</b> ${reason}\n
 ✅ <b>Залишок:</b> ${count / 60} занять (${count}хв)`,
+
+      deleteIndividualTrialLesson: (studentName: string, username: string, number: string, teacherName:string, dayOfWeek: string, day: string, month: string, time: string, reason: string) =>
+      `❌️️ <b>Видалення пробного заняття</b> ❌\n
+<b>Студент:</b> ${studentName} 
+(@${username}); ${number}
+<b>Викладач:</b> ${teacherName}\n
+👉 заняття в ${dayOfWeek}, ${day} ${month} о ${time} за Києвом 🇺🇦 видалено
+<b>Причина:</b> ${reason}`,
 
       trialLessonByTeacher: (dayOfWeek: string, day: string, month: string, time: string, studentName: string, teacherName: string, miro_link: string, zoom: string) => `📌 Пробне заняття заплановане 📌\n
 <b>Коли:</b> ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦

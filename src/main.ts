@@ -23,12 +23,12 @@ import formattedName from "./data/process/nameFormatt";
 import { liveKeyboard } from "./data/keyboard/livekeyboard";
 import DateRecord, { DateHistory } from "./base/handlers/getTime";
 import MongoDBReturnType from "./data/general/mongoDBType";
-import { Context, Markup, TelegramError } from "telegraf";
+import { Markup, TelegramError } from "telegraf";
 import { ObjectId } from 'mongodb';
 import { DateProcess, DateProcessToPresentView, SortSchedule, TimeProcess, UniversalSingleDataProcess, getDayOfWeek } from "./data/process/dateAndTimeProcess";
 import IndividualArray from "./data/individual/interface";
 import NotificationReg, { SendNotification, SendNotificationWithMedia } from "./data/notifications/notificationProcess";
-import { Update } from "telegraf/typings/core/types/typegram";
+import checkAvailabilityForLesson from "./data/general/lessonAvailabiltityCheck";
 
 async function main() {
   const [ onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, notifbot, notiftoken, db, dbProcess ] = await arch();
@@ -78,7 +78,10 @@ async function main() {
     await dbProcess.DeleteExpiredIndividualLessons();
   });
 
-  schedule.scheduleJob('*/5 * * * *', async () => {
+  schedule.scheduleJob('*/1 * * * *', async () => {
+    console.log('\n\nNotification Trigger\n\n')
+    await dbProcess.DeleteExpiredIndividualLessons();
+    await dbProcess.DeleteTeNoticationEntryData();
     await dbProcess.NotificateUserAboutLesson(bot.telegram);
   });
 
@@ -190,6 +193,7 @@ async function main() {
       await set('state')('IndividualHandler');
     }
     else if (data.text === 'деЗавдання' && userI!.role === 'teacher'){
+      const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
       if (userI!.set_detasks){
         ctx.reply('вітаю в деЗавданнях, що саме вас цікавить?', {
           reply_markup: {
@@ -200,8 +204,16 @@ async function main() {
         await set('state')('TeacherDeTaskHandler');
       }
       else{
-        ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання')
-        await set('state')('TeachersSetTasksHandler')
+        if (userI!.registered_students?.length){
+          ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання');
+          await set('state')('TeachersSetTasksHandler');
+        }
+        else ctx.reply('наразі у вас немає актуальних студентів', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject && userObject!.role !== undefined && userObject!.role !== null ? userObject!.role : 'guest')
+          }
+        });
       }
     }
     else if (data.text === "Вчитель на годину" && userI!.role === 'guest'){
@@ -6257,7 +6269,7 @@ async function main() {
       })
       await set('state')('AdminAddUserToTeacherAndTrial_RespondTeacher');
     }
-    else if (data.text.startsWith("https://miro.com/")){
+    else if (data.text.startsWith("https://miro")){
       const student = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id'])),
         teacher = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_teacher_id'])),
         inline = inlineScheduleTrialLessonTeacher(teacher!.id, student!.id);
@@ -6987,15 +6999,21 @@ async function main() {
         ctx.reply('от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату 15:45\n\nповторіть, будь ласка, ще раз :)')
       }
       else{
-        await set('teacher_time_individual_lesson_set')(time);
-        ctx.reply('вкажіть, скільки триватиме заняття:', {
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: keyboards.durationChoose()
-          }
-        })
+        const allLessons = await dbProcess.ShowAllInvdividualLessons(),
+          free = checkAvailabilityForLesson(time, user['teacher_date_individual_lesson_set'], allLessons, ctx?.chat?.id ?? -1, 'part_1');
 
-        await set('state')('IndividualLessonScheduleSetDurationAndCreate')
+        if (free === 'free'){
+          await set('teacher_time_individual_lesson_set')(time);
+          ctx.reply('вкажіть, скільки триватиме заняття:', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.durationChoose()
+            }
+          })
+  
+          await set('state')('IndividualLessonScheduleSetDurationAndCreate')
+        }
+        else ctx.reply('нажаль, ви не маєте змогу запланувати заннятя на цей час, бо воно заплановане заняттям з ' +free);
       }
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
@@ -7007,62 +7025,75 @@ async function main() {
       await set('state')('IndividualLessonScheduleCheckTimeAndGetDuration');
     }
     else if (data.text === '60хв' || data.text === '90хв' || data.text === '30хв'){
-      await dbProcess.CreateNewIndividualLesson(
-        parseInt(user['teacher_individual_lesson_schedule_student_id']),
-        ctx?.chat?.id ?? -1,
-        user['teacher_date_individual_lesson_set'],
-        user['teacher_time_individual_lesson_set'],
-        parseInt(data.text.replace(/хв/g, '').trim())
-      )
-
-      const Teacher = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
-        User = await dbProcess.ShowOneUser(parseInt(user['teacher_individual_lesson_schedule_student_id']));
-
-      ctx.telegram.sendMessage(parseInt(user['teacher_individual_lesson_schedule_student_id']), 
-        script.notification.forStudent.scheduleLesson(
-          UniversalSingleDataProcess(new Date(user['teacher_date_individual_lesson_set']), 'day_of_week'),
-          UniversalSingleDataProcess(new Date(user['teacher_date_individual_lesson_set']), 'day'),
-          UniversalSingleDataProcess(new Date(user['teacher_date_individual_lesson_set']), 'month'),
+      const allLessons = await dbProcess.ShowAllInvdividualLessons(),
+        free = checkAvailabilityForLesson(
           user['teacher_time_individual_lesson_set'],
-          Teacher? Teacher.name: "не вдалося знайти вчителя",
-          User?.miro_link ?? "відсутнє",
-          User?.individual_count ?? 0
-        ))
-      
-      if (User!.individual_count === 0){
-        const inline = inlinePayButton(User!.id);
-        SendNotification(notifbot, script.notification.forAdmins.notEnoughCountOfLessons(User!.name, User!.username, User!.number, Teacher!.name));
-        ctx.telegram.sendMessage(parseInt(user['teacher_individual_lesson_schedule_student_id']),
-          script.notification.forStudent.notEnoughCountOfLessons(User!.name), {
-            ...Markup.inlineKeyboard(inline)
-          }
+          user['teacher_date_individual_lesson_set'],
+          allLessons,
+          ctx?.chat?.id ?? -1,
+          'part_2',
+          parseInt(data.text.replace(/хв/g, '').trim())
+        );
+
+      if (free === 'free'){
+        await dbProcess.CreateNewIndividualLesson(
+          parseInt(user['teacher_individual_lesson_schedule_student_id']),
+          ctx?.chat?.id ?? -1,
+          user['teacher_date_individual_lesson_set'],
+          user['teacher_time_individual_lesson_set'],
+          parseInt(data.text.replace(/хв/g, '').trim())
         )
-      }
-
-      if (User){
-        const date = DateProcessToPresentView(user['teacher_date_individual_lesson_set'])
-        ctx.reply(script.indivdual.individualLessonCreated(
-          User.name,
-          date[1],
-          date[0],
-          user['teacher_time_individual_lesson_set'],
-          User.individual_count
-        ), {
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: [
-              [
-                { text: "Запланувати ще одне заняття" }
-              ],
-              [
-                { text: "В МЕНЮ" }
+  
+        const Teacher = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+          User = await dbProcess.ShowOneUser(parseInt(user['teacher_individual_lesson_schedule_student_id']));
+  
+        ctx.telegram.sendMessage(parseInt(user['teacher_individual_lesson_schedule_student_id']), 
+          script.notification.forStudent.scheduleLesson(
+            UniversalSingleDataProcess(new Date(user['teacher_date_individual_lesson_set']), 'day_of_week'),
+            UniversalSingleDataProcess(new Date(user['teacher_date_individual_lesson_set']), 'day'),
+            UniversalSingleDataProcess(new Date(user['teacher_date_individual_lesson_set']), 'month'),
+            user['teacher_time_individual_lesson_set'],
+            Teacher? Teacher.name: "не вдалося знайти вчителя",
+            User?.miro_link ?? "відсутнє",
+            User?.individual_count ?? 0
+          ))
+        
+        if (User!.individual_count === 0){
+          const inline = inlinePayButton(User!.id);
+          SendNotification(notifbot, script.notification.forAdmins.notEnoughCountOfLessons(User!.name, User!.username, User!.number, Teacher!.name));
+          ctx.telegram.sendMessage(parseInt(user['teacher_individual_lesson_schedule_student_id']),
+            script.notification.forStudent.notEnoughCountOfLessons(User!.name), {
+              ...Markup.inlineKeyboard(inline)
+            }
+          )
+        }
+  
+        if (User){
+          const date = DateProcessToPresentView(user['teacher_date_individual_lesson_set'])
+          ctx.reply(script.indivdual.individualLessonCreated(
+            User.name,
+            date[1],
+            date[0],
+            user['teacher_time_individual_lesson_set'],
+            User.individual_count
+          ), {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: [
+                [
+                  { text: "Запланувати ще одне заняття" }
+                ],
+                [
+                  { text: "В МЕНЮ" }
+                ]
               ]
-            ]
-          }
-        })
-
-        await set('state')('EndRootManager');
+            }
+          })
+  
+          await set('state')('EndRootManager');
+        }
       }
+      else ctx.reply('нажаль, ви не маєте змогу запланувати заннятя на цей час, бо воно заплановане з ' +free);
     }
     else ctx.reply(script.errorException.chooseButtonError, {
       reply_markup: {
@@ -7210,42 +7241,42 @@ async function main() {
     if (CheckException.BackRoot(data)){
       const date = DateProcess((DateProcessToPresentView(user['teacher_reschedule_lesson_date_of_lesson']))[1]),
         lessons = await dbProcess.ShowAllInvdividualLessons();
-        let activeLessons = [];
+      let activeLessons = [];
 
-        for (let i = 0; i < lessons.length; i++){
-          if (lessons[i].idTeacher === ctx?.chat?.id && lessons[i].date === date[1]){
-            activeLessons.push(lessons[i]);
-          }
+      for (let i = 0; i < lessons.length; i++){
+        if (lessons[i].idTeacher === ctx?.chat?.id && lessons[i].date === date[1]){
+          activeLessons.push(lessons[i]);
+        }
+      }
+
+      if (activeLessons){
+        let messageToSend = `📋 ${getDayOfWeek(new Date(date[1]))} ${(DateProcessToPresentView(date[1]))[1]}\n\n`,
+          keyboardChoose = [];
+
+        for (let i = 0; i < activeLessons.length; i++){
+          const User = await dbProcess.ShowOneUser(activeLessons[i].idStudent);
+          keyboardChoose.push([{ text: (i + 1).toString() }])
+          messageToSend += script.indivdual.rescheduleForTeacher(
+            i + 1,
+            activeLessons[i].time,
+            activeLessons[i].duration,
+            User!.name,
+            User!.username,
+            User!.number,
+            activeLessons[i].type
+          )
         }
 
-        if (activeLessons){
-          let messageToSend = `📋 ${getDayOfWeek(new Date(date[1]))} ${(DateProcessToPresentView(date[1]))[1]}\n\n`,
-            keyboardChoose = [];
-
-          for (let i = 0; i < activeLessons.length; i++){
-            const User = await dbProcess.ShowOneUser(activeLessons[i].idStudent);
-            keyboardChoose.push([{ text: (i + 1).toString() }])
-            messageToSend += script.indivdual.rescheduleForTeacher(
-              i + 1,
-              activeLessons[i].time,
-              activeLessons[i].duration,
-              User!.name,
-              User!.username,
-              User!.number,
-              activeLessons[i].type
-            )
+        ctx.reply('оберіть заняття, яке ви хочете перенести:', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboardChoose
           }
+        })
 
-          ctx.reply('оберіть заняття, яке ви хочете перенести:', {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: keyboardChoose
-            }
-          })
-
-          await set('state')('IndividualLessonRescheduleRespondLessonAndGetReason');
-        }
-        else ctx.reply('на жаль або на щастя в цей день у вас немає занять - вкажіть іншу дату');
+        await set('state')('IndividualLessonRescheduleRespondLessonAndGetReason');
+      }
+      else ctx.reply('на жаль або на щастя в цей день у вас немає занять - вкажіть іншу дату');
     }
     else if (CheckException.TextException(data)){
       await set('teacher_reschedule_lesson_reason')(data.text);
@@ -7272,7 +7303,7 @@ async function main() {
       else{
         await set('teacher_date_individual_lesson_set')(date[1]);
         ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
-          await set('state')('IndividualLessonRescheduleCheckTimeAndGetDuration');
+        await set('state')('IndividualLessonRescheduleCheckTimeAndGetDuration');
       }
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
@@ -7294,37 +7325,91 @@ async function main() {
       }
       else{
         const allLessons = await dbProcess.ShowAllInvdividualLessons(),
-          timeSplitted = parseInt(time.split(':')[0]);
-        let free = false,
-          busyBy = '';
+        lesson = (await dbProcess.GetSpecificIndividualLessons([ new ObjectId(user['teacher_reschedule_lesson_id_of_lesson']) ]))[0],
+          User = await dbProcess.ShowOneUser(lesson?.idStudent),
+          newDate = user['teacher_date_individual_lesson_set'];
 
-        for (let i = 0; i < allLessons.length; i++){
-          if (allLessons[i].idTeacher === ctx?.chat?.id && allLessons[i].date === user['teacher_date_individual_lesson_set']){
-            const timeFromActiveLesson = parseInt(allLessons[i].time.split(':')[0]);
+        let free: string | undefined;
 
-            if (timeFromActiveLesson + 1 >= timeSplitted || timeFromActiveLesson - 1 <= timeSplitted){
-              free = true;
+        if (lesson?.type === 'trial'){
+          free = checkAvailabilityForLesson(time, allLessons[0].date, allLessons, ctx?.chat?.id ?? -1, 'part_2', 60);
+        }
+        free = checkAvailabilityForLesson(time, allLessons[0].date, allLessons, ctx?.chat?.id ?? -1, 'part_1');
+
+        if (free === 'free'){
+          if (lesson?.type === 'trial'){
+            const updatedLesson = await dbProcess.EditExistIndividualLesson(
+              new ObjectId(user['teacher_reschedule_lesson_id_of_lesson']),
+              user['teacher_date_individual_lesson_set'],
+              time
+            )
+      
+            bot.telegram.sendMessage(User!.id,
+              script.notification.forStudent.rescheduleTrialLesson(
+                UniversalSingleDataProcess(new Date(lesson!.date), 'day_of_week'),
+                UniversalSingleDataProcess(new Date(lesson!.date), 'day'),
+                UniversalSingleDataProcess(new Date(lesson!.date), 'month'),
+                lesson!.time,
+                UniversalSingleDataProcess(new Date(newDate), 'day_of_week'),
+                UniversalSingleDataProcess(new Date(newDate), 'day'),
+                UniversalSingleDataProcess(new Date(newDate), 'month'),
+                time,
+                User!.miro_link ?? "відсутнє"
+              ), {parse_mode: "HTML"}
+            )
+      
+            SendNotification(notifbot, script.notification.forAdmins.rescheduleTrialLesson(
+              User!.name,
+              User!.username,
+              User!.number,
+              user['name'],
+              UniversalSingleDataProcess(new Date(newDate), 'day'),
+              UniversalSingleDataProcess(new Date(newDate), 'month'),
+              time,
+              user['teacher_reschedule_lesson_reason'],
+              User!.miro_link ?? "відсутнє",
+            ))
+      
+            if (updatedLesson){
+              if (User){
+                const date = DateProcessToPresentView(user['teacher_date_individual_lesson_set'])
+                ctx.reply(script.indivdual.individualTrialLessonReschduled(
+                  User.name,
+                  date[1],
+                  date[0],
+                  time
+                ), {
+                  reply_markup: {
+                    one_time_keyboard: true,
+                    keyboard: [
+                      [
+                        { text: "Перенести ще одне заняття" }
+                      ],
+                      [
+                        { text: "В МЕНЮ" }
+                      ]
+                    ]
+                  }
+                })
+        
+                await set('state')('EndRootManager');
+              }
             }
-            else{
-              const User = await dbProcess.ShowOneUser(allLessons[i].idStudent);
-              busyBy = User!.name;
-              free = false;
-              break;
-            }
+            else ctx.reply(`у користувача ${User!.name} недостатньо хвилин для подібних змін (наразі у нього ${User!.individual_count ?? 0}хв)`);
+          }
+          else{
+            await set('teacher_time_individual_lesson_set')(time);
+            ctx.reply('вкажіть, скільки триватиме заняття:', {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboards.durationChoose()
+              }
+            })
+    
+            await set('state')('IndividualLessonRescheduleSetDurationAndCreate');
           }
         }
-        if (free){
-          await set('teacher_time_individual_lesson_set')(time);
-          ctx.reply('вкажіть, скільки триватиме заняття:', {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: keyboards.durationChoose()
-            }
-          })
-  
-          await set('state')('IndividualLessonRescheduleSetDurationAndCreate')
-        }
-        else ctx.reply(`на жаль, на цей час у вас заплановане заняття з ${busyBy}(\n\nвкажіть інший час у форматі: 15:45`)
+        else ctx.reply(`на жаль, на цей час у вас заплановане заняття з ${free}(\n\nвкажіть інший час у форматі: 15:45`)
       }
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
@@ -7338,71 +7423,76 @@ async function main() {
     else if (data.text === '60хв' || data.text === '90хв' || data.text === '30хв'){
       const lesson = (await dbProcess.GetSpecificIndividualLessons([new ObjectId(user['teacher_reschedule_lesson_id_of_lesson'])]))[0],
         User = await dbProcess.ShowOneUser(parseInt(user['teacher_individual_lesson_schedule_student_id'])),
-        newDate = user['teacher_date_individual_lesson_set'];
+        newDate = user['teacher_date_individual_lesson_set'],
+        allLessons = await dbProcess.ShowAllInvdividualLessons(),
+        free = checkAvailabilityForLesson(user['teacher_time_individual_lesson_set'], user['teacher_date_individual_lesson_set'], allLessons, ctx?.chat?.id ?? -1, 'part_2', parseInt(data.text.replace(/хв/g, '').trim()));
 
-      const updatedLesson = await dbProcess.EditExistIndividualLesson(
-        new ObjectId(user['teacher_reschedule_lesson_id_of_lesson']),
-        user['teacher_date_individual_lesson_set'],
-        user['teacher_time_individual_lesson_set'],
-        parseInt(data.text.replace(/хв/g, '').trim())
-      )
-
-      const newUserObject = await dbProcess.ShowOneUser(parseInt(user['teacher_individual_lesson_schedule_student_id']));
-
-      bot.telegram.sendMessage(User!.id,
-        script.notification.forStudent.rescheduleLesson(
-          UniversalSingleDataProcess(new Date(lesson!.date), 'day_of_week'),
-          UniversalSingleDataProcess(new Date(lesson!.date), 'day'),
-          UniversalSingleDataProcess(new Date(lesson!.date), 'month'),
-          lesson!.time,
-          UniversalSingleDataProcess(new Date(newDate), 'day_of_week'),
+      if (free === 'free'){
+        const updatedLesson = await dbProcess.EditExistIndividualLesson(
+          new ObjectId(user['teacher_reschedule_lesson_id_of_lesson']),
+          user['teacher_date_individual_lesson_set'],
+          user['teacher_time_individual_lesson_set'],
+          parseInt(data.text.replace(/хв/g, '').trim())
+        )
+  
+        const newUserObject = await dbProcess.ShowOneUser(parseInt(user['teacher_individual_lesson_schedule_student_id']));
+  
+        bot.telegram.sendMessage(User!.id,
+          script.notification.forStudent.rescheduleLesson(
+            UniversalSingleDataProcess(new Date(lesson!.date), 'day_of_week'),
+            UniversalSingleDataProcess(new Date(lesson!.date), 'day'),
+            UniversalSingleDataProcess(new Date(lesson!.date), 'month'),
+            lesson!.time,
+            UniversalSingleDataProcess(new Date(newDate), 'day_of_week'),
+            UniversalSingleDataProcess(new Date(newDate), 'day'),
+            UniversalSingleDataProcess(new Date(newDate), 'month'),
+            user['teacher_time_individual_lesson_set'],
+            User!.miro_link ?? "відсутнє",
+            newUserObject!.individual_count ?? 0
+          ))
+  
+        SendNotification(notifbot, script.notification.forAdmins.rescheduleLesson(
+          User!.name,
+          User!.username,
+          User!.number,
+          user['name'],
           UniversalSingleDataProcess(new Date(newDate), 'day'),
           UniversalSingleDataProcess(new Date(newDate), 'month'),
           user['teacher_time_individual_lesson_set'],
-          User!.miro_link ?? "відсутнє",
-          newUserObject!.individual_count ?? 0
+          user['teacher_reschedule_lesson_reason'],
+          User!.miro_link,
+          User!.individual_count
         ))
-
-      SendNotification(notifbot, script.notification.forAdmins.rescheduleLesson(
-        User!.name,
-        User!.username,
-        User!.number,
-        user['name'],
-        UniversalSingleDataProcess(new Date(newDate), 'day'),
-        UniversalSingleDataProcess(new Date(newDate), 'month'),
-        user['teacher_time_individual_lesson_set'],
-        user['teacher_reschedule_lesson_reason'],
-        User!.miro_link,
-        User!.individual_count
-      ))
-
-      if (updatedLesson){
-        if (User){
-          const date = DateProcessToPresentView(user['teacher_date_individual_lesson_set'])
-          ctx.reply(script.indivdual.individualLessonCreated(
-            User.name,
-            date[1],
-            date[0],
-            user['teacher_time_individual_lesson_set'],
-            User.individual_count
-          ), {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: [
-                [
-                  { text: "Перенести ще одне заняття" }
-                ],
-                [
-                  { text: "В МЕНЮ" }
-                ]
-              ]
-            }
-          })
   
-          await set('state')('EndRootManager');
+        if (updatedLesson){
+          if (User){
+            const date = DateProcessToPresentView(user['teacher_date_individual_lesson_set'])
+            ctx.reply(script.indivdual.individualLessonCreated(
+              User.name,
+              date[1],
+              date[0],
+              user['teacher_time_individual_lesson_set'],
+              User.individual_count ?? 0
+            ), {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: [
+                  [
+                    { text: "Перенести ще одне заняття" }
+                  ],
+                  [
+                    { text: "В МЕНЮ" }
+                  ]
+                ]
+              }
+            })
+    
+            await set('state')('EndRootManager');
+          }
         }
+        else ctx.reply(`у користувача ${User!.name} недостатньо хвилин для подібних змін (наразі у нього ${User!.individual_count ?? 0}хв)`);
       }
-      else ctx.reply(`у користувача ${User!.name} недостатньо хвилин для подібних змін (наразі у нього ${User!.individual_count ?? 0}хв)`);
+      else ctx.reply(`на жаль, але це заняття вже зайнято з ${free}(\n\nвкажіть інший час у форматі: 15:45')`);
     }
     else ctx.reply(script.errorException.chooseButtonError, {
       reply_markup: {
@@ -7512,14 +7602,17 @@ async function main() {
           }
 
           await set('teacher_delete_lesson_date_of_lesson')(date[1]);
-          ctx.reply('оберіть заняття, яке ви хочете видалити:', {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: keyboardChoose
-            }
-          })
-
-          await set('state')('IndividualLessonDeleteLessonRespondLessonAndGetReason');
+          if (keyboardChoose.length){
+            ctx.reply('оберіть заняття, яке ви хочете видалити:', {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboardChoose
+              }
+            })
+  
+            await set('state')('IndividualLessonDeleteLessonRespondLessonAndGetReason');
+          }
+          else ctx.reply('на жаль або на щастя в цей день у вас немає занять - вкажіть іншу дату');
         }
         else ctx.reply('на жаль або на щастя в цей день у вас немає занять - вкажіть іншу дату');
       }
@@ -7528,13 +7621,26 @@ async function main() {
 
   onTextMessage('IndividualLessonDeleteLessonRespondLessonAndGetReason', async(ctx, user, set, data) => {
     const lessons = await dbProcess.ShowAllInvdividualLessons();
-    let activeLessons = [];
+    let activeLessons = [],
+      keyboardChoose = [];
+
+    if (CheckException.BackRoot(data)){
+      ctx.reply('вкажіть дату заняття, яке ви хочете видалити у форматі: 23.05.2024');
+      await set('state')('IndividualLessonDeleteLessonFindLesson');
+    }
 
     for (let i = 0; i < lessons.length; i++){
-      if (lessons[i].idTeacher === ctx?.chat?.id && lessons[i].date === user['teacher_reschedule_lesson_date_of_lesson']){
+      if (lessons[i].idTeacher === ctx?.chat?.id && lessons[i].date === user['teacher_delete_lesson_date_of_lesson']){
         activeLessons.push(lessons[i]);
       }
     }
+
+    if (activeLessons){
+      for (let i = 0; i < activeLessons.length; i++){
+        keyboardChoose.push([{ text: (i + 1).toString() }]);
+      }
+    }
+
     if (CheckException.BackRoot(data)){
       ctx.reply('вкажіть дату заняття, яке ви хочете видалити у форматі: 23.05.2024');
       await set('state')('IndividualLessonDeleteLessonFindLesson');
@@ -7544,6 +7650,12 @@ async function main() {
       ctx.reply('вкажіть причину видалення заняття:');
       await set('state')('IndividualLessonDeleteRespondReasonAndVerifyDelete');
     }
+    else ctx.reply(script.errorException.chooseButtonError, {
+      reply_markup: {
+        one_time_keyboard: true,
+        keyboard: keyboardChoose
+      }
+    })
   })
 
   onTextMessage('IndividualLessonDeleteRespondReasonAndVerifyDelete', async(ctx, user, set, data) => {
@@ -7614,39 +7726,73 @@ async function main() {
 
           await dbProcess.DeleteIndividualLesson(new ObjectId(user['teacher_delete_lesson_id_of_lesson']));
 
-          ctx.telegram.sendMessage(User!.id, script.notification.forStudent.deleteIndividualLesson(
-            UniversalSingleDataProcess(lessonToDelete!.date, 'day_of_week'),
-            UniversalSingleDataProcess(lessonToDelete!.date, 'day'),
-            UniversalSingleDataProcess(lessonToDelete!.date, 'month'),
-            lessonToDelete!.time,
-            User!.individual_count ?? 0
-          ))
-
-          SendNotification(notifbot, script.notification.forAdmins.deleteIndividualLesson(
-            User!.name,
-            User!.username,
-            User!.number,
-            Teacher!.name,
-            UniversalSingleDataProcess(lessonToDelete!.date, 'day_of_week'),
-            UniversalSingleDataProcess(lessonToDelete!.date, 'day'),
-            UniversalSingleDataProcess(lessonToDelete!.date, 'month'),
-            lessonToDelete!.time,
-            user['teacher_individual_lesson_delete_reason'],
-            User!.count
-          ))
-          
-          ctx.reply('✅ заняття видалено', {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: [
-                [
-                  { text: "Видалити ще одне заняття" }
-                ],[
-                  { text: "В МЕНЮ" }
+          if (lessonToDelete?.type === 'trial'){
+            ctx.telegram.sendMessage(User!.id, script.notification.forStudent.deleteIndividualTrialLesson(
+              UniversalSingleDataProcess(new Date(lessonToDelete!.date), 'day_of_week'),
+              UniversalSingleDataProcess(new Date(lessonToDelete!.date), 'day'),
+              UniversalSingleDataProcess(new Date(lessonToDelete!.date), 'month'),
+              lessonToDelete!.time
+            ))
+  
+            SendNotification(notifbot, script.notification.forAdmins.deleteIndividualTrialLesson(
+              User!.name,
+              User!.username,
+              User!.number,
+              Teacher!.name,
+              UniversalSingleDataProcess(new Date(lessonToDelete!.date), 'day_of_week'),
+              UniversalSingleDataProcess(new Date(lessonToDelete!.date), 'day'),
+              UniversalSingleDataProcess(new Date(lessonToDelete!.date), 'month'),
+              lessonToDelete!.time,
+              user['teacher_individual_lesson_delete_reason']
+            ))
+            ctx.reply('✅ пробне заняття видалено', {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: [
+                  [
+                    { text: "Видалити ще одне заняття" }
+                  ],[
+                    { text: "В МЕНЮ" }
+                  ]
                 ]
-              ]
-            }
-          })
+              }
+            })
+          }
+          else{
+            ctx.telegram.sendMessage(User!.id, script.notification.forStudent.deleteIndividualLesson(
+              UniversalSingleDataProcess(new Date(lessonToDelete!.date), 'day_of_week'),
+              UniversalSingleDataProcess(new Date(lessonToDelete!.date), 'day'),
+              UniversalSingleDataProcess(new Date(lessonToDelete!.date), 'month'),
+              lessonToDelete!.time,
+              User!.individual_count ?? 0
+            ))
+  
+            SendNotification(notifbot, script.notification.forAdmins.deleteIndividualLesson(
+              User!.name,
+              User!.username,
+              User!.number,
+              Teacher!.name,
+              UniversalSingleDataProcess(new Date(lessonToDelete!.date), 'day_of_week'),
+              UniversalSingleDataProcess(new Date(lessonToDelete!.date), 'day'),
+              UniversalSingleDataProcess(new Date(lessonToDelete!.date), 'month'),
+              lessonToDelete!.time,
+              user['teacher_individual_lesson_delete_reason'],
+              User!.individual_count ?? 0
+            ))
+            ctx.reply('✅ заняття видалено', {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: [
+                  [
+                    { text: "Видалити ще одне заняття" }
+                  ],[
+                    { text: "В МЕНЮ" }
+                  ]
+                ]
+              }
+            })
+          }
+          
           await set('state')('EndRootManager');
           break;
 
@@ -7836,38 +7982,15 @@ async function main() {
       }
       else{
         const allLessons = await dbProcess.ShowAllInvdividualLessons(),
-          timeSplitted = parseInt(time.split(':')[0]);
-        let free = false,
-          busyBy = '';
+          free = checkAvailabilityForLesson(time, user['teacher_trial_date_of_lesson'], allLessons, ctx?.chat?.id ?? -1, 'part_2', 60);
 
-        pointer
-        for (let i = 0; i < allLessons.length; i++){
-          if (allLessons[i].idTeacher === ctx?.chat?.id && allLessons[i].date === user['teacher_date_individual_lesson_set']){
-            const endTime = new Date(`${allLessons[i].date}T${allLessons[i].time}` + allLessons[i].duration * 60000),
-              startTime = new Date(new Date(`${allLessons[i].date}T${allLessons[i].time}`).getTime() - 1800000),
-              timeFromActiveLesson = parseInt(allLessons[i].time.split(':')[0]);
-
-            if (timeFromActiveLesson + 1 >= timeSplitted || timeFromActiveLesson - 1 <= timeSplitted){
-              free = true;
-            }
-            else{
-              const User = await dbProcess.ShowOneUser(allLessons[i].idStudent);
-              busyBy = User!.name;
-              free = false;
-              break;
-            }
-          }
-          else{
-            free = true
-          }
-        }
-        if (free){
+        if (free === 'free'){
           await set('teacher_time_individual_lesson_set')(time);
           ctx.reply('додайте посилання на конференцію зі студентом:');
   
           await set('state')('IndividualLessonTrialRespondLinkAndCreate');
         }
-        else ctx.reply(`на жаль, на цей час у вас заплановане заняття з ${busyBy}(\n\nвкажіть інший час у форматі: 15:45`)
+        else ctx.reply(`на жаль, на цей час у вас заплановане заняття з ${free}(\n\nвкажіть інший час у форматі: 15:45`)
       }
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
