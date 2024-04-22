@@ -1,4 +1,4 @@
-// DehtoBot for dehto German Course
+// DehtoBot for dehto German School
 // Developed by Yaroslav Volkivskyi (TheLaidSon)
 
 // Actual v2.0 Rebirth Closed Beta
@@ -7,7 +7,7 @@
 import script from "./data/general/script";
 import packet from "./data/course/packets";
 import * as schedule from 'node-schedule';
-import { confirmationChat, supportChat, devChat, versionBot, eugeneChat } from './data/general/chats';
+import { confirmationChat, supportChat, devChat, versionBot } from './data/general/chats';
 import { CheckException } from "./base/handlers/check";
 import arch from './base/main/architecture';
 import getCourses, { Course, Courses, courseNumbersToSkip } from "./data/course/coursesAndTopics";
@@ -25,7 +25,8 @@ import DateRecord, { DateHistory } from "./base/handlers/getTime";
 import MongoDBReturnType from "./data/general/mongoDBType";
 import { Markup, TelegramError } from "telegraf";
 import { ObjectId } from 'mongodb';
-import { DateProcess, DateProcessToPresentView, SortSchedule, TimeProcess, UniversalSingleDataProcess, getDayOfWeek } from "./data/process/dateAndTimeProcess";
+import { DateProcess, DateProcessToPresentView, SortSchedule, 
+  TimeProcess, UniversalSingleDataProcess, getDayOfWeek } from "./data/process/dateAndTimeProcess";
 import IndividualArray from "./data/individual/interface";
 import NotificationReg, { SendNotification, SendNotificationWithMedia } from "./data/notifications/notificationProcess";
 import checkAvailabilityForLesson from "./data/general/lessonAvailabiltityCheck";
@@ -73,15 +74,31 @@ async function main() {
     await set('state')('FunctionRoot');
   });
 
+  bot.command('sysinfo', async (ctx) => {
+    console.log('DEV CHECK SYSTEM INFO');
+
+    const set = db.set(ctx?.chat?.id ?? -1),
+      userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+
+    ctx.reply(script.about(versionBot), {
+      parse_mode: "Markdown",
+      reply_markup: {
+        one_time_keyboard: true,
+        keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role ?? 'guest')
+      }
+    })
+
+    await set('state')('FunctionRoot');
+  })
+
   schedule.scheduleJob('0 */2 * * *', async () => {
     await dbProcess.DeleteExpiredClubs();
     await dbProcess.DeleteExpiredIndividualLessons();
   });
 
-  schedule.scheduleJob('*/1 * * * *', async () => {
-    console.log('\n\nNotification Trigger\n\n')
-    await dbProcess.DeleteExpiredIndividualLessons();
+  schedule.scheduleJob('*/5 * * * *', async () => {
     await dbProcess.DeleteTeNoticationEntryData();
+    await dbProcess.DeleteExpiredIndividualLessons();
     await dbProcess.NotificateUserAboutLesson(bot.telegram);
   });
 
@@ -236,15 +253,6 @@ async function main() {
       });
 
       await set('state')('ActionClubRespondAndRootAction');
-    }
-    else if (data.text === 'sysinfo'){
-      ctx.reply(script.about(versionBot), {
-        parse_mode: "HTML",
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: keyboards.toMenu()
-        }
-      })
     }
     else if (data.text === 'Користувачі' && (userI!.role === 'developer' || userI!.role === 'admin')){
       ctx.reply('оберіть одну із кнопок нижче:', {
@@ -921,14 +929,6 @@ async function main() {
     else if (data.text === 'Видалити ще одне заняття' && userI!.role === 'teacher'){
       ctx.reply('вкажіть дату заняття, яке ви хочете видалити у форматі: 23.05.2024');
       await set('state')('IndividualLessonDeleteLessonFindLesson');
-    }
-    else if (data.text === 'sysinfo'){
-      ctx.reply(script.about(versionBot), {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: keyboards.toMenu()
-        }
-      })
     }
     else{
       ctx.reply(script.errorException.chooseMenuButtonError, {

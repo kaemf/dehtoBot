@@ -7,3 +7,4 @@ new collection -
 individualLessons (collection)
 supportActiveChannels (collection)
 deTask (collection)
+sentNotificationIndividualLessons (collection)
