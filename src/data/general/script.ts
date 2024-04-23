@@ -678,7 +678,13 @@ ${count > 0 ? '✅' : '❌'} <b>Залишок:</b> ${count / 60} занять (
 ${classType !== 'trial' ? `${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count / 60} занять (${count}хв)` : ''}`,
 
       changeCountLessonsOnClub: (count: number) =>
-      `📈 <b>Баланс занять змінено</b> 📈\n\n<b>Тип занять:</b> Розмовні клуби\n✅ <b>Залишок:</b> ${count} занять\n\nгарного дня 🙌`
+      `📈 <b>Баланс занять змінено</b> 📈\n\n<b>Тип занять:</b> Розмовні клуби\n✅ <b>Залишок:</b> ${count} занять\n\nгарного дня 🙌`,
+
+      lessonComingClubNotification: (minute: number, dayOfWeek: string, day: string, month: string, time: string, teacherName: string, title: string, link: string) =>
+      `🌤 Розмовний клуб розпочнеться за ${minute}хв 🌤\n
+Коли: ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦 
+Викладач: ${teacherName}\nТема: ${title}\n\nПосилання: ${link}\n
+Лексика:`
     },
 
     forTeachers: {
@@ -717,7 +723,15 @@ ${count > 0 ? '✅' : '❌'} <b>Залишок:</b> ${count / 60} занять (
       `🌤 <b>Заняття розпочнеться за ${minute}хв</b> 🌤\n
 <b>Коли</b>: ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦
 <b>Студент</b>: ${studentName}\n<b>посилання на дошку Miro</b>: ${miro_link ?? "відстнє"}\n
-${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count / 60} занять (${count}хв)`
+${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count / 60} занять (${count}хв)`,
+
+      lessonComingClubNotification: (minute: number, dayOfWeek: string, day: string, month: string, time: string, title: string, link: string, registered: string, count: number) =>
+      `🌤 Розмовний клуб розпочнеться за ${minute}хв 🌤\n
+Коли: ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦  
+Тема: ${title}${registered}
+👉 Посилання: ${link}
+кількість доступних місць: ${count}\n
+Лексика:`
     },
     
     forAdmins: {

@@ -936,9 +936,11 @@ export default async function dbProcess(botdb: MongoClient){
         }
 
         async NotificateUserAboutClubLesson(ctx: Telegram){
-            const lessons = await this.clubdbLessons.find({}).toArray();
+            const lessons = await this.ShowAll(),
+                users = await this.ShowAllUsers();
 
             for (let i = 0; i < lessons.length; i++){
+                let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
                 const lessonDate = new Date(`${lessons[i].date.replace(/\./g, '-')}T${lessons[i].time}`);
                 if (this.Under40Minutes(lessonDate)){
                     const sentNotificationAboutLessons = await this.sentIndividualNotifications.find({}).toArray();
@@ -948,57 +950,82 @@ export default async function dbProcess(botdb: MongoClient){
                                 continue;
                             }
                             else{
-                                ctx.sendMessage(lessons[i].idStudent, script.notification.forStudent.lessonComingNotification(
-                                    lessons[i].type,
+                                for (let k = 0; k < users.length; k++){
+                                    if (await this.HasThisClubUser(users[k].id, lessons[i].idClub)){
+                                        userHaved += `- ${users[k].name} (@${users[k].username})\n📲${users[k].number}\n\n`;
+                                        await ctx.sendMessage(users[k].id, script.notification.forStudent.lessonComingClubNotification(
+                                            this.TimeLeft(lessonDate),
+                                            UniversalSingleDataProcess(lessonDate, 'day_of_week'),
+                                            UniversalSingleDataProcess(lessonDate, 'day'),
+                                            UniversalSingleDataProcess(lessonDate, 'month'),
+                                            lessons[i].time,
+                                            lessons[i].teacher,
+                                            lessons[i].title,
+                                            lessons[i].link
+                                        ), {parse_mode: "HTML"});
+                                        console.log(`\nNotification Club Lesson Sent to Student. Lesson start in ${formatDateWithTime(lessonDate)}`)
+                                        await ctx.sendDocument(users[k].id, lessons[i].documentation);
+                                    }
+                                }
+
+                                if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
+                                    userHaved = '';
+                                }
+
+                                await ctx.sendMessage(lessons[i].teacher_id, script.notification.forTeachers.lessonComingClubNotification(
                                     this.TimeLeft(lessonDate),
                                     UniversalSingleDataProcess(lessonDate, 'day_of_week'),
                                     UniversalSingleDataProcess(lessonDate, 'day'),
                                     UniversalSingleDataProcess(lessonDate, 'month'),
                                     lessons[i].time,
-                                    (await this.ShowOneUser(lessons[i].idTeacher))?.name ?? "сталась помилка",
-                                    (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
-                                    (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
+                                    lessons[i].title,
+                                    lessons[i].link,
+                                    userHaved,
+                                    lessons[i].count
                                 ), {parse_mode: "HTML"});
-                                ctx.sendMessage(lessons[i].idTeacher, script.notification.forStudent.lessonComingNotification(
-                                    lessons[i].type,
-                                    this.TimeLeft(lessonDate),
-                                    UniversalSingleDataProcess(lessonDate, 'day_of_week'),
-                                    UniversalSingleDataProcess(lessonDate, 'day'),
-                                    UniversalSingleDataProcess(lessonDate, 'month'),
-                                    lessons[i].time,
-                                    (await this.ShowOneUser(lessons[i].idStudent))?.name ?? "сталась помилка",
-                                    (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
-                                    (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
-                                ), {parse_mode: "HTML"});
-                                console.log(`\nNotification Sent. Lesson start in ${formatDateWithTime(lessonDate)}`);
+                                await ctx.sendDocument(lessons[i].teacher_id, lessons[i].documentation);
+                                
+                                console.log(`\nNotification Club Lesson Sent to Teacher. Lesson start in ${formatDateWithTime(lessonDate)}`);
                                 await this.sentIndividualNotifications.insertOne({id: lessons[i]._id});
                             }
                         }
                     }
                     else{
-                        ctx.sendMessage(lessons[i].idStudent, script.notification.forStudent.lessonComingNotification(
-                            lessons[i].type,
+                        for (let k = 0; k < users.length; k++){
+                            if (await this.HasThisClubUser(users[k].id, lessons[i].idClub)){
+                                userHaved += `- ${users[k].name} (@${users[k].username})\n📲${users[k].number}\n\n`;
+                                await ctx.sendMessage(users[k].id, script.notification.forStudent.lessonComingClubNotification(
+                                    this.TimeLeft(lessonDate),
+                                    UniversalSingleDataProcess(lessonDate, 'day_of_week'),
+                                    UniversalSingleDataProcess(lessonDate, 'day'),
+                                    UniversalSingleDataProcess(lessonDate, 'month'),
+                                    lessons[i].time,
+                                    lessons[i].teacher,
+                                    lessons[i].title,
+                                    lessons[i].link
+                                ), {parse_mode: "HTML"});
+                                await ctx.sendDocument(users[k].id, lessons[i].documentation);
+                            }
+                        }
+
+                        if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
+                            userHaved = '';
+                        }
+
+                        await ctx.sendMessage(lessons[i].teacher_id, script.notification.forTeachers.lessonComingClubNotification(
                             this.TimeLeft(lessonDate),
                             UniversalSingleDataProcess(lessonDate, 'day_of_week'),
                             UniversalSingleDataProcess(lessonDate, 'day'),
                             UniversalSingleDataProcess(lessonDate, 'month'),
                             lessons[i].time,
-                            (await this.ShowOneUser(lessons[i].idTeacher))?.name ?? "сталась помилка",
-                            (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
-                            (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
+                            lessons[i].title,
+                            lessons[i].link,
+                            userHaved,
+                            lessons[i].count
                         ), {parse_mode: "HTML"});
-                        ctx.sendMessage(lessons[i].idTeacher, script.notification.forStudent.lessonComingNotification(
-                            lessons[i].type,
-                            this.TimeLeft(lessonDate),
-                            UniversalSingleDataProcess(lessonDate, 'day_of_week'),
-                            UniversalSingleDataProcess(lessonDate, 'day'),
-                            UniversalSingleDataProcess(lessonDate, 'month'),
-                            lessons[i].time,
-                            (await this.ShowOneUser(lessons[i].idStudent))?.name ?? "сталась помилка",
-                            (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
-                            (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
-                        ), {parse_mode: "HTML"});
-                        console.log(`\nNotification Sent. Lesson start in ${formatDateWithTime(lessonDate)}`);
+                        await ctx.sendDocument(lessons[i].teacher_id, lessons[i].documentation);
+                        
+                        console.log(`\nNotification Club Lesson Sent. Lesson start in ${formatDateWithTime(lessonDate)}`);
                         await this.sentIndividualNotifications.insertOne({id: lessons[i]._id});
                     }
                 }
