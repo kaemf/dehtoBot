@@ -912,16 +912,95 @@ export default async function dbProcess(botdb: MongoClient){
 
             if (sentNotificationAboutLessons && sentNotificationAboutLessons.length){
                 for (let i = 0; i < sentNotificationAboutLessons.length; i++){
-                   const lesson = await this.individualdbLessons.findOne({_id: sentNotificationAboutLessons[i].id});
+                   let lesson = await this.individualdbLessons.findOne({_id: sentNotificationAboutLessons[i].id});
 
                    if (!lesson){
-                    await this.sentIndividualNotifications.deleteOne({_id: sentNotificationAboutLessons[i]._id});
+                    lesson = await this.clubdbLessons.findOne({_id: sentNotificationAboutLessons[i].id});
+                    
+                    if (!lesson){
+                        await this.sentIndividualNotifications.deleteOne({_id: sentNotificationAboutLessons[i]._id});
+                    }
+                    else{
+                        if (this.TimeLeft(new Date(`${lesson!.date.replace(/\./g, '-')}T${lesson!.time}`)) < 0){
+                            await this.sentIndividualNotifications.deleteOne({_id: sentNotificationAboutLessons[i]._id});
+                        }
+                    }
                    }
                    else{
                        if (this.TimeLeft(new Date(`${lesson!.date.replace(/\./g, '-')}T${lesson!.time}`)) < 0){
                         await this.sentIndividualNotifications.deleteOne({_id: sentNotificationAboutLessons[i]._id});
                        }
                    }
+                }
+            }
+        }
+
+        async NotificateUserAboutClubLesson(ctx: Telegram){
+            const lessons = await this.clubdbLessons.find({}).toArray();
+
+            for (let i = 0; i < lessons.length; i++){
+                const lessonDate = new Date(`${lessons[i].date.replace(/\./g, '-')}T${lessons[i].time}`);
+                if (this.Under40Minutes(lessonDate)){
+                    const sentNotificationAboutLessons = await this.sentIndividualNotifications.find({}).toArray();
+                    if (sentNotificationAboutLessons && sentNotificationAboutLessons.length){
+                        for (let j = 0; j < sentNotificationAboutLessons.length; j++){
+                            if (sentNotificationAboutLessons[j].id.toString() === lessons[i]._id.toString()){
+                                continue;
+                            }
+                            else{
+                                ctx.sendMessage(lessons[i].idStudent, script.notification.forStudent.lessonComingNotification(
+                                    lessons[i].type,
+                                    this.TimeLeft(lessonDate),
+                                    UniversalSingleDataProcess(lessonDate, 'day_of_week'),
+                                    UniversalSingleDataProcess(lessonDate, 'day'),
+                                    UniversalSingleDataProcess(lessonDate, 'month'),
+                                    lessons[i].time,
+                                    (await this.ShowOneUser(lessons[i].idTeacher))?.name ?? "сталась помилка",
+                                    (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
+                                    (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
+                                ), {parse_mode: "HTML"});
+                                ctx.sendMessage(lessons[i].idTeacher, script.notification.forStudent.lessonComingNotification(
+                                    lessons[i].type,
+                                    this.TimeLeft(lessonDate),
+                                    UniversalSingleDataProcess(lessonDate, 'day_of_week'),
+                                    UniversalSingleDataProcess(lessonDate, 'day'),
+                                    UniversalSingleDataProcess(lessonDate, 'month'),
+                                    lessons[i].time,
+                                    (await this.ShowOneUser(lessons[i].idStudent))?.name ?? "сталась помилка",
+                                    (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
+                                    (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
+                                ), {parse_mode: "HTML"});
+                                console.log(`\nNotification Sent. Lesson start in ${formatDateWithTime(lessonDate)}`);
+                                await this.sentIndividualNotifications.insertOne({id: lessons[i]._id});
+                            }
+                        }
+                    }
+                    else{
+                        ctx.sendMessage(lessons[i].idStudent, script.notification.forStudent.lessonComingNotification(
+                            lessons[i].type,
+                            this.TimeLeft(lessonDate),
+                            UniversalSingleDataProcess(lessonDate, 'day_of_week'),
+                            UniversalSingleDataProcess(lessonDate, 'day'),
+                            UniversalSingleDataProcess(lessonDate, 'month'),
+                            lessons[i].time,
+                            (await this.ShowOneUser(lessons[i].idTeacher))?.name ?? "сталась помилка",
+                            (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
+                            (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
+                        ), {parse_mode: "HTML"});
+                        ctx.sendMessage(lessons[i].idTeacher, script.notification.forStudent.lessonComingNotification(
+                            lessons[i].type,
+                            this.TimeLeft(lessonDate),
+                            UniversalSingleDataProcess(lessonDate, 'day_of_week'),
+                            UniversalSingleDataProcess(lessonDate, 'day'),
+                            UniversalSingleDataProcess(lessonDate, 'month'),
+                            lessons[i].time,
+                            (await this.ShowOneUser(lessons[i].idStudent))?.name ?? "сталась помилка",
+                            (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
+                            (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
+                        ), {parse_mode: "HTML"});
+                        console.log(`\nNotification Sent. Lesson start in ${formatDateWithTime(lessonDate)}`);
+                        await this.sentIndividualNotifications.insertOne({id: lessons[i]._id});
+                    }
                 }
             }
         }
