@@ -91,15 +91,19 @@ async function main() {
     await set('state')('FunctionRoot');
   })
 
-  schedule.scheduleJob('0 */2 * * *', async () => {
+  // schedule.scheduleJob('0 */2 * * *', async () => {
+  //   await dbProcess.DeleteExpiredClubs();
+  //   await dbProcess.DeleteExpiredIndividualLessons();
+  // });
+
+  schedule.scheduleJob('*/1 * * * *', async () => {
+    console.log('Notification job');
     await dbProcess.DeleteExpiredClubs();
     await dbProcess.DeleteExpiredIndividualLessons();
-  });
-
-  schedule.scheduleJob('*/5 * * * *', async () => {
+    await dbProcess.NotificateUserAboutLesson(bot.telegram);
+    await dbProcess.NotificateUserAboutClubLesson(bot.telegram);
     await dbProcess.DeleteTeNoticationEntryData();
     await dbProcess.DeleteExpiredIndividualLessons();
-    await dbProcess.NotificateUserAboutLesson(bot.telegram);
   });
 
   //Get real user name and root to get phone number with this.function
@@ -287,14 +291,14 @@ async function main() {
       // For Teachers
       for (let i = 0; i < results.length; i++){
         if (parseInt(results[i].teacher_id) === ctx?.chat?.id ?? -1){
-          let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
+          let userHaved : string = '\n\n<b>👉Зареєстровані користувачі</b>\n';
           for (let j = 0; j < users.length; j++) {
             if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
               userHaved += `- ${users[j].name} (@${users[j].username})\n📲${users[j].number}\n\n`;
             }
           }
           
-          if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
+          if (userHaved === '\n\n<b>👉Зареєстровані користувачі</b>\n'){
             userHaved = '';
           }
 
@@ -903,13 +907,13 @@ async function main() {
       await set('state')('GetClubToRegistrationAndCheckPayment');
     }
     else if (data.text === 'Запланувати ще одне заняття' && userI!.role === 'teacher'){
-      const teachersStudents = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1)
+      const teachersStudents = (await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1))?.registered_students?.length
       ?
       (await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1))?.registered_students : false;
       if (teachersStudents){
         let studentsKeyboard = [];
         for (let i = 0; i < teachersStudents.length; i++){
-          studentsKeyboard.push([{ text: teachersStudents[i] }]);
+          studentsKeyboard.push([{ text: (await dbProcess.ShowOneUser(teachersStudents[i]))?.name }]);
         }
         ctx.reply('оберіть студента, з яким плануєте заняття:', {
           reply_markup: {
@@ -920,7 +924,7 @@ async function main() {
 
         await set('state')('IndividualLessonScheduleCheckAvailibilityStudentAndGetDateTime');
       }
-      ctx.reply('нажаль, на данний момент ви не маєте жодного активного студента');
+      ctx.reply('на жаль, на данний момент ви не маєте жодного активного студента');
     }
     else if (data.text === 'Перенести ще одне заняття' && userI!.role === 'teacher'){
       ctx.reply('вкажіть дату заняття, яке ви хочете перенести у форматі: 23.05.2024');
@@ -2445,13 +2449,13 @@ async function main() {
     
       if (results.length){
         for (let i = 0; i < results.length; i++) {
-          let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
+          let userHaved : string = '\n\n<b>👉Зареєстровані користувачі</b>\n';
           for (let j = 0; j < users.length; j++) {
             if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
               userHaved += `- ${users[j].name} (@${users[j].username}) - ${ConvertToPrice((await db.get(users[j].id)('club-typeclub'))!)} uah.\n📲${users[j].number}\n\n`;
             }
           }
-            if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
+            if (userHaved === '\n\n<b>👉Зареєстровані користувачі</b>\n'){
               userHaved = '';
             }
   
@@ -2486,13 +2490,13 @@ async function main() {
     
       if (results.length){
         for (let i = 0; i < results.length; i++) {
-          let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
+          let userHaved : string = '\n\n<b>👉Зареєстровані користувачі</b>\n';
           for (let j = 0; j < users.length; j++) {
             if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
               userHaved += `- ${users[j].name} (@${users[j].username}) - ${ConvertToPrice((await db.get(users[j].id)('club-typeclub'))!)} uah.\n📲${users[j].number}\n\n`;
             }
           }
-            if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
+            if (userHaved === '\n\n<b>👉Зареєстровані користувачі</b>\n'){
               userHaved = '';
             }
   
@@ -2527,13 +2531,13 @@ async function main() {
     
       if (results.length){
         for (let i = 0; i < results.length; i++) {
-          let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
+          let userHaved : string = '\n\n<b>👉Зареєстровані користувачі</b>\n';
           for (let j = 0; j < users.length; j++) {
             if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
               userHaved += `- ${users[j].name} (@${users[j].username}) - ${ConvertToPrice((await db.get(users[j].id)('club-typeclub'))!)} uah.\n📲${users[j].number}\n\n`;
             }
           }
-          if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
+          if (userHaved === '\n\n<b>👉Зареєстровані користувачі</b>\n'){
             userHaved = '';
           }
   
@@ -3223,13 +3227,13 @@ async function main() {
         users = await dbProcess.ShowAllUsers();
     
       for (let i = 0; i < results.length; i++) {
-        let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
+        let userHaved : string = '\n\n<b>👉Зареєстровані користувачі</b>\n';
         for (let j = 0; j < users.length; j++) {
           if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
             userHaved += `- ${users[j].name} (@${users[j].username}) - ${ConvertToPrice((await db.get(users[j].id)('club-typeclub'))!)} uah.\n📲${users[j].number}\n\n`;
           }
         }
-          if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
+          if (userHaved === '\n\n<b>👉Зареєстровані користувачі</b>\n'){
             userHaved = '';
           }
 
@@ -3328,13 +3332,13 @@ async function main() {
         users = await dbProcess.ShowAllUsers();
     
       for (let i = 0; i < results.length; i++) {
-        let userHaved : string = '\n\n<b>👉🏼Зареєстровані користувачі</b>\n';
+        let userHaved : string = '\n\n<b>👉Зареєстровані користувачі</b>\n';
         for (let j = 0; j < users.length; j++) {
           if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
             userHaved += `- ${users[j].name} (@${users[j].username}) - ${ConvertToPrice((await db.get(users[j].id)('club-typeclub'))!)} uah.\n📲${users[j].number}\n\n`;
           }
         }
-          if (userHaved === '\n\n<b>👉🏼Зареєстровані користувачі</b>\n'){
+          if (userHaved === '\n\n<b>👉Зареєстровані користувачі</b>\n'){
             userHaved = '';
           }
 
@@ -4355,7 +4359,7 @@ async function main() {
           await set('state')('PeronalStudentHandler');
         }
         else{
-          ctx.reply('Нажаль, такого користувача не знайдено.');
+          ctx.reply('на жаль, такого користувача не знайдено.');
         }
       }
       else{
@@ -4391,7 +4395,7 @@ async function main() {
           await set('state')('ForceChangeAvaibleLessonsAndReturn');
         }
         else{
-          ctx.reply('Нажаль, такого користувача не знайдено.');
+          ctx.reply('на жаль, такого користувача не знайдено.');
         }
       }
       else{
@@ -4457,7 +4461,7 @@ async function main() {
           await set('state')('ChangeActivePacket_Handler');
         }
         else{
-          ctx.reply('Нажаль, такого користувача не знайдено.');
+          ctx.reply('на жаль, такого користувача не знайдено.');
         }
       }
       else{
@@ -4520,7 +4524,7 @@ async function main() {
 
         await set('state')('TeachersChooseStudentHandler');
       }
-      else ctx.reply('нажаль... у вас немає активних студентів :(');
+      else ctx.reply('на жаль... у вас немає активних студентів :(');
     }
     else if (CheckException.TextException(data)){
       await set('teacher_content_detask')(`${user['teacher_content_detask'] ? `${user['teacher_content_detask']},` : ''}${data.text}`);
@@ -4660,7 +4664,7 @@ async function main() {
         await set('state')('EndRootManager');
       }
       else{
-        ctx.reply('нажаль, цього студента не знайдено в базі данних, тому операція неможлива. спробуйте обрати іншого', {
+        ctx.reply('на жаль, цього студента не знайдено в базі данних, тому операція неможлива. спробуйте обрати іншого', {
           reply_markup: {
             one_time_keyboard: true,
             keyboard: studentsKeyboard
@@ -4857,7 +4861,7 @@ async function main() {
           }
 
           if (!keyboard.length){
-            ctx.reply('нажаль... ви не маєте студентів, яким давали завдання, але ви можете це виправити :)', {
+            ctx.reply('на жаль... ви не маєте студентів, яким давали завдання, але ви можете це виправити :)', {
               reply_markup: {
                 one_time_keyboard: true,
                 keyboard: keyboards.deTaskMenu()
@@ -4997,7 +5001,7 @@ async function main() {
             }
             else{
               await set('detask_tmp_endkeyboard')('have_task');
-              ctx.reply('нажаль, студент ще не дав відповіді на ваше завдання :(', {
+              ctx.reply('на жаль, студент ще не дав відповіді на ваше завдання :(', {
                 reply_markup: {
                   one_time_keyboard: true,
                   keyboard: keyboards.deTaskMenu('have_task')
@@ -5123,7 +5127,7 @@ async function main() {
         ctx.telegram.sendMessage(userID, "егей! у вас нове деЗавдання!");
         if (previousTask) await dbProcess.DeleteDeTask(userObject!.detask);
       }
-      else ctx.reply('нажаль... виникла помилка, студент якого ви обрали на початку не знайдено в базі даних :(\n\nповторіть, будь ласка, знову', {
+      else ctx.reply('на жаль... виникла помилка, студент якого ви обрали на початку не знайдено в базі даних :(\n\nповторіть, будь ласка, знову', {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.toMenu()
@@ -6379,7 +6383,7 @@ async function main() {
       })
       await set('state')('AdminAddUserToTeacher_RespondTeacher');
     }
-    else if (data.text.startsWith("https://miro.com/")){
+    else if (data.text.startsWith("https://miro")){
       const student = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id'])),
         teacher = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_teacher_id']));
 
@@ -6691,7 +6695,7 @@ async function main() {
         })
         await set('state')('AdminSendNotificationSpecificUserHandler');
       }
-      else ctx.reply('нажаль, такого користувача не знайдено, спробуйте ще раз, будь ласка')
+      else ctx.reply('на жаль, такого користувача не знайдено, спробуйте ще раз, будь ласка')
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
   })
@@ -6770,7 +6774,7 @@ async function main() {
 
             await set('state')('IndividualLessonScheduleCheckAvailibilityStudentAndGetDateTime')
           }
-          else ctx.reply('нажаль, на данний момент ви не маєте жодного активного студента');
+          else ctx.reply('на жаль, на данний момент ви не маєте жодного активного студента');
           break;
 
         case "Перенести заняття":
@@ -6888,29 +6892,32 @@ async function main() {
         await set('state')('TeacherSchduleHandler');
       }
     }
-    else if (teacherStudents.includes(data.text)){
+    else if (CheckException.TextException(data)){
       const User = await dbProcess.FindUser(data.text);
-      if (User){
-        await ctx.reply(script.studentFind.checkIndividualCountShowStudent(
-          User.name,
-          User.username,
-          User.number,
-          User.individual_count ?? 0
-        ))
-
-        if (User.individual_count > 0){
-          await set('teacher_individual_lesson_schedule_student_id')(User.id);
-          await ctx.reply('вкажіть день, місяць та рік у форматі:\n23.05.2024');
-          await set('state')('IndividualLessonScheduleRespondDateAndCheckThis');
-        }
-        else await ctx.reply(`не можна запланувати заняття, у ${User.name} немає проплачених занять - повідомте в підтримку та оберіть іншого студента:`, {
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: students
+      if (teacherStudents.includes(User?.id)){
+        if (User){
+          await ctx.reply(script.studentFind.checkIndividualCountShowStudent(
+            User.name,
+            User.username,
+            User.number,
+            User.individual_count ?? 0
+          ))
+  
+          if (User.individual_count > 0){
+            await set('teacher_individual_lesson_schedule_student_id')(User.id);
+            await ctx.reply('вкажіть день, місяць та рік у форматі:\n23.05.2024');
+            await set('state')('IndividualLessonScheduleRespondDateAndCheckThis');
           }
-        })
+          else await ctx.reply(`не можна запланувати заняття, у ${User.name} немає проплачених занять - повідомте в підтримку та оберіть іншого студента:`, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: students
+            }
+          })
+        }
+        else ctx.reply(`на жаль, такого користувача як ${data.text} не знайдено в базі данних`);
       }
-      else ctx.reply(`нажаль, такого користувача як ${data.text} не знайдено в базі данних`);
+      else ctx.reply(`на жаль, такого користувача як ${data.text} не знайдено в базі данних`);
     }
     else ctx.reply(script.errorException.chooseButtonError, {
       reply_markup: {
@@ -6939,7 +6946,7 @@ async function main() {
 
         await set('state')('IndividualLessonScheduleCheckAvailibilityStudentAndGetDateTime')
       }
-      else ctx.reply('нажаль, на данний момент ви не маєте жодного активного студента');
+      else ctx.reply('на жаль, на данний момент ви не маєте жодного активного студента');
     }
     else if (CheckException.TextException(data)){
       const date = DateProcess(data.text);
@@ -6987,7 +6994,7 @@ async function main() {
           }
         })
       }
-      else ctx.reply(`нажаль, такого користувача як ${data.text} не знайдено в базі данних`);
+      else ctx.reply(`на жаль, такого користувача як ${data.text} не знайдено в базі данних`);
     }
     else if (CheckException.TextException(data)){
       const time = TimeProcess(data.text);
@@ -7013,7 +7020,7 @@ async function main() {
   
           await set('state')('IndividualLessonScheduleSetDurationAndCreate')
         }
-        else ctx.reply('нажаль, ви не маєте змогу запланувати заннятя на цей час, бо воно заплановане заняттям з ' +free);
+        else ctx.reply('на жаль, ви не маєте змогу запланувати заннятя на цей час, бо воно заплановане заняттям з ' +free);
       }
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
@@ -7093,7 +7100,7 @@ async function main() {
           await set('state')('EndRootManager');
         }
       }
-      else ctx.reply('нажаль, ви не маєте змогу запланувати заннятя на цей час, бо воно заплановане з ' +free);
+      else ctx.reply('на жаль, ви не маєте змогу запланувати заннятя на цей час, бо воно заплановане з ' +free);
     }
     else ctx.reply(script.errorException.chooseButtonError, {
       reply_markup: {
@@ -8633,7 +8640,7 @@ async function main() {
   bot.action(/^declinePaymentWO:(\d+),(.+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]);
 
-    await ctx.telegram.sendMessage(idUser, `вибачте, ${await db.get(idUser)('name')}, але нажаль ваша оплата не успішна.\nповторіть будь ласка змовлення`);
+    await ctx.telegram.sendMessage(idUser, `вибачте, ${await db.get(idUser)('name')}, але на жаль ваша оплата не успішна.\nповторіть будь ласка змовлення`);
 
     try {
       // set up payment status "nopaid"
@@ -8653,7 +8660,7 @@ async function main() {
     const idUser = Number.parseInt(ctx.match[1]);
     const idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2]));
 
-    await ctx.telegram.sendMessage(idUser, `вибачте, ${await db.get(idUser)('name')}, але нажаль ваша оплата не успішна.\nповторіть будь ласка змовлення`);
+    await ctx.telegram.sendMessage(idUser, `вибачте, ${await db.get(idUser)('name')}, але на жаль ваша оплата не успішна.\nповторіть будь ласка змовлення`);
 
     try {
       // set up payment status "nopaid"
@@ -8709,7 +8716,7 @@ async function main() {
     const idUser = Number.parseInt(ctx.match[1]);
     const packetName = ctx.match[2] === 's' ? 'Шпрах-Клуб' : 'Шпрах-Клуб+PLUS';
 
-    await ctx.telegram.sendMessage(idUser, `вибачте, ${await db.get(idUser)('name')}, але нажаль ваша оплата не успішна.\nповторіть будь ласка змовлення`);
+    await ctx.telegram.sendMessage(idUser, `вибачте, ${await db.get(idUser)('name')}, але на жаль ваша оплата не успішна.\nповторіть будь ласка змовлення`);
 
     try {
       // set up payment status "nopaid"
@@ -8780,7 +8787,7 @@ async function main() {
     const idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2]));
     const packetName = ctx.match[3] === 's' ? 'Шпрах-Клуб' : 'Шпрах-Клуб+PLUS';
 
-    await ctx.telegram.sendMessage(idUser, `вибачте, ${await db.get(idUser)('name')}, але нажаль ваша оплата не успішна.\nповторіть будь ласка змовлення`);
+    await ctx.telegram.sendMessage(idUser, `вибачте, ${await db.get(idUser)('name')}, але на жаль ваша оплата не успішна.\nповторіть будь ласка змовлення`);
 
     try {
       // set up payment status "nopaid"

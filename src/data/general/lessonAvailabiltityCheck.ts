@@ -98,7 +98,7 @@ export default function checkAvailabilityForLesson(timeInputed: string, dateInpu
             if (free){
                 console.warn(`(P2) Busy: ${busyBy}`);
                 console.log(`(P2) Дата и время занятия: ${_date} ${lessonObjects[i].time}, \n\n${_timeInputted_}`);
-                console.log(`(P2) Сколько идет занятие: ${duration / 60000}`);
+                console.log(`(P2) Сколько идет занятие: ${newDuration_ / 60000}`);
                 console.log(`(P2) EndTime Когда заканчивается занятие (+duration): ${_endTime}`);
                 console.log(`(P2) StartTime Время начала занятия (-30): ${_startTime}`);
                 return busyBy;
@@ -106,7 +106,7 @@ export default function checkAvailabilityForLesson(timeInputed: string, dateInpu
             else{
                 console.warn(`(P2) No Busy`);
                 console.log(`(P2) Дата и время занятия: ${_date} ${lessonObjects[i].time}, \n\n${_timeInputted_}`);
-                console.log(`(P2) Сколько идет занятие: ${duration / 60000}`);
+                console.log(`(P2) Сколько идет занятие: ${newDuration_ / 60000}`);
                 console.log(`(P2) EndTime Когда заканчивается занятие (+duration): ${_endTime}`);
                 console.log(`(P2) StartTime Время начала занятия (-30): ${_startTime}`);
                 return 'free';
