@@ -467,10 +467,9 @@ export default async function dbProcess(botdb: MongoClient){
                         if (usersTeacher && newTeacher){
                             const oldTeacherStudents = usersTeacher.registered_students,
                                 newTeacherStudents = newTeacher.registered_students,
-                                indexInMassiveOld = oldTeacherStudents.indexOf(user.name),
-                                indexInMassiveNew = newTeacherStudents.indexOf(user.name);
+                                indexInMassiveOld = oldTeacherStudents.indexOf(user.id);
 
-                            if (indexInMassiveOld !== -1){
+                            if (oldTeacherStudents.includes(user.id)){
                                 oldTeacherStudents.splice(indexInMassiveOld, 1);
 
                                 const updateObjectTeacher = {$set : {
@@ -481,8 +480,8 @@ export default async function dbProcess(botdb: MongoClient){
                             }
                             else throw new Error('\n\nUser not found in old Teacher');
 
-                            if (indexInMassiveNew === -1){
-                                newTeacherStudents.push(user!.name);
+                            if (!newTeacherStudents.includes(user.id)){
+                                newTeacherStudents.push(user!.id);
 
                                 const updateObjectTeacher = {$set : {
                                     registered_students: newTeacherStudents
@@ -495,12 +494,11 @@ export default async function dbProcess(botdb: MongoClient){
                         }
                         else{
                             const newTeacher = await this.ShowOneUser(await this.GetUserIDByName(value.toString())),
-                                newTeacherStudents = newTeacher!.registered_students,
-                                indexInMassiveNew = newTeacherStudents.indexOf(user.name);
+                                newTeacherStudents = newTeacher!.registered_students;
 
-                            if (indexInMassiveNew === -1 && newTeacher){
+                            if (!newTeacherStudents.includes(user.id) && newTeacher){
                                 let ifEmpty = [];
-                                newTeacherStudents ? newTeacherStudents.push(user!.name) : ifEmpty.push(user!.name);
+                                newTeacherStudents ? newTeacherStudents.push(user!.id) : ifEmpty.push(user!.id);
 
                                 const updateObjectTeacher = {$set : {
                                     registered_students: !newTeacherStudents ? ifEmpty : newTeacherStudents

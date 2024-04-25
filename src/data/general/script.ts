@@ -535,13 +535,13 @@ ${date} о ${time} 🇺🇦 за ось цим посиланням:\n\n${link}\
 
   studentFind: {
     generalFind: (name: string, id: number, role: string, username: string, phone: string, typeOfLessons: string, teacher: string, count: number, miro: string) => 
-    `👉 ${ConvertRole(role)} (ID: ${id})
+    `👉 <b>${ConvertRole(role)} (ID: ${id})</b>
 ${name}
 (@${username}); ${phone}\n
-Тип занять: ${typeOfLessons}
-Викладач: ${teacher}
-${count > 0 ? '✅': '❌'} Залишок: ${count / 60} занять (${count}хв)\n
-посилання на дошку Miro студента: ${miro}`,
+<b>Тип занять:</b> ${typeOfLessons}
+<b>Викладач:</b> ${teacher}
+${count > 0 ? '✅': '❌'} <b>Залишок:</b> ${count / 60} занять (${count}хв)\n
+<b>посилання на дошку Miro студента:</b> ${miro}`,
 
     showTeacher: (name: string, id: number, role: string, username: string, phone: string, countOfStudents: number) =>
     `👉 ${ConvertRole(role)} (ID: ${id})
@@ -683,7 +683,15 @@ ${classType !== 'trial' ? `${count > 0 ? '✅' : '❌'} <b>Залишок</b>: $
       lessonComingClubNotification: (minute: number, dayOfWeek: string, day: string, month: string, time: string, teacherName: string, title: string, link: string) =>
       `🌤 <b>Розмовний клуб розпочнеться за ${minute}хв</b> 🌤\n
 <b>Коли:</b> ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦 
-<b>Викладач:</b> ${teacherName}\n<b>Тема:</b> ${title}\n\n<b>Посилання:</b> ${link}`
+<b>Викладач:</b> ${teacherName}\n<b>Тема:</b> ${title}\n\n<b>Посилання:</b> ${link}`,
+
+      miroLinkChanged: (teacherName: string, teacherUserName: string, teacherNumber: string, miro_link: string, count: number) =>
+      `🤩 <b>Лінк на Miro змінено</b> 🤩\n
+👉 <b>ваш викладач:</b>\n${teacherName}\n (@${teacherUserName}); ${teacherNumber}\n
+👉 <b>ваше посилання на дошку Miro:</b>
+${miro_link}\n
+${count > 0 ? '✅' : '❌'} <b>Залишок:</b> ${count / 60} занять (${count}хв)\n
+гарного дня 🙌`
     },
 
     forTeachers: {
@@ -710,6 +718,14 @@ ${count > 0 ? '✅' : '❌'} <b>Залишок:</b> ${count / 60} занять (
 <b>посилання на дошку Miro:</b> ${miro_link}\n
 ${count > 0 ? '✅' : '❌'} <b>Залишок:</b> ${count / 60} занять (${count}хв)`,
 
+      forOldTeacher: (studentName: string, studentUserName: string, studentNumber: string) =>
+`🔁 від вас було переведено студента:\n
+👉 ${studentName}\n(@${studentUserName}); ${studentNumber}\n
+не забудьте написати йому_їй щось приємне;)\n
+можете скопіювати: Дана Батьківна, підтримка повідомила, що ви не будете продовжувати навчання, проте мені було приємно з вами працювати!🥹\n
+Бажаю Вам натхнення та успіхів у вивченні мови!
+Вдалого дня🍓`,
+
       deleteStudent: (studentName: string, studentUserName: string, studentNumber: string) =>
       `🙂 <b>у вас було прибрано з індивідуальних занять студента:</b>\n
 👉 ${studentName}\n(@${studentUserName}); ${studentNumber}\n
@@ -729,7 +745,15 @@ ${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count / 60} занять (
 <b>Коли:</b> ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦  
 <b>Тема:</b> ${title}${registered}
 👉 <b>Посилання:</b> ${link}
-<b>кількість доступних місць:</b> ${count}`
+<b>кількість доступних місць:</b> ${count}`,
+
+      miroLinkChanged: (studentName: string, studentUserName: string, studentNumber: string, miro_link: string, count: number) => 
+      `🤩 <b>Лінк на Miro змінено</b> 🤩\n
+👉 ${studentName}
+(@${studentUserName}); ${studentNumber}\n
+<b>посилання на дошку Miro:</b>
+${miro_link}\n
+✅ <b>Залишок:</b> ${count / 60} занять (${count}хв)`
     },
     
     forAdmins: {
@@ -743,7 +767,7 @@ ${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count / 60} занять (
 👉 заняття перенесено на субота, ${day} ${month} о ${time} за Києвом 🇺🇦
 <b>Причина:</b> ${reason}
 <b>посилання на дошку Miro:</b> ${miro_link}\n
-✅ <b>Залишок:</b> ${count / 60} занять (${count}хв)`,
+${count > 0 ? '✅' : '❌'} <b>Залишок:</b> ${count / 60} занять (${count}хв)`,
 
       rescheduleTrialLesson: (studentName: string, username: string, number: string, teacherName: string, day: string, month: string, time: string, reason: string, miro_link: string) => 
       `♻️️️ <b>Перенесення пробного заняття</b> ♻️\n

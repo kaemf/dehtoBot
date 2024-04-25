@@ -55,11 +55,19 @@ export default async function init() {
     const originalSendMessage = ctx.telegram.sendMessage;
     const originalReply = ctx.reply;
     ctx.telegram.sendMessage = async (chatId: string | number, text: string, extra?: any) => {
-      return originalSendMessage.call(ctx.telegram, chatId, text, { ...extra, parse_mode: 'HTML' });
+      let finalExtra = { ...extra, parse_mode: 'HTML' };
+      if (extra && !extra.reply_markup) {
+        finalExtra.reply_markup = { remove_keyboard: true };
+      }
+      return originalSendMessage.call(ctx.telegram, chatId, text, finalExtra);
     };
 
     ctx.reply = async (text: string, extra?: any) => {
-      return originalReply.call(ctx, text, { ...extra, parse_mode: 'HTML' });
+      let finalExtra = { ...extra, parse_mode: 'HTML' };
+      if (extra && !extra.reply_markup) {
+        finalExtra.reply_markup = { remove_keyboard: true };
+      }
+      return originalReply.call(ctx, text, finalExtra);
     };
 
     await next();

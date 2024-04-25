@@ -1,7 +1,6 @@
 import { DateProcessToPresentView } from "../process/dateAndTimeProcess";
 
 export default function checkAvailabilityForLesson(timeInputed: string, dateInputed: string, lessonObjects: any, idTeacher: number, part: string, newDuration?: number) {
-    const duration = lessonObjects.duration * 60000;
     let free = false,
       busyBy = '';
 
@@ -9,6 +8,7 @@ export default function checkAvailabilityForLesson(timeInputed: string, dateInpu
       case "part_1":
         for (let i = 0; i < lessonObjects.length; i++){
           if (lessonObjects[i].idTeacher === idTeacher && lessonObjects[i].date === DateProcessToPresentView(dateInputed)){
+            const duration = lessonObjects[i].duration * 60000
             const date = (lessonObjects[i].date).replace(/\./g, '-');
             const lessonTime = new Date(`${date}T${lessonObjects[i].time}`),
               endTime = new Date(lessonTime.getTime() + duration),
@@ -64,9 +64,10 @@ export default function checkAvailabilityForLesson(timeInputed: string, dateInpu
         if (newDuration === undefined) throw new Error('newDuration is undefined');
         for (let i = 0; i < lessonObjects.length; i++){
           if (lessonObjects[i].idTeacher === idTeacher && lessonObjects[i].date === dateInputed){
+            const _duration = lessonObjects[i].duration * 60000
             const _date = lessonObjects[i].date.replace(/\./g, '-');
             const newDuration_ = newDuration * 60000,
-              _endTime = new Date(new Date(`${_date}T${lessonObjects[i].time}`).getTime() + duration),
+              _endTime = new Date(new Date(`${_date}T${lessonObjects[i].time}`).getTime() + _duration),
               _startTime = new Date(new Date(`${_date}T${lessonObjects[i].time}`).getTime() - newDuration_),
               _lessonTime = new Date(`${_date}T${lessonObjects[i].time}`),
               _timeInputted_ =  new Date(`${_date}T${timeInputed}`);

@@ -924,7 +924,7 @@ async function main() {
 
         await set('state')('IndividualLessonScheduleCheckAvailibilityStudentAndGetDateTime');
       }
-      ctx.reply('на жаль, на данний момент ви не маєте жодного активного студента');
+      else ctx.reply('на жаль, на данний момент ви не маєте жодного активного студента');
     }
     else if (data.text === 'Перенести ще одне заняття' && userI!.role === 'teacher'){
       ctx.reply('вкажіть дату заняття, яке ви хочете перенести у форматі: 23.05.2024');
@@ -5306,7 +5306,7 @@ async function main() {
           const AllUsers = await dbProcess.ShowAllUsers();
           let keyboardTeacher = []
           for (let i = 0; i < AllUsers.length; i++){
-            if (AllUsers[i].role === 'teacher'){
+            if (AllUsers[i].role === 'teacher' && AllUsers[i].id !== User?.teacher){
               keyboardTeacher.push([{ text: AllUsers[i].name }]);
             }
           }
@@ -5416,6 +5416,7 @@ async function main() {
           break;
 
         default:
+          const oldTeacher = (await dbProcess.ShowOneUser(parseInt(user['user_to_change_individual_id'])))?.teacher;
           const returnable_result = await dbProcess.IndividualChangeUserData(
             parseInt(user['user_to_change_individual_id']),
             user['admin_parametr_to_change_individual'],
@@ -5423,8 +5424,7 @@ async function main() {
           );
           const User = await dbProcess.FindUser(user['user_to_change_individual_id']),
             teacher = await dbProcess.ShowOneUser(User.teacher);
-          ctx.reply('успішно!');
-          ctx.reply(script.studentFind.generalFind(
+          const probably_deleted = ctx.reply(script.studentFind.generalFind(
             User.name,
             User.id,
             User.role,
@@ -5459,7 +5459,14 @@ async function main() {
               User!.individual_count ?? 0
             ))
 
+            ctx.telegram.sendMessage(oldTeacher, script.notification.forTeachers.forOldTeacher(
+              User!.name,
+              User!.username,
+              User!.number
+            ))
+
             await ctx.reply('студента переведено!');
+            ctx.telegram.deleteMessage(ctx?.chat?.id ?? -1, (await probably_deleted).message_id); // probably_deleted
             await ctx.reply(script.studentFind.generalFind(
               User.name,
               User.id,
@@ -5487,7 +5494,24 @@ async function main() {
             ctx.reply(`✅ студента ${User.name} було успішно видалено від викладача ${returnable_result!.name}`)
           }
           else{
+            ctx.telegram.sendMessage(teacher!.id, script.notification.forTeachers.miroLinkChanged(
+              User!.name,
+              User!.username,
+              User!.number,
+              User!.miro_link,
+              User!.individual_count
+            ));
+            
+            ctx.telegram.sendMessage(User!.id, script.notification.forStudent.miroLinkChanged(
+              teacher!.name,
+              teacher!.username,
+              teacher!.number,
+              User!.miro_link,
+              User!.individual_count
+            ));
+
             await ctx.reply('лінк змінено!');
+            ctx.telegram.deleteMessage(ctx?.chat?.id ?? -1, (await probably_deleted).message_id); // probably_deleted
             await ctx.reply(script.studentFind.generalFind(
               User.name,
               User.id,
@@ -7020,7 +7044,7 @@ async function main() {
   
           await set('state')('IndividualLessonScheduleSetDurationAndCreate')
         }
-        else ctx.reply('на жаль, ви не маєте змогу запланувати заннятя на цей час, бо воно заплановане заняттям з ' +free);
+        else ctx.reply('на жаль, ви не маєте змогу запланувати заннятя на цей час, бо воно заплановане заняттям з ' +(await dbProcess.ShowOneUser(parseInt(free!)))!.name);
       }
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
@@ -7100,7 +7124,7 @@ async function main() {
           await set('state')('EndRootManager');
         }
       }
-      else ctx.reply('на жаль, ви не маєте змогу запланувати заннятя на цей час, бо воно заплановане з ' +free);
+      else ctx.reply('на жаль, ви не маєте змогу запланувати заннятя на цей час, бо воно заплановане з ' +(await dbProcess.ShowOneUser(parseInt(free!)))!.name);
     }
     else ctx.reply(script.errorException.chooseButtonError, {
       reply_markup: {
@@ -7416,7 +7440,7 @@ async function main() {
             await set('state')('IndividualLessonRescheduleSetDurationAndCreate');
           }
         }
-        else ctx.reply(`на жаль, на цей час у вас заплановане заняття з ${free}(\n\nвкажіть інший час у форматі: 15:45`)
+        else ctx.reply(`на жаль, на цей час у вас заплановане заняття з ${(await dbProcess.ShowOneUser(parseInt(free!)))!.name}(\n\nвкажіть інший час у форматі: 15:45`)
       }
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
@@ -7499,7 +7523,7 @@ async function main() {
         }
         else ctx.reply(`у користувача ${User!.name} недостатньо хвилин для подібних змін (наразі у нього ${User!.individual_count ?? 0}хв)`);
       }
-      else ctx.reply(`на жаль, але це заняття вже зайнято з ${free}(\n\nвкажіть інший час у форматі: 15:45')`);
+      else ctx.reply(`на жаль, але це заняття вже зайнято з ${(await dbProcess.ShowOneUser(parseInt(free!)))!.name}(\n\nвкажіть інший час у форматі: 15:45')`);
     }
     else ctx.reply(script.errorException.chooseButtonError, {
       reply_markup: {
@@ -7997,7 +8021,7 @@ async function main() {
   
           await set('state')('IndividualLessonTrialRespondLinkAndCreate');
         }
-        else ctx.reply(`на жаль, на цей час у вас заплановане заняття з ${free}(\n\nвкажіть інший час у форматі: 15:45`)
+        else ctx.reply(`на жаль, на цей час у вас заплановане заняття з ${(await dbProcess.ShowOneUser(parseInt(free!)))!.name}(\n\nвкажіть інший час у форматі: 15:45`)
       }
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
