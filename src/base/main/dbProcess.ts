@@ -253,6 +253,18 @@ export default async function dbProcess(botdb: MongoClient){
                             }
                         }
                     }
+                    const teacher = await dbProcess.ShowOneUser(lessons[i].idTeacher);
+
+                    if (teacher){
+                        const set_individual_lessons = teacher.set_individual_lessons?.length ? teacher.set_individual_lessons : false,
+                            string_individual_lessons = set_individual_lessons.forEach((element: any) => {
+                                return element.toString();
+                            }),
+                            indexElement = string_individual_lessons?.indexOf(lessons[i]._id.toString());
+
+                        if (indexElement !== -1) set_individual_lessons.splice(indexElement, 1);
+                        await this.botdbUsers.updateOne({id: teacher.id}, {$set: {set_individual_lessons: set_individual_lessons}});
+                    }
                     console.log('\nFounded Expired Individual Lessson and Delete\n')
                     await this.SystemDeleteIndividualLesson(lessons[i]._id);
                 }
@@ -545,7 +557,7 @@ export default async function dbProcess(botdb: MongoClient){
 
             if (teacherObject){
                 await this.botdbUsers.updateMany({teacher: idTeacher}, {$set: {teacher: false, detask: false}});
-                await this.botdbUsers.updateOne({id: teacherObject!.idTeacher}, {$set : {registered_students: [], role: 'guest', set_detasks: []}});
+                await this.botdbUsers.updateOne({id: idTeacher}, {$set : {registered_students: [], role: 'guest', set_detasks: [], set_individual_lessons: []}});
                 if (teacherDetasks){
                     for (let i = 0; i < teacherDetasks.length; i++){
                         await this.deTaskDB.deleteOne({_id: teacherDetasks[i]})
@@ -662,21 +674,26 @@ export default async function dbProcess(botdb: MongoClient){
                 }
                 if (lesson.duration > duration!){
                     const different = lesson.duration - duration!;
-                    result = student!.individual_count + different;
+                    result = parseInt(student!.individual_count + different);
                     if (result < 0){
                         return false;
                     }
                     else{
                         await this.individualdbLessons.updateOne({_id: id}, {$set: {
                             date: date,
-                            time: time
+                            time: time,
+                            duration: duration!
                         }});
                         await this.sentIndividualNotifications.deleteOne({id: lesson._id});
                         await this.botdbUsers.updateOne({id: student!.id}, {$set: { individual_count: result }});
                         return true;
                     }
                 }
-                else{
+                else if (lesson.duration === duration!){
+                    await this.sentIndividualNotifications.deleteOne({id: lesson._id});
+                    return true;
+                }
+                else if (lesson.duration < duration!){
                     const different = duration! - lesson.duration;
                     result = student!.individual_count - different;
                     if (result < 0){
@@ -685,7 +702,8 @@ export default async function dbProcess(botdb: MongoClient){
                     else{
                         await this.individualdbLessons.updateOne({_id: id}, {$set: {
                             date: date,
-                            time: time
+                            time: time,
+                            duration: duration!
                         }});
                         await this.sentIndividualNotifications.deleteOne({id: lesson._id});
                         await this.botdbUsers.updateOne({id: student!.id}, {$set: { individual_count: result }});
@@ -709,12 +727,26 @@ export default async function dbProcess(botdb: MongoClient){
             const lesson = await this.individualdbLessons.findOne({_id: id});
 
             if (lesson){
-                const student = await dbProcess.ShowOneUser(lesson.idStudent);
+                const student = await dbProcess.ShowOneUser(lesson.idStudent),
+                    teacher = await dbProcess.ShowOneUser(lesson.idTeacher);
 
                 if (student){
-                    const lessonDuration = lesson.duration;
+                    if (lesson.type === 'classic'){
+                        await this.botdbUsers.updateOne({id: student.id}, {$set: {individual_count: parseInt(student.individual_count + lesson.duration)}});
+                    }
+                    else console.log('lesson isnt classic');
+                    if (teacher){
+                        const set_individual_lessons = teacher.set_individual_lessons?.length ? teacher.set_individual_lessons : false,
+                            string_individual_lessons = set_individual_lessons.forEach((element: any) => {
+                                return element.toString();
+                            }),
+                            indexElement = string_individual_lessons?.indexOf(lesson._id.toString());
+
+                        if (indexElement !== -1) set_individual_lessons.splice(indexElement, 1);
+                        await this.botdbUsers.updateOne({id: teacher.id}, {$set: {set_individual_lessons: set_individual_lessons}});
+                    }
+                    else throw new Error('\n\Teacher not found DeleteIndividualLesson()');
                     await this.individualdbLessons.deleteOne({_id: id});
-                    await this.botdbUsers.updateOne({_id: id}, {$set: {individual_count: student.individual_count + lessonDuration}});
                 }
                 else throw new Error('\n\nUser not found DeleteIndividualLesson()');
             }

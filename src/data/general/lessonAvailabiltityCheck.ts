@@ -1,6 +1,6 @@
 import { DateProcessToPresentView } from "../process/dateAndTimeProcess";
 
-export default function checkAvailabilityForLesson(timeInputed: string, dateInputed: string, lessonObjects: any, idTeacher: number, part: string, newDuration?: number) {
+export default function checkAvailabilityForLesson(timeInputed: string, dateInputed: string, lessonObjects: any, idTeacher: number, part: string, newDuration?: number, reschedule?: boolean) {
     let free = false,
       busyBy = '';
 
@@ -79,7 +79,10 @@ export default function checkAvailabilityForLesson(timeInputed: string, dateInpu
                 free = false;
               }
               else{
-                free = true;
+                if (reschedule){
+                  free = lessonObjects[i].time === timeInputed ? false : true
+                }
+                else free = true;
                 console.log(`(P2) Trigger on like else: endTime <= timeInputted_`)
                 busyBy = (lessonObjects[i].idStudent).toString();
               }
@@ -92,7 +95,10 @@ export default function checkAvailabilityForLesson(timeInputed: string, dateInpu
               }
               else{
                 console.log(`(P2) Trigger on like else: startTime >= timeInputted_`)
-                free = true;
+                if (reschedule){
+                  free = lessonObjects[i].time === timeInputed ? false : true
+                }
+                else free = true;
                 busyBy = (lessonObjects[i].idStudent).toString();
               }
             }

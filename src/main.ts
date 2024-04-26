@@ -304,7 +304,7 @@ async function main() {
 
           let addString = results[i].count > 0 ? `<b>кількість доступних місць</b>: ${results[i].count}` : `❌ немає вільних місць ❌`;
   
-          await ctx.telegram.sendDocument(ctx?.chat?.id ?? -1, results[i].documentation, { caption: script.speakingClub.report.showClubTypeTeacher(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved, results[i].link)});
+          await ctx.telegram.sendDocument(ctx?.chat?.id ?? -1, results[i].documentation, { caption: script.speakingClub.report.showClubTypeTeacher(i + 1, results[i].title, results[i].teacher, dbProcess.getDateClub(new Date(results[i].date)), results[i].time, addString, userHaved, results[i].link), parse_mode: "HTML" });
           haveClubs = true;
         }
       }
@@ -582,6 +582,8 @@ async function main() {
       else if (userObject!.role === 'teacher'){
         const trialLessons = await dbProcess.GetUserTrialLessons(ctx?.chat?.id ?? -1);
         if (userObject?.set_individual_lessons?.length || trialLessons?.length){
+          console.log(userObject?.set_individual_lessons)
+          console.log(trialLessons?.length)
           const lessons = SortSchedule([
             ...(userObject?.set_individual_lessons?.length ? await dbProcess.GetSpecificIndividualLessons(userObject?.set_individual_lessons) : []),
             ...(trialLessons?.length ? trialLessons : [])
@@ -684,23 +686,43 @@ async function main() {
 
       for (let i = 0; i < sortedStudents.length; i++){
         const teacher = await dbProcess.ShowOneUser(sortedStudents[i]!.teacher);
-        await ctx.reply(script.studentFind.generalFind(
-          sortedStudents[i].name,
-          sortedStudents[i].id,
-          sortedStudents[i].role,
-          sortedStudents[i].username,
-          sortedStudents[i].number,
-          sortedStudents[i].typeOfLessons ?? "Індивідуальні",
-          teacher?.name ?? "Відсутній",
-          sortedStudents[i].individual_count ?? 0,
-          sortedStudents[i].miro_link ?? "Відсутнє"
-        ), {
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: keyboards.indiviualMenu(userObject!.role)
-          }
-        })
+        if (i % 10 === 0 && i != 0){
+          const messageWaiting = ctx.reply("Почекайте маленько, підгружаю ще...");
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          ctx.telegram.deleteMessage(ctx?.chat?.id ?? -1, (await messageWaiting).message_id);
+          await ctx.reply(script.studentFind.generalFind(
+            sortedStudents[i].name,
+            sortedStudents[i].id,
+            sortedStudents[i].role,
+            sortedStudents[i].username,
+            sortedStudents[i].number,
+            sortedStudents[i].typeOfLessons ?? "Індивідуальні",
+            teacher?.name ?? "Відсутній",
+            sortedStudents[i].individual_count ?? 0,
+            sortedStudents[i].miro_link ?? "Відсутнє"
+          ))
+        }
+        else{
+          await ctx.reply(script.studentFind.generalFind(
+            sortedStudents[i].name,
+            sortedStudents[i].id,
+            sortedStudents[i].role,
+            sortedStudents[i].username,
+            sortedStudents[i].number,
+            sortedStudents[i].typeOfLessons ?? "Індивідуальні",
+            teacher?.name ?? "Відсутній",
+            sortedStudents[i].individual_count ?? 0,
+            sortedStudents[i].miro_link ?? "Відсутнє"
+          ))
+        }
       }
+
+      await ctx.reply(`Загальна кількість студентів: ${students.length}`, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.indiviualMenu(userObject!.role)
+        }
+      });
     }
     else if (data.text === "Запис на заняття"){
       ctx.reply(script.registrationLesson.niceWhatATime, {reply_markup: {remove_keyboard: true}});
@@ -4656,7 +4678,12 @@ async function main() {
             keyboard: keyboards.toMenu()
           }
         });
-        ctx.telegram.sendMessage(userID, "егей! у вас нове деЗавдання!");
+        pointer
+        // ctx.telegram.sendMessage(userID, "егей! у вас нове деЗавдання!", {
+        //   reply_markup: {
+        //     inline_keyboard: {}
+        //   }
+        // });
         await set('teacher_content_detask')('');
         await set('teacher_filecontent_detask')('');
         await set('teacher_typeofcontent_detask')('');
@@ -4840,52 +4867,65 @@ async function main() {
         teachersStudents = teacher!.registered_students,
         teacherTasks = teacher!.set_detasks;
       let keyboard = [];
-      switch(data.text){
-        case "Дати завдання":
-          ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання')
-          await set('state')('TeachersSetTasksHandler')
-          break;
 
-        case "Перевірити завдання":
-          for (let i = 0; i < teachersStudents.length; i++){
-            const userObject = await dbProcess.ShowOneUser(teachersStudents[i]),
-              task = await dbProcess.GetStudentAnswerForDeTask(teachersStudents[i]);
-
-            if (task){
-              for (let j = 0; j < teacherTasks.length; j++){
-                if (teacherTasks[j].toString() === userObject!.detask.toString()){
-                  keyboard.push([{ text: (await dbProcess.ShowOneUser(teachersStudents[i]))!.name }])
+      if (teachersStudents.length){
+        switch(data.text){
+          case "Дати завдання":
+            ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання')
+            await set('state')('TeachersSetTasksHandler')
+            break;
+  
+          case "Перевірити завдання":
+            for (let i = 0; i < teachersStudents.length; i++){
+              const userObject = await dbProcess.ShowOneUser(teachersStudents[i]),
+                task = await dbProcess.GetStudentAnswerForDeTask(teachersStudents[i]);
+  
+              if (task){
+                for (let j = 0; j < teacherTasks.length; j++){
+                  if (teacherTasks[j].toString() === userObject!.detask.toString()){
+                    keyboard.push([{ text: (await dbProcess.ShowOneUser(teachersStudents[i]))!.name }])
+                  }
                 }
               }
             }
-          }
-
-          if (!keyboard.length){
-            ctx.reply('на жаль... ви не маєте студентів, яким давали завдання, але ви можете це виправити :)', {
+  
+            if (!keyboard.length){
+              ctx.reply('на жаль... ви не маєте студентів, яким давали завдання, але ви можете це виправити :)', {
+                reply_markup: {
+                  one_time_keyboard: true,
+                  keyboard: keyboards.deTaskMenu()
+                }
+              });
+            }
+            else{
+              ctx.reply('добренько, тепер виберіть студента, котрий вам потрібен', {
+                reply_markup: {
+                  one_time_keyboard: true,
+                  keyboard: keyboard
+                }
+              })
+              await set('state')('GetStudentForTeacherDeTaskHandler');
+            }
+            break;
+  
+          default:
+            ctx.reply(script.errorException.chooseButtonError, {
               reply_markup: {
                 one_time_keyboard: true,
-                keyboard: keyboards.deTaskMenu()
-              }
-            });
-          }
-          else{
-            ctx.reply('добренько, тепер виберіть студента, котрий вам потрібен', {
-              reply_markup: {
-                one_time_keyboard: true,
-                keyboard: keyboard
+                keyboard: keyboards.deTaskMenu() // TODO
               }
             })
-            await set('state')('GetStudentForTeacherDeTaskHandler');
+        }
+      }
+      else{
+        ctx.reply('на жаль... ви не маєте студентів :(', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.toMenu()
           }
-          break;
+        })
 
-        default:
-          ctx.reply(script.errorException.chooseButtonError, {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: keyboards.deTaskMenu() // TODO
-            }
-          })
+        await set('state')('EndRootManager');
       }
     }
   })
@@ -5847,7 +5887,7 @@ async function main() {
         case "Так":
           await dbProcess.DeleteTeacherFromPost(parseInt(user['admin_teachersoperation_idone']))
           ?
-          ctx.reply('✅ викладача Мякишева катерина було успішно видалено', {
+          ctx.reply(`✅ викладача ${teacher!.name} катерина було успішно видалено`, {
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.toMenu()
@@ -5860,7 +5900,7 @@ async function main() {
               keyboard: keyboards.toMenu()
             }
           })
-          await set('state')('EndFunctionManager')
+          await set('state')('EndRootManager')
           break;
 
         case "Ні":
@@ -7124,7 +7164,11 @@ async function main() {
           await set('state')('EndRootManager');
         }
       }
-      else ctx.reply('на жаль, ви не маєте змогу запланувати заннятя на цей час, бо воно заплановане з ' +(await dbProcess.ShowOneUser(parseInt(free!)))!.name);
+      else{
+        await ctx.reply('на жаль, ви не маєте змогу запланувати заннятя на цей час, бо воно заплановане з ' +(await dbProcess.ShowOneUser(parseInt(free!)))!.name);
+        await ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
+        await set('state')('IndividualLessonScheduleCheckTimeAndGetDuration');
+      }
     }
     else ctx.reply(script.errorException.chooseButtonError, {
       reply_markup: {
@@ -7233,15 +7277,18 @@ async function main() {
             )
           }
 
-          await set('teacher_reschedule_lesson_date_of_lesson')(date[1]);
-          ctx.reply('оберіть заняття, яке ви хочете перенести:', {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: keyboardChoose
-            }
-          })
-
-          await set('state')('IndividualLessonRescheduleRespondLessonAndGetReason');
+          if (keyboardChoose?.length){
+            await set('teacher_reschedule_lesson_date_of_lesson')(date[1]);
+            ctx.reply('оберіть заняття, яке ви хочете перенести:', {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboardChoose
+              }
+            })
+  
+            await set('state')('IndividualLessonRescheduleRespondLessonAndGetReason');
+          }
+          else ctx.reply('на жаль або на щастя в цей день у вас немає занять - вкажіть іншу дату');
         }
         else ctx.reply('на жаль або на щастя в цей день у вас немає занять - вкажіть іншу дату');
       }
@@ -7456,7 +7503,7 @@ async function main() {
         User = await dbProcess.ShowOneUser(parseInt(user['teacher_individual_lesson_schedule_student_id'])),
         newDate = user['teacher_date_individual_lesson_set'],
         allLessons = await dbProcess.ShowAllInvdividualLessons(),
-        free = checkAvailabilityForLesson(user['teacher_time_individual_lesson_set'], user['teacher_date_individual_lesson_set'], allLessons, ctx?.chat?.id ?? -1, 'part_2', parseInt(data.text.replace(/хв/g, '').trim()));
+        free = checkAvailabilityForLesson(user['teacher_time_individual_lesson_set'], user['teacher_date_individual_lesson_set'], allLessons, ctx?.chat?.id ?? -1, 'part_2', parseInt(data.text.replace(/хв/g, '').trim()), true);
 
       if (free === 'free'){
         const updatedLesson = await dbProcess.EditExistIndividualLesson(
@@ -7492,7 +7539,7 @@ async function main() {
           user['teacher_time_individual_lesson_set'],
           user['teacher_reschedule_lesson_reason'],
           User!.miro_link,
-          User!.individual_count
+          newUserObject!.individual_count
         ))
   
         if (updatedLesson){
@@ -7503,7 +7550,7 @@ async function main() {
               date[1],
               date[0],
               user['teacher_time_individual_lesson_set'],
-              User.individual_count ?? 0
+              newUserObject!.individual_count ?? 0
             ), {
               reply_markup: {
                 one_time_keyboard: true,
@@ -7523,7 +7570,10 @@ async function main() {
         }
         else ctx.reply(`у користувача ${User!.name} недостатньо хвилин для подібних змін (наразі у нього ${User!.individual_count ?? 0}хв)`);
       }
-      else ctx.reply(`на жаль, але це заняття вже зайнято з ${(await dbProcess.ShowOneUser(parseInt(free!)))!.name}(\n\nвкажіть інший час у форматі: 15:45')`);
+      else{
+        ctx.reply(`на жаль, але це заняття вже зайнято з ${(await dbProcess.ShowOneUser(parseInt(free!)))!.name}(\n\nвкажіть інший час у форматі: 15:45`);
+        await set('state')('IndividualLessonRescheduleCheckTimeAndGetDuration');
+      }
     }
     else ctx.reply(script.errorException.chooseButtonError, {
       reply_markup: {
@@ -7790,12 +7840,13 @@ async function main() {
             })
           }
           else{
+            const newUserObject = await dbProcess.ShowOneUser(lessonToDelete!.idStudent);
             ctx.telegram.sendMessage(User!.id, script.notification.forStudent.deleteIndividualLesson(
               UniversalSingleDataProcess(new Date(lessonToDelete!.date), 'day_of_week'),
               UniversalSingleDataProcess(new Date(lessonToDelete!.date), 'day'),
               UniversalSingleDataProcess(new Date(lessonToDelete!.date), 'month'),
               lessonToDelete!.time,
-              User!.individual_count ?? 0
+              newUserObject!.individual_count ?? 0
             ))
   
             SendNotification(notifbot, script.notification.forAdmins.deleteIndividualLesson(
@@ -7808,7 +7859,7 @@ async function main() {
               UniversalSingleDataProcess(new Date(lessonToDelete!.date), 'month'),
               lessonToDelete!.time,
               user['teacher_individual_lesson_delete_reason'],
-              User!.individual_count ?? 0
+              newUserObject!.individual_count ?? 0
             ))
             ctx.reply('✅ заняття видалено', {
               reply_markup: {

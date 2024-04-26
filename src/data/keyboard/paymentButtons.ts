@@ -164,3 +164,12 @@ export const inlineScheduleTrialLessonTeacher = (id: number, idStudent: number):
         ]
     ];
 }
+
+// Go to detask Solution
+export const inlineGoToDetaskSolution = (id: number): HideableIKBtn[][] => {
+    return [
+        [
+            Markup.button.callback("виконати ", `goToDetaskSolution:${id}`),
+        ]
+    ];
+}
