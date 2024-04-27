@@ -623,7 +623,7 @@ ${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count} заняття (${c
 <b>посилання на дошку Miro:</b> ${miro_link}\n
 ${countOfLessons > 0 ? '✅' : '❌'} <b>Залишок:</b> ${countOfLessons / 60} занять (${countOfLessons}хв)`,
 
-      notEnoughCountOfLessons: (name: string) => `🤷‍♂️ <b>Немає оплачених занять</b 🤷‍♂️\n\n😢 ${name} у вас немає проплачених занять, будемо продовжувати?`,
+      notEnoughCountOfLessons: (name: string) => `🤷‍♂️ <b>Немає оплачених занять</b> 🤷‍♂️\n\n😢 ${name} у вас немає проплачених занять, будемо продовжувати?`,
 
       rescheduleLesson: (oldDayOfWeek: string, oldDay: string, oldMonth: string, oldTime: string, newDayOfWeek: string, newDay: string, newMonth: string, newTime: string, miro_link: string, count: number) => 
       `♻️️️ <b>Перенесення заняття</b> ♻️\n

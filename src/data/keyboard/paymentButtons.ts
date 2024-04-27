@@ -178,7 +178,7 @@ export const inlineGoToDetaskSolution = (id: number): HideableIKBtn[][] => {
 export const inlineGoToDetaskCheck = (id: number): HideableIKBtn[][] => {
     return [
         [
-            Markup.button.callback("виконати", `goToDetaskCheck:${id}`),
+            Markup.button.callback("перевірити", `goToDetaskCheck:${id}`),
         ]
     ];
 }

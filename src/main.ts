@@ -23,7 +23,7 @@ import { inlineApprovePayment, inlineAcceptOncePayment, inlineAcceptOncePaymentW
   from "./data/keyboard/paymentButtons";
 import formattedName from "./data/process/nameFormatt";
 import { liveKeyboard } from "./data/keyboard/livekeyboard";
-import DateRecord, { DateHistory } from "./base/handlers/getTime";
+import DateRecord, { DateHistory, Time } from "./base/handlers/getTime";
 import MongoDBReturnType from "./data/general/mongoDBType";
 import { Markup, TelegramError } from "telegraf";
 import { ObjectId } from 'mongodb';
@@ -93,12 +93,7 @@ async function main() {
     await set('state')('FunctionRoot');
   })
 
-  // schedule.scheduleJob('0 */2 * * *', async () => {
-  //   await dbProcess.DeleteExpiredClubs();
-  //   await dbProcess.DeleteExpiredIndividualLessons();
-  // });
-
-  schedule.scheduleJob('*/1 * * * *', async () => {
+  schedule.scheduleJob('*/5 * * * *', async () => {
     console.log('Notification job');
     await dbProcess.DeleteExpiredClubs();
     await dbProcess.DeleteExpiredIndividualLessons();
@@ -951,11 +946,11 @@ async function main() {
       else ctx.reply('на жаль, на данний момент ви не маєте жодного активного студента');
     }
     else if (data.text === 'Перенести ще одне заняття' && userI!.role === 'teacher'){
-      ctx.reply('вкажіть дату заняття, яке ви хочете перенести у форматі: 23.05.2024');
+      ctx.reply(`вкажіть дату заняття, яке ви хочете перенести у форматі: ${DateRecord()}`);
       await set('state')('IndividualLessonRescheduleFindLesson');
     }
     else if (data.text === 'Видалити ще одне заняття' && userI!.role === 'teacher'){
-      ctx.reply('вкажіть дату заняття, яке ви хочете видалити у форматі: 23.05.2024');
+      ctx.reply(`вкажіть дату заняття, яке ви хочете видалити у форматі: ${DateRecord()}`);
       await set('state')('IndividualLessonDeleteLessonFindLesson');
     }
     else{
@@ -2654,7 +2649,7 @@ async function main() {
         await set("AP_teacher_name")(teacher[0]);
         await set("AP_teacher_id")(teacher[1]);
   
-        ctx.reply('вкажіть день, місяць та рік у форматі:\n23.05.2024');
+        ctx.reply(`вкажіть день, місяць та рік у форматі:\n${DateRecord()}`);
         await set('state')('ADD_RespondDateAndGetCheckThis');
       }
       else{
@@ -2710,7 +2705,7 @@ async function main() {
       }
       else{
         await set('AP_date')(date[1]);
-        ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
+        ctx.reply(`вкажіть години та хвилини за Києвом 🇺🇦 у форматі: ${Time()}`);
         await set('state')('ADD_RespondTimeAndGetCount');
       }
     }
@@ -2721,7 +2716,7 @@ async function main() {
 
   onTextMessage('ADD_RespondTimeAndGetCount', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      ctx.reply('вкажіть день, місяць та рік у форматі:\n23.05.2024');
+      ctx.reply(`вкажіть день, місяць та рік у форматі:\n${DateRecord()}`);
       await set('state')('ADD_RespondDateAndGetCheckThis');
     }
     else if (CheckException.TextException(data)){
@@ -2731,7 +2726,7 @@ async function main() {
         ctx.reply('боженьки.. ви ввели не правильний час...\n\nповторіть, будь ласка, ще раз :)')
       }
       else if (time === 'format_of_time_uncorrect'){
-        ctx.reply('от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату 15:45\n\nповторіть, будь ласка, ще раз :)')
+        ctx.reply(`от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату ${Time()}\n\nповторіть, будь ласка, ще раз :)`)
       }
       else{
         await set('AP_time')(time);
@@ -2755,7 +2750,7 @@ async function main() {
         ctx.reply('перепрошую, але формат введеної вами дати не є корректним :(\n\nслідуйте, будь ласка, за данним прикладом 19.03.2024');
       }
       else{
-        ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
+        ctx.reply(`вкажіть години та хвилини за Києвом 🇺🇦 у форматі: ${Time()}`);
         await set('state')('ADD_RespondTimeAndGetCount');
       }
     }
@@ -2930,13 +2925,13 @@ async function main() {
           break;
 
         case "Дата":
-          ctx.reply('вкажіть день, місяць та рік у форматі:\n23.05.2024');
+          ctx.reply(`вкажіть день, місяць та рік у форматі:\n${DateRecord()}`);
           await set('CheckCorrectCollectedDataWhileAddingClub_Choose')('Дата');
           await set('state')('CheckCorrectCollectedDataWhileAddingClubHandler');
           break;
 
         case "Час":
-          ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
+          ctx.reply(`вкажіть години та хвилини за Києвом 🇺🇦 у форматі: ${Time()}`);
           await set('CheckCorrectCollectedDataWhileAddingClub_Choose')('Час');
           await set('state')('CheckCorrectCollectedDataWhileAddingClubHandler');
           break;
@@ -3080,7 +3075,7 @@ async function main() {
             ctx.reply('боженьки.. ви ввели не правильний час...\n\nповторіть, будь ласка, ще раз :)')
           }
           else if (time === 'format_of_time_uncorrect'){
-            ctx.reply('от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату 15:45\n\nповторіть, будь ласка, ще раз :)')
+            ctx.reply(`от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату ${Time()}\n\nповторіть, будь ласка, ще раз :)`)
           }
           else{
             await set('AP_time')(time);
@@ -4953,20 +4948,23 @@ async function main() {
         teacherTasks = teacher ? teacher.set_detasks : false,
         teacherRegisterStudents = teacher ? teacher.registered_students : false;
       let teacherHaveThisTask = false,
-        errorKeyboard = [];
+        errorKeyboard = [], regularCheck = [];
 
       for (let i = 0; i < teacherRegisterStudents.length; i++){
-        errorKeyboard.push([{ text: teacherRegisterStudents[i] }]);
+        errorKeyboard.push([{ text: (await dbProcess.ShowOneUser(teacherRegisterStudents[i]))!.name }]);
+        regularCheck.push((await dbProcess.ShowOneUser(teacherRegisterStudents[i]))!.name);
       }
 
-      for (let i = 0; i < teacherTasks.length; i++){
-        if (teacherTasks[i].toString() === student?.detask?.toString()){
-          teacherHaveThisTask = true;
-          break;
+      if (teacherTasks?.length){
+        for (let i = 0; i < teacherTasks.length; i++){
+          if (teacherTasks[i].toString() === student?.detask?.toString()){
+            teacherHaveThisTask = true;
+            break;
+          }
         }
       }
 
-      if (student && teacherTasks && teacherRegisterStudents.includes(data.text)){
+      if (student && teacherTasks && regularCheck.includes(data.text)){
         const answer = await dbProcess.GetStudentAnswerForDeTask(studentID);
 
         await set('tmp_userid_detask')(studentID);
@@ -6842,12 +6840,12 @@ async function main() {
           break;
 
         case "Перенести заняття":
-          ctx.reply('вкажіть дату заняття, яке ви хочете перенести у форматі: 23.05.2024');
+          ctx.reply(`вкажіть дату заняття, яке ви хочете перенести у форматі: ${DateRecord()}`);
           await set('state')('IndividualLessonRescheduleFindLesson');
           break;
 
         case "Видалити заняття":
-          ctx.reply('вкажіть дату заняття, яке ви хочете видалити у форматі: 23.05.2024');
+          ctx.reply(`вкажіть дату заняття, яке ви хочете видалити у форматі: ${DateRecord()}`);
           await set('state')('IndividualLessonDeleteLessonFindLesson');
           break;
 
@@ -6893,7 +6891,7 @@ async function main() {
     let students = [];
     
     for (let i = 0; i < teacherStudents.length; i++){
-      students.push([{ text: teacherStudents[i] }]);
+      students.push([{ text: (await dbProcess.ShowOneUser(teacherStudents[i])!)!.name }]);
     }
     if (CheckException.BackRoot(data)){
       const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
@@ -6969,7 +6967,7 @@ async function main() {
   
           if (User.individual_count > 0){
             await set('teacher_individual_lesson_schedule_student_id')(User.id);
-            await ctx.reply('вкажіть день, місяць та рік у форматі:\n23.05.2024');
+            await ctx.reply(`вкажіть день, місяць та рік у форматі:\n${DateRecord()}`);
             await set('state')('IndividualLessonScheduleRespondDateAndCheckThis');
           }
           else await ctx.reply(`не можна запланувати заняття, у ${User.name} немає проплачених занять - повідомте в підтримку та оберіть іншого студента:`, {
@@ -7023,7 +7021,7 @@ async function main() {
       }
       else{
         await set('teacher_date_individual_lesson_set')(date[1]);
-        ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
+        ctx.reply(`вкажіть години та хвилини за Києвом 🇺🇦 у форматі: ${Time()}`);
         await set('state')('IndividualLessonScheduleCheckTimeAndGetDuration');
       }
     }
@@ -7048,7 +7046,7 @@ async function main() {
         ))
 
         if (User.individual_count > 0){
-          await ctx.reply('вкажіть день, місяць та рік у форматі:\n23.05.2024');
+          await ctx.reply(`вкажіть день, місяць та рік у форматі:\n${DateRecord()}`);
           await set('state')('IndividualLessonScheduleRespondDateAndCheckThis');
         }
         else await ctx.reply(`не можна запланувати заняття, у ${User.name} немає проплачених занять - повідомте в підтримку та оберіть іншого студента:`, {
@@ -7067,7 +7065,7 @@ async function main() {
         ctx.reply('боженьки.. ви ввели не правильний час...\n\nповторіть, будь ласка, ще раз :)')
       }
       else if (time === 'format_of_time_uncorrect'){
-        ctx.reply('от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату 15:45\n\nповторіть, будь ласка, ще раз :)')
+        ctx.reply(`от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату ${Time()}\n\nповторіть, будь ласка, ще раз :)`)
       }
       else{
         const allLessons = await dbProcess.ShowAllInvdividualLessons(),
@@ -7092,7 +7090,7 @@ async function main() {
 
   onTextMessage('IndividualLessonScheduleSetDurationAndCreate', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
+      ctx.reply(`вкажіть години та хвилини за Києвом 🇺🇦 у форматі: ${Time()}`);
       await set('state')('IndividualLessonScheduleCheckTimeAndGetDuration');
     }
     else if (data.text === '60хв' || data.text === '90хв' || data.text === '30хв'){
@@ -7107,66 +7105,76 @@ async function main() {
         );
 
       if (free === 'free'){
-        await dbProcess.CreateNewIndividualLesson(
+        const minuteCheck = await dbProcess.CreateNewIndividualLesson(
           parseInt(user['teacher_individual_lesson_schedule_student_id']),
           ctx?.chat?.id ?? -1,
           user['teacher_date_individual_lesson_set'],
           user['teacher_time_individual_lesson_set'],
           parseInt(data.text.replace(/хв/g, '').trim())
-        )
-  
-        const Teacher = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
-          User = await dbProcess.ShowOneUser(parseInt(user['teacher_individual_lesson_schedule_student_id']));
-  
-        ctx.telegram.sendMessage(parseInt(user['teacher_individual_lesson_schedule_student_id']), 
-          script.notification.forStudent.scheduleLesson(
-            UniversalSingleDataProcess(new Date(user['teacher_date_individual_lesson_set']), 'day_of_week'),
-            UniversalSingleDataProcess(new Date(user['teacher_date_individual_lesson_set']), 'day'),
-            UniversalSingleDataProcess(new Date(user['teacher_date_individual_lesson_set']), 'month'),
-            user['teacher_time_individual_lesson_set'],
-            Teacher? Teacher.name: "не вдалося знайти вчителя",
-            User?.miro_link ?? "відсутнє",
-            User?.individual_count ?? 0
-          ))
-        
-        if (User!.individual_count === 0){
-          const inline = inlinePayButton(User!.id);
-          SendNotification(notifbot, script.notification.forAdmins.notEnoughCountOfLessons(User!.name, User!.username, User!.number, Teacher!.name));
-          ctx.telegram.sendMessage(parseInt(user['teacher_individual_lesson_schedule_student_id']),
-            script.notification.forStudent.notEnoughCountOfLessons(User!.name), {
-              ...Markup.inlineKeyboard(inline)
-            }
-          )
-        }
-  
-        if (User){
-          const date = DateProcessToPresentView(user['teacher_date_individual_lesson_set'])
-          ctx.reply(script.indivdual.individualLessonCreated(
-            User.name,
-            date[1],
-            date[0],
-            user['teacher_time_individual_lesson_set'],
-            User.individual_count
-          ), {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: [
-                [
-                  { text: "Запланувати ще одне заняття" }
-                ],
-                [
-                  { text: "В МЕНЮ" }
+        ),
+        count = (await dbProcess.ShowOneUser(parseInt(user['teacher_individual_lesson_schedule_student_id'])))!.individual_count;
+
+
+        if (minuteCheck === 'success'){
+          const Teacher = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
+            User = await dbProcess.ShowOneUser(parseInt(user['teacher_individual_lesson_schedule_student_id']));
+    
+          ctx.telegram.sendMessage(parseInt(user['teacher_individual_lesson_schedule_student_id']), 
+            script.notification.forStudent.scheduleLesson(
+              UniversalSingleDataProcess(new Date(user['teacher_date_individual_lesson_set']), 'day_of_week'),
+              UniversalSingleDataProcess(new Date(user['teacher_date_individual_lesson_set']), 'day'),
+              UniversalSingleDataProcess(new Date(user['teacher_date_individual_lesson_set']), 'month'),
+              user['teacher_time_individual_lesson_set'],
+              Teacher? Teacher.name: "не вдалося знайти вчителя",
+              User?.miro_link ?? "відсутнє",
+              User?.individual_count ?? 0
+            ))
+          
+          if (User!.individual_count === 0){
+            const inline = inlinePayButton(User!.id);
+            SendNotification(notifbot, script.notification.forAdmins.notEnoughCountOfLessons(User!.name, User!.username, User!.number, Teacher!.name));
+            ctx.telegram.sendMessage(parseInt(user['teacher_individual_lesson_schedule_student_id']),
+              script.notification.forStudent.notEnoughCountOfLessons(User!.name), {
+                ...Markup.inlineKeyboard(inline)
+              }
+            )
+          }
+    
+          if (User){
+            const date = DateProcessToPresentView(user['teacher_date_individual_lesson_set'])
+            ctx.reply(script.indivdual.individualLessonCreated(
+              User.name,
+              date[1],
+              date[0],
+              user['teacher_time_individual_lesson_set'],
+              User.individual_count
+            ), {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: [
+                  [
+                    { text: "Запланувати ще одне заняття" }
+                  ],
+                  [
+                    { text: "В МЕНЮ" }
+                  ]
                 ]
-              ]
-            }
-          })
-  
-          await set('state')('EndRootManager');
+              }
+            })
+    
+            await set('state')('EndRootManager');
+          }
         }
+        else ctx.reply(`залишок у студента всього ${count}, будь ласка, оберіть інший час із кнопок нижче`, {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.durationChoose()
+          }
+        })
       }
       else{
         await ctx.reply('на жаль, ви не маєте змогу запланувати заннятя на цей час, бо воно заплановане з ' +(await dbProcess.ShowOneUser(parseInt(free!)))!.name);
-        await ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
+        await ctx.reply(`вкажіть години та хвилини за Києвом 🇺🇦 у форматі: ${Time()}`);
         await set('state')('IndividualLessonScheduleCheckTimeAndGetDuration');
       }
     }
@@ -7305,7 +7313,7 @@ async function main() {
       }
     }
     if (CheckException.BackRoot(data)){
-      ctx.reply('вкажіть дату заняття, яке ви хочете перенести у форматі: 23.05.2024');
+      ctx.reply(`вкажіть дату заняття, яке ви хочете перенести у форматі: ${DateRecord()}`);
       await set('state')('IndividualLessonRescheduleFindLesson');
     }
     else if (!isNaN(parseInt(data.text)) && activeLessons[parseInt(data.text) - 1]){
@@ -7358,7 +7366,7 @@ async function main() {
     }
     else if (CheckException.TextException(data)){
       await set('teacher_reschedule_lesson_reason')(data.text);
-      ctx.reply('вкажіть дату на коли перенести заняття у форматі: 23.05.2024');
+      ctx.reply(`вкажіть дату на коли перенести заняття у форматі: ${DateRecord()}`);
       await set('state')('IndividualLessonRescheduleRespondDateAndCheckThis');
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
@@ -7380,7 +7388,7 @@ async function main() {
       }
       else{
         await set('teacher_date_individual_lesson_set')(date[1]);
-        ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
+        ctx.reply(`вкажіть години та хвилини за Києвом 🇺🇦 у форматі: ${Time()}`);
         await set('state')('IndividualLessonRescheduleCheckTimeAndGetDuration');
       }
     }
@@ -7389,7 +7397,7 @@ async function main() {
   
   onTextMessage('IndividualLessonRescheduleCheckTimeAndGetDuration', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      ctx.reply('вкажіть дату на коли перенести заняття у форматі: 23.05.2024');
+      ctx.reply(`вкажіть дату на коли перенести заняття у форматі: ${DateRecord()}`);
       await set('state')('IndividualLessonRescheduleRespondDateAndCheckThis');
     }
     else if (CheckException.TextException(data)){
@@ -7399,7 +7407,7 @@ async function main() {
         ctx.reply('боженьки.. ви ввели не правильний час...\n\nповторіть, будь ласка, ще раз :)')
       }
       else if (time === 'format_of_time_uncorrect'){
-        ctx.reply('от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату 15:45\n\nповторіть, будь ласка, ще раз :)')
+        ctx.reply(`от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату ${Time()}\n\nповторіть, будь ласка, ще раз :)`)
       }
       else{
         const allLessons = await dbProcess.ShowAllInvdividualLessons(),
@@ -7487,7 +7495,7 @@ async function main() {
             await set('state')('IndividualLessonRescheduleSetDurationAndCreate');
           }
         }
-        else ctx.reply(`на жаль, на цей час у вас заплановане заняття з ${(await dbProcess.ShowOneUser(parseInt(free!)))!.name}(\n\nвкажіть інший час у форматі: 15:45`)
+        else ctx.reply(`на жаль, на цей час у вас заплановане заняття з ${(await dbProcess.ShowOneUser(parseInt(free!)))!.name}(\n\nвкажіть інший час у форматі: ${Time()}`)
       }
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
@@ -7495,7 +7503,7 @@ async function main() {
 
   onTextMessage('IndividualLessonRescheduleSetDurationAndCreate', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      ctx.reply('вкажіть години та хвилини за Києвом 🇺🇦 у форматі: 15:45');
+      ctx.reply(`вкажіть години та хвилини за Києвом 🇺🇦 у форматі: ${Time()}`);
       await set('state')('IndividualLessonRescheduleCheckTimeAndGetDuration');
     }
     else if (data.text === '60хв' || data.text === '90хв' || data.text === '30хв'){
@@ -7515,35 +7523,34 @@ async function main() {
   
         const newUserObject = await dbProcess.ShowOneUser(parseInt(user['teacher_individual_lesson_schedule_student_id']));
   
-        bot.telegram.sendMessage(User!.id,
-          script.notification.forStudent.rescheduleLesson(
-            UniversalSingleDataProcess(new Date(lesson!.date), 'day_of_week'),
-            UniversalSingleDataProcess(new Date(lesson!.date), 'day'),
-            UniversalSingleDataProcess(new Date(lesson!.date), 'month'),
-            lesson!.time,
-            UniversalSingleDataProcess(new Date(newDate), 'day_of_week'),
-            UniversalSingleDataProcess(new Date(newDate), 'day'),
-            UniversalSingleDataProcess(new Date(newDate), 'month'),
-            user['teacher_time_individual_lesson_set'],
-            User!.miro_link ?? "відсутнє",
-            newUserObject!.individual_count ?? 0
-          ))
-  
-        SendNotification(notifbot, script.notification.forAdmins.rescheduleLesson(
-          User!.name,
-          User!.username,
-          User!.number,
-          user['name'],
-          UniversalSingleDataProcess(new Date(newDate), 'day'),
-          UniversalSingleDataProcess(new Date(newDate), 'month'),
-          user['teacher_time_individual_lesson_set'],
-          user['teacher_reschedule_lesson_reason'],
-          User!.miro_link,
-          newUserObject!.individual_count
-        ))
-  
         if (updatedLesson){
           if (User){
+            bot.telegram.sendMessage(User!.id,
+              script.notification.forStudent.rescheduleLesson(
+                UniversalSingleDataProcess(new Date(lesson!.date), 'day_of_week'),
+                UniversalSingleDataProcess(new Date(lesson!.date), 'day'),
+                UniversalSingleDataProcess(new Date(lesson!.date), 'month'),
+                lesson!.time,
+                UniversalSingleDataProcess(new Date(newDate), 'day_of_week'),
+                UniversalSingleDataProcess(new Date(newDate), 'day'),
+                UniversalSingleDataProcess(new Date(newDate), 'month'),
+                user['teacher_time_individual_lesson_set'],
+                User!.miro_link ?? "відсутнє",
+                newUserObject!.individual_count ?? 0
+              ))
+      
+            SendNotification(notifbot, script.notification.forAdmins.rescheduleLesson(
+              User!.name,
+              User!.username,
+              User!.number,
+              user['name'],
+              UniversalSingleDataProcess(new Date(newDate), 'day'),
+              UniversalSingleDataProcess(new Date(newDate), 'month'),
+              user['teacher_time_individual_lesson_set'],
+              user['teacher_reschedule_lesson_reason'],
+              User!.miro_link,
+              newUserObject!.individual_count
+            ))
             const date = DateProcessToPresentView(user['teacher_date_individual_lesson_set'])
             ctx.reply(script.indivdual.individualLessonCreated(
               User.name,
@@ -7568,10 +7575,15 @@ async function main() {
             await set('state')('EndRootManager');
           }
         }
-        else ctx.reply(`у користувача ${User!.name} недостатньо хвилин для подібних змін (наразі у нього ${User!.individual_count ?? 0}хв)`);
+        else ctx.reply(`у користувача ${User!.name} недостатньо хвилин для подібних змін (наразі у нього ${User!.individual_count ?? 0}хв)`, {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.durationChoose()
+          }
+        });
       }
       else{
-        ctx.reply(`на жаль, але це заняття вже зайнято з ${(await dbProcess.ShowOneUser(parseInt(free!)))!.name}(\n\nвкажіть інший час у форматі: 15:45`);
+        ctx.reply(`на жаль, але це заняття вже зайнято з ${(await dbProcess.ShowOneUser(parseInt(free!)))!.name}(\n\nвкажіть інший час у форматі: ${Time()}`);
         await set('state')('IndividualLessonRescheduleCheckTimeAndGetDuration');
       }
     }
@@ -7706,7 +7718,7 @@ async function main() {
       keyboardChoose = [];
 
     if (CheckException.BackRoot(data)){
-      ctx.reply('вкажіть дату заняття, яке ви хочете видалити у форматі: 23.05.2024');
+      ctx.reply(`вкажіть дату заняття, яке ви хочете видалити у форматі: ${DateRecord()}`);
       await set('state')('IndividualLessonDeleteLessonFindLesson');
     }
 
@@ -7723,7 +7735,7 @@ async function main() {
     }
 
     if (CheckException.BackRoot(data)){
-      ctx.reply('вкажіть дату заняття, яке ви хочете видалити у форматі: 23.05.2024');
+      ctx.reply(`вкажіть дату заняття, яке ви хочете видалити у форматі: ${DateRecord()}`);
       await set('state')('IndividualLessonDeleteLessonFindLesson');
     }
     else if (!isNaN(parseInt(data.text)) && activeLessons[parseInt(data.text) - 1]){
@@ -7984,7 +7996,7 @@ async function main() {
           User.miro_link ?? "відсутнє",
           await db.get(User.id)('club-typeclub') ?? false
         ))
-        await ctx.reply('вкажіть день, місяць та рік у форматі:\n23.05.2024');
+        await ctx.reply(`вкажіть день, місяць та рік у форматі:\n${DateRecord()}`);
         await set('state')('IndividualLessonsTrialLessonRespondDate');
       }
       else ctx.reply('такого користувача не знайдено в базі даних');
@@ -8024,7 +8036,7 @@ async function main() {
       }
       else{
         await set('teacher_trial_date_of_lesson')(date[1]);
-        ctx.reply('вкажіть години та хвилини за Києвом у форматі: 15:45');
+        ctx.reply(`вкажіть години та хвилини за Києвом у форматі: ${Time()}`);
 
         await set('state')('IndividualLessonTrialLessonRespondTime');
       }
@@ -8048,7 +8060,7 @@ async function main() {
           User.miro_link ?? "відсутнє",
           await db.get(User.id)('club-typeclub') ?? false
         ))
-        await ctx.reply('вкажіть день, місяць та рік у форматі:\n23.05.2024');
+        await ctx.reply(`вкажіть день, місяць та рік у форматі:\n${DateRecord()}`);
         await set('state')('IndividualLessonsTrialLessonRespondDate');
       }
       else ctx.reply('такого користувача не знайдено в базі даних');
@@ -8060,7 +8072,7 @@ async function main() {
         ctx.reply('боженьки.. ви ввели не правильний час...\n\nповторіть, будь ласка, ще раз :)')
       }
       else if (time === 'format_of_time_uncorrect'){
-        ctx.reply('от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату 15:45\n\nповторіть, будь ласка, ще раз :)')
+        ctx.reply(`от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату ${Time()}\n\nповторіть, будь ласка, ще раз :)`)
       }
       else{
         const allLessons = await dbProcess.ShowAllInvdividualLessons(),
@@ -8072,7 +8084,7 @@ async function main() {
   
           await set('state')('IndividualLessonTrialRespondLinkAndCreate');
         }
-        else ctx.reply(`на жаль, на цей час у вас заплановане заняття з ${(await dbProcess.ShowOneUser(parseInt(free!)))!.name}(\n\nвкажіть інший час у форматі: 15:45`)
+        else ctx.reply(`на жаль, на цей час у вас заплановане заняття з ${(await dbProcess.ShowOneUser(parseInt(free!)))!.name}(\n\nвкажіть інший час у форматі: ${Time()}`)
       }
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
@@ -8080,7 +8092,7 @@ async function main() {
 
   onTextMessage('IndividualLessonTrialRespondLinkAndCreate', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      ctx.reply('вкажіть години та хвилини за Києвом у форматі: 15:45');
+      ctx.reply(`вкажіть години та хвилини за Києвом у форматі: ${Time()}`);
 
       await set('state')('IndividualLessonTrialLessonRespondTime');
     }
@@ -8686,7 +8698,7 @@ async function main() {
         User.miro_link ?? "відсутнє",
         await db.get(User.id)('club-typeclub') ?? false
       ))
-      await ctx.reply('вкажіть день, місяць та рік у форматі:\n23.05.2024');
+      await ctx.reply(`вкажіть день, місяць та рік у форматі:\n${DateRecord()}`);
       await db.set(parseInt(ctx.match[1]))('state')('IndividualLessonsTrialLessonRespondDate');
     }
     else ctx.reply('помилка :( користувача не знайдено')

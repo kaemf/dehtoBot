@@ -620,7 +620,7 @@ export default async function dbProcess(botdb: MongoClient){
                                 if (student.individual_count - duration >= 0){
                                     actualMCount = student.individual_count - duration;
                                 }
-                                else throw new Error('\n\nStudent haven`t enough minutes for individual lesson\nCreateNewIndividualLesson()');
+                                else return 'not_enough_minutes';
 
                                 const lesson = await this.individualdbLessons.insertOne({
                                     idStudent: idStudent,
@@ -645,16 +645,18 @@ export default async function dbProcess(botdb: MongoClient){
 
                                 await this.botdbUsers.updateOne({id: idStudent}, {$set: {individual_lessons: lessonPush, individual_count: actualMCount}})
                                 await this.botdbUsers.updateOne({id: idTeacher}, {$set: {set_individual_lessons: lessonTeacherPush}});
+
+                                return 'success';
                             }
-                            else throw new Error(`\n\nDuration entered is uncorrect (${duration})`);
+                            else throw new Error(`Duration entered is uncorrect (${duration})`);
                         }
-                        else throw new Error(`\n\nDate is uncorrect. ${date} and ${time}.\n\nIn system view is ${new Date(`${date}T${time}`)}`);
+                        else throw new Error(`Date is uncorrect. ${date} and ${time}.\n\nIn system view is ${new Date(`${date}T${time}`)}`);
                     }
-                    else throw new Error(`\n\nTeacher haven't student ${student.name}`);
+                    else throw new Error(`Teacher haven't student ${student.name}`);
                 }
-                else throw new Error(`\n\nTeacher haven't any student`);
+                else throw new Error(`Teacher haven't any student`);
             }
-            else throw new Error('\n\nError: can`t find student or teacher in CreateNewIndividualLesson function');
+            else throw new Error('Error: can`t find student or teacher in CreateNewIndividualLesson function');
         }
 
         async EditExistIndividualLesson(id: ObjectId, date: string, time: string, duration?: number){
