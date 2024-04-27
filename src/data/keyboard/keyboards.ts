@@ -679,6 +679,22 @@ class Keyboard{
       ]
     ]
   }
+
+  deTaskTeacher(){
+    return [
+      [
+        { text: "НАЗНАЧИТИ ЗАВДАННЯ" }
+      ]
+    ]
+  }
+
+  deTaskTeacherFirstAttempt(){
+    return [
+      [
+        { text: "ОБРАТИ СТУДЕНТА" }
+      ]
+    ]
+  }
 }
 
 const keyboards : Keyboard = new Keyboard();

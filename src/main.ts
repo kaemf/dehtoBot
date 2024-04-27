@@ -28,7 +28,9 @@ import MongoDBReturnType from "./data/general/mongoDBType";
 import { Markup, TelegramError } from "telegraf";
 import { ObjectId } from 'mongodb';
 import { DateProcess, DateProcessToPresentView, SortSchedule, 
-  TimeProcess, UniversalSingleDataProcess, getDayOfWeek } from "./data/process/dateAndTimeProcess";
+  TimeProcess, UniversalSingleDataProcess, getDayOfWeek, 
+  isDateNoInPast,
+  isTimeNotInPast} from "./data/process/dateAndTimeProcess";
 import IndividualArray from "./data/individual/interface";
 import NotificationReg, { SendNotification, SendNotificationWithMedia } from "./data/notifications/notificationProcess";
 import checkAvailabilityForLesson from "./data/general/lessonAvailabiltityCheck";
@@ -2729,9 +2731,12 @@ async function main() {
         ctx.reply(`от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату ${Time()}\n\nповторіть, будь ласка, ще раз :)`)
       }
       else{
-        await set('AP_time')(time);
-        ctx.reply('кількість місць:');
-        await set('state')('ADD_RespondCountAndGetLink');
+        if (isTimeNotInPast(time)){
+          await set('AP_time')(time);
+          ctx.reply('кількість місць:');
+          await set('state')('ADD_RespondCountAndGetLink');
+        }
+        else ctx.reply(`час не піддається магії наших можливостей, але ми можемо зробити ваш час разом з нами неймовірним. приєднуйтесь до нас і дивіться, куди нас заведе часова стрілка! а саме на дату з форматом ${Time()}`);
       }
     }
     else{
@@ -3078,7 +3083,7 @@ async function main() {
             ctx.reply(`от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату ${Time()}\n\nповторіть, будь ласка, ще раз :)`)
           }
           else{
-            await set('AP_time')(time);
+            isTimeNotInPast(time) ? await set('AP_time')(time) : ctx.reply('ви ввели час, який вже минув, повторіть, будь ласка, ще раз :)');
           }
           
           await ctx.reply(script.speakingClub.report.checkClub(
@@ -4547,101 +4552,121 @@ async function main() {
     }
     else if (CheckException.TextException(data)){
       await set('teacher_content_detask')(`${user['teacher_content_detask'] ? `${user['teacher_content_detask']},` : ''}${data.text}`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+          keyboard: keyboards.deTaskTeacherFirstAttempt()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.FileException(data)){
       await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.file[0]};${data.file[1]}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}file`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+          keyboard: keyboards.deTaskTeacherFirstAttempt()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.LocationException(data)){
       await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.location[0]};${data.location[1]}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}location`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+          keyboard: keyboards.deTaskTeacherFirstAttempt()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.PhoneException(data)){
-      await set('teacher_content_detask')(`${user['teacher_content_detask'] ? `${user['teacher_content_detask']},` : ''}${data.phone_number[0]};${data.phone_number[1]}`)
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      await set('teacher_content_detask')(`${user['teacher_content_detask'] ? `${user['teacher_content_detask']},` : ''}${data.phone_number[0]};${data.phone_number[1]}`);
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+          keyboard: keyboards.deTaskTeacherFirstAttempt()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.PhotoException(data)){
       await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.photo[0]};${data.photo[1]}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}photo`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+          keyboard: keyboards.deTaskTeacherFirstAttempt()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.StickerException(data)){
       await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.stickers}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}sticker`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+          keyboard: keyboards.deTaskTeacherFirstAttempt()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.VideoException(data)){
       await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.video[0]};${data.video[1]}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']}` : ''}video`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+          keyboard: keyboards.deTaskTeacherFirstAttempt()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.AudioException(data)){
       await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.audio}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}audio`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+          keyboard: keyboards.deTaskTeacherFirstAttempt()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.VoiceException(data)){
       await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.voice}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}voice`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+          keyboard: keyboards.deTaskTeacherFirstAttempt()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.VideoNoteException(data)){
       await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.video_circle}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}video_circle`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+          keyboard: keyboards.deTaskTeacherFirstAttempt()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else ctx.reply('помилка(\n\nсхоже ви надіслали не підтримуваний тип повідомлення або ж тицьнули не туди')
   })
@@ -5176,105 +5201,126 @@ async function main() {
       await set('teacher_filecontent_detask')('');
       await set('teacher_typeofcontent_detask')('');
       await set('tmp_userid_detask')('');
+      await set('detask_teacher_temp_message_continue')('');
       await set('state')('EndRootManager');
     }
     else if (CheckException.TextException(data)){
       await set('teacher_content_detask')(`${user['teacher_content_detask'] ? `${user['teacher_content_detask']},` : ''}${data.text}`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "НАЗНАЧИТИ ЗАВДАННЯ"}]]
+          keyboard: keyboards.deTaskTeacher()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.FileException(data)){
       await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.file[0]};${data.file[1]}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}file`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "НАЗНАЧИТИ ЗАВДАННЯ"}]]
+          keyboard: keyboards.deTaskTeacher()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.LocationException(data)){
       await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.location[0]};${data.location[1]}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}location`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "НАЗНАЧИТИ ЗАВДАННЯ"}]]
+          keyboard: keyboards.deTaskTeacher()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.PhoneException(data)){
-      await set('teacher_content_detask')(`${user['teacher_content_detask'] ? `${user['teacher_content_detask']},` : ''}${data.phone_number[0]};${data.phone_number[1]}`)
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      await set('teacher_content_detask')(`${user['teacher_content_detask'] ? `${user['teacher_content_detask']},` : ''}${data.phone_number[0]};${data.phone_number[1]}`);
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "НАЗНАЧИТИ ЗАВДАННЯ"}]]
+          keyboard: keyboards.deTaskTeacher()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.PhotoException(data)){
       await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.photo[0]};${data.photo[1]}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}photo`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "НАЗНАЧИТИ ЗАВДАННЯ"}]]
+          keyboard: keyboards.deTaskTeacher()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.StickerException(data)){
       await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.stickers}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}sticker`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "НАЗНАЧИТИ ЗАВДАННЯ"}]]
+          keyboard: keyboards.deTaskTeacher()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.VideoException(data)){
       await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.video[0]};${data.video[1]}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']}` : ''}video`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "НАЗНАЧИТИ ЗАВДАННЯ"}]]
+          keyboard: keyboards.deTaskTeacher()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.AudioException(data)){
       await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.audio}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}audio`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "НАЗНАЧИТИ ЗАВДАННЯ"}]]
+          keyboard: keyboards.deTaskTeacher()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.VoiceException(data)){
       await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.voice}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}voice`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ОБРАТИ СТУДЕНТА"}]]
+          keyboard: keyboards.deTaskTeacher()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.VideoNoteException(data)){
       await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.video_circle}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}video_circle`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue']));
+      const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "НАЗНАЧИТИ ЗАВДАННЯ"}]]
+          keyboard: keyboards.deTaskTeacher()
         }
       })
+      await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else ctx.reply('помилка(\n\nсхоже ви надіслали не підтримуваний тип повідомлення або ж тицьнули не туди')
   })
@@ -7020,9 +7066,12 @@ async function main() {
         ctx.reply('перепрошую, але формат введеної вами дати не є корректним :(\n\nслідуйте, будь ласка, за данним прикладом 19.03.2024');
       }
       else{
-        await set('teacher_date_individual_lesson_set')(date[1]);
-        ctx.reply(`вкажіть години та хвилини за Києвом 🇺🇦 у форматі: ${Time()}`);
-        await set('state')('IndividualLessonScheduleCheckTimeAndGetDuration');
+        if (isDateNoInPast(date[1])){
+          await set('teacher_date_individual_lesson_set')(date[1]);
+          ctx.reply(`вкажіть години та хвилини за Києвом 🇺🇦 у форматі: ${Time()}`);
+          await set('state')('IndividualLessonScheduleCheckTimeAndGetDuration');
+        }
+        else ctx.reply(`на жаль... ми не можемо планувати заняття в минуле :(\n\nвиберіть, будь ласка, щось більш реальне в форматі: ${DateRecord()}`);
       }
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
@@ -7068,21 +7117,24 @@ async function main() {
         ctx.reply(`от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату ${Time()}\n\nповторіть, будь ласка, ще раз :)`)
       }
       else{
-        const allLessons = await dbProcess.ShowAllInvdividualLessons(),
-          free = checkAvailabilityForLesson(time, user['teacher_date_individual_lesson_set'], allLessons, ctx?.chat?.id ?? -1, 'part_1');
-
-        if (free === 'free'){
-          await set('teacher_time_individual_lesson_set')(time);
-          ctx.reply('вкажіть, скільки триватиме заняття:', {
-            reply_markup: {
-              one_time_keyboard: true,
-              keyboard: keyboards.durationChoose()
-            }
-          })
+        if (isTimeNotInPast(time)){
+          const allLessons = await dbProcess.ShowAllInvdividualLessons(),
+            free = checkAvailabilityForLesson(time, user['teacher_date_individual_lesson_set'], allLessons, ctx?.chat?.id ?? -1, 'part_1');
   
-          await set('state')('IndividualLessonScheduleSetDurationAndCreate')
+          if (free === 'free'){
+            await set('teacher_time_individual_lesson_set')(time);
+            ctx.reply('вкажіть, скільки триватиме заняття:', {
+              reply_markup: {
+                one_time_keyboard: true,
+                keyboard: keyboards.durationChoose()
+              }
+            })
+    
+            await set('state')('IndividualLessonScheduleSetDurationAndCreate')
+          }
+          else ctx.reply('на жаль, ви не маєте змогу запланувати заннятя на цей час, бо воно заплановане заняттям з ' +(await dbProcess.ShowOneUser(parseInt(free!)))!.name);
         }
-        else ctx.reply('на жаль, ви не маєте змогу запланувати заннятя на цей час, бо воно заплановане заняттям з ' +(await dbProcess.ShowOneUser(parseInt(free!)))!.name);
+        else ctx.reply(`вибачте, час не підкорюється нашому мистецтву повернення минулого. але давайте зробимо вашу подорож у майбутнє незабутньою! для цього введіть час у форматі ${Time()}`);
       }
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
@@ -7258,47 +7310,50 @@ async function main() {
         ctx.reply('перепрошую, але формат введеної вами дати не є корректним :(\n\nслідуйте, будь ласка, за данним прикладом 19.03.2024');
       }
       else{
-        const lessons = await dbProcess.ShowAllInvdividualLessons();
-        let activeLessons = [];
-
-        for (let i = 0; i < lessons.length; i++){
-          if (lessons[i].idTeacher === ctx?.chat?.id && lessons[i].date === date[1]){
-            activeLessons.push(lessons[i]);
-          }
-        }
-
-        if (activeLessons){
-          let messageToSend = `📋 ${getDayOfWeek(new Date(date[1]))} ${(DateProcessToPresentView(date[1]))[1]}\n\n`,
-            keyboardChoose = [];
-
-          for (let i = 0; i < activeLessons.length; i++){
-            const User = await dbProcess.ShowOneUser(activeLessons[i].idStudent);
-            keyboardChoose.push([{ text: (i + 1).toString() }])
-            messageToSend += script.indivdual.rescheduleForTeacher(
-              i + 1,
-              activeLessons[i].time,
-              activeLessons[i].duration,
-              User!.name,
-              User!.username,
-              User!.number,
-              activeLessons[i].type
-            )
-          }
-
-          if (keyboardChoose?.length){
-            await set('teacher_reschedule_lesson_date_of_lesson')(date[1]);
-            ctx.reply('оберіть заняття, яке ви хочете перенести:', {
-              reply_markup: {
-                one_time_keyboard: true,
-                keyboard: keyboardChoose
-              }
-            })
+        if (isDateNoInPast(date[1])){
+          const lessons = await dbProcess.ShowAllInvdividualLessons();
+          let activeLessons = [];
   
-            await set('state')('IndividualLessonRescheduleRespondLessonAndGetReason');
+          for (let i = 0; i < lessons.length; i++){
+            if (lessons[i].idTeacher === ctx?.chat?.id && lessons[i].date === date[1]){
+              activeLessons.push(lessons[i]);
+            }
+          }
+  
+          if (activeLessons){
+            let messageToSend = `📋 ${getDayOfWeek(new Date(date[1]))} ${(DateProcessToPresentView(date[1]))[1]}\n\n`,
+              keyboardChoose = [];
+  
+            for (let i = 0; i < activeLessons.length; i++){
+              const User = await dbProcess.ShowOneUser(activeLessons[i].idStudent);
+              keyboardChoose.push([{ text: (i + 1).toString() }])
+              messageToSend += script.indivdual.rescheduleForTeacher(
+                i + 1,
+                activeLessons[i].time,
+                activeLessons[i].duration,
+                User!.name,
+                User!.username,
+                User!.number,
+                activeLessons[i].type
+              )
+            }
+  
+            if (keyboardChoose?.length){
+              await set('teacher_reschedule_lesson_date_of_lesson')(date[1]);
+              ctx.reply('оберіть заняття, яке ви хочете перенести:', {
+                reply_markup: {
+                  one_time_keyboard: true,
+                  keyboard: keyboardChoose
+                }
+              })
+    
+              await set('state')('IndividualLessonRescheduleRespondLessonAndGetReason');
+            }
+            else ctx.reply('на жаль або на щастя в цей день у вас немає занять - вкажіть іншу дату');
           }
           else ctx.reply('на жаль або на щастя в цей день у вас немає занять - вкажіть іншу дату');
         }
-        else ctx.reply('на жаль або на щастя в цей день у вас немає занять - вкажіть іншу дату');
+        else ctx.reply(`на жаль, ми не можемо змінити минуле, але можемо покращити майбутнє\nвведіть іншу дату наприклад, ${DateRecord()}`);
       }
     }
   })
@@ -7387,9 +7442,12 @@ async function main() {
         ctx.reply('перепрошую, але формат введеної вами дати не є корректним :(\n\nслідуйте, будь ласка, за данним прикладом 19.03.2024');
       }
       else{
-        await set('teacher_date_individual_lesson_set')(date[1]);
-        ctx.reply(`вкажіть години та хвилини за Києвом 🇺🇦 у форматі: ${Time()}`);
-        await set('state')('IndividualLessonRescheduleCheckTimeAndGetDuration');
+        if (isDateNoInPast(date[1])){
+          await set('teacher_date_individual_lesson_set')(date[1]);
+          ctx.reply(`вкажіть години та хвилини за Києвом 🇺🇦 у форматі: ${Time()}`);
+          await set('state')('IndividualLessonRescheduleCheckTimeAndGetDuration');
+        }
+        else ctx.reply(`Ой, вибачте, ми ще не винахідливі настільки, щоб змінити минуле. Давайте зосередимося на майбутньому!\nвведіть дату за форматом: ${DateRecord()}`);
       }
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
@@ -7410,92 +7468,95 @@ async function main() {
         ctx.reply(`от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату ${Time()}\n\nповторіть, будь ласка, ще раз :)`)
       }
       else{
-        const allLessons = await dbProcess.ShowAllInvdividualLessons(),
-        lesson = (await dbProcess.GetSpecificIndividualLessons([ new ObjectId(user['teacher_reschedule_lesson_id_of_lesson']) ]))[0],
-          User = await dbProcess.ShowOneUser(lesson?.idStudent),
-          newDate = user['teacher_date_individual_lesson_set'];
-
-        let free: string | undefined;
-
-        if (lesson?.type === 'trial'){
-          free = checkAvailabilityForLesson(time, allLessons[0].date, allLessons, ctx?.chat?.id ?? -1, 'part_2', 60);
-        }
-        free = checkAvailabilityForLesson(time, allLessons[0].date, allLessons, ctx?.chat?.id ?? -1, 'part_1');
-
-        if (free === 'free'){
+        if (isTimeNotInPast(time)){
+          const allLessons = await dbProcess.ShowAllInvdividualLessons(),
+          lesson = (await dbProcess.GetSpecificIndividualLessons([ new ObjectId(user['teacher_reschedule_lesson_id_of_lesson']) ]))[0],
+            User = await dbProcess.ShowOneUser(lesson?.idStudent),
+            newDate = user['teacher_date_individual_lesson_set'];
+  
+          let free: string | undefined;
+  
           if (lesson?.type === 'trial'){
-            const updatedLesson = await dbProcess.EditExistIndividualLesson(
-              new ObjectId(user['teacher_reschedule_lesson_id_of_lesson']),
-              user['teacher_date_individual_lesson_set'],
-              time
-            )
-      
-            bot.telegram.sendMessage(User!.id,
-              script.notification.forStudent.rescheduleTrialLesson(
-                UniversalSingleDataProcess(new Date(lesson!.date), 'day_of_week'),
-                UniversalSingleDataProcess(new Date(lesson!.date), 'day'),
-                UniversalSingleDataProcess(new Date(lesson!.date), 'month'),
-                lesson!.time,
-                UniversalSingleDataProcess(new Date(newDate), 'day_of_week'),
+            free = checkAvailabilityForLesson(time, allLessons[0].date, allLessons, ctx?.chat?.id ?? -1, 'part_2', 60);
+          }
+          free = checkAvailabilityForLesson(time, allLessons[0].date, allLessons, ctx?.chat?.id ?? -1, 'part_1');
+  
+          if (free === 'free'){
+            if (lesson?.type === 'trial'){
+              const updatedLesson = await dbProcess.EditExistIndividualLesson(
+                new ObjectId(user['teacher_reschedule_lesson_id_of_lesson']),
+                user['teacher_date_individual_lesson_set'],
+                time
+              )
+        
+              bot.telegram.sendMessage(User!.id,
+                script.notification.forStudent.rescheduleTrialLesson(
+                  UniversalSingleDataProcess(new Date(lesson!.date), 'day_of_week'),
+                  UniversalSingleDataProcess(new Date(lesson!.date), 'day'),
+                  UniversalSingleDataProcess(new Date(lesson!.date), 'month'),
+                  lesson!.time,
+                  UniversalSingleDataProcess(new Date(newDate), 'day_of_week'),
+                  UniversalSingleDataProcess(new Date(newDate), 'day'),
+                  UniversalSingleDataProcess(new Date(newDate), 'month'),
+                  time,
+                  User!.miro_link ?? "відсутнє"
+                ), {parse_mode: "HTML"}
+              )
+        
+              SendNotification(notifbot, script.notification.forAdmins.rescheduleTrialLesson(
+                User!.name,
+                User!.username,
+                User!.number,
+                user['name'],
                 UniversalSingleDataProcess(new Date(newDate), 'day'),
                 UniversalSingleDataProcess(new Date(newDate), 'month'),
                 time,
-                User!.miro_link ?? "відсутнє"
-              ), {parse_mode: "HTML"}
-            )
-      
-            SendNotification(notifbot, script.notification.forAdmins.rescheduleTrialLesson(
-              User!.name,
-              User!.username,
-              User!.number,
-              user['name'],
-              UniversalSingleDataProcess(new Date(newDate), 'day'),
-              UniversalSingleDataProcess(new Date(newDate), 'month'),
-              time,
-              user['teacher_reschedule_lesson_reason'],
-              User!.miro_link ?? "відсутнє",
-            ))
-      
-            if (updatedLesson){
-              if (User){
-                const date = DateProcessToPresentView(user['teacher_date_individual_lesson_set'])
-                ctx.reply(script.indivdual.individualTrialLessonReschduled(
-                  User.name,
-                  date[1],
-                  date[0],
-                  time
-                ), {
-                  reply_markup: {
-                    one_time_keyboard: true,
-                    keyboard: [
-                      [
-                        { text: "Перенести ще одне заняття" }
-                      ],
-                      [
-                        { text: "В МЕНЮ" }
-                      ]
-                    ]
-                  }
-                })
+                user['teacher_reschedule_lesson_reason'],
+                User!.miro_link ?? "відсутнє",
+              ))
         
-                await set('state')('EndRootManager');
+              if (updatedLesson){
+                if (User){
+                  const date = DateProcessToPresentView(user['teacher_date_individual_lesson_set'])
+                  ctx.reply(script.indivdual.individualTrialLessonReschduled(
+                    User.name,
+                    date[1],
+                    date[0],
+                    time
+                  ), {
+                    reply_markup: {
+                      one_time_keyboard: true,
+                      keyboard: [
+                        [
+                          { text: "Перенести ще одне заняття" }
+                        ],
+                        [
+                          { text: "В МЕНЮ" }
+                        ]
+                      ]
+                    }
+                  })
+          
+                  await set('state')('EndRootManager');
+                }
               }
+              else ctx.reply(`у користувача ${User!.name} недостатньо хвилин для подібних змін (наразі у нього ${User!.individual_count ?? 0}хв)`);
             }
-            else ctx.reply(`у користувача ${User!.name} недостатньо хвилин для подібних змін (наразі у нього ${User!.individual_count ?? 0}хв)`);
+            else{
+              await set('teacher_time_individual_lesson_set')(time);
+              ctx.reply('вкажіть, скільки триватиме заняття:', {
+                reply_markup: {
+                  one_time_keyboard: true,
+                  keyboard: keyboards.durationChoose()
+                }
+              })
+      
+              await set('state')('IndividualLessonRescheduleSetDurationAndCreate');
+            }
           }
-          else{
-            await set('teacher_time_individual_lesson_set')(time);
-            ctx.reply('вкажіть, скільки триватиме заняття:', {
-              reply_markup: {
-                one_time_keyboard: true,
-                keyboard: keyboards.durationChoose()
-              }
-            })
-    
-            await set('state')('IndividualLessonRescheduleSetDurationAndCreate');
-          }
+          else ctx.reply(`на жаль, на цей час у вас заплановане заняття з ${(await dbProcess.ShowOneUser(parseInt(free!)))!.name}(\n\nвкажіть інший час у форматі: ${Time()}`)
         }
-        else ctx.reply(`на жаль, на цей час у вас заплановане заняття з ${(await dbProcess.ShowOneUser(parseInt(free!)))!.name}(\n\nвкажіть інший час у форматі: ${Time()}`)
+        else ctx.reply(`час не обертається назад, але ми можемо зробити ваші дні світлішими. давайте рухатися вперед разом за форматом ${Time()}!`)
       }
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
@@ -8035,10 +8096,13 @@ async function main() {
         ctx.reply('перепрошую, але формат введеної вами дати не є корректним :(\n\nслідуйте, будь ласка, за данним прикладом 19.03.2024');
       }
       else{
-        await set('teacher_trial_date_of_lesson')(date[1]);
-        ctx.reply(`вкажіть години та хвилини за Києвом у форматі: ${Time()}`);
-
-        await set('state')('IndividualLessonTrialLessonRespondTime');
+        if (isDateNoInPast(date[1])){
+          await set('teacher_trial_date_of_lesson')(date[1]);
+          ctx.reply(`вкажіть години та хвилини за Києвом у форматі: ${Time()}`);
+  
+          await set('state')('IndividualLessonTrialLessonRespondTime');
+        }
+        else ctx.reply(`На жаль, наш часовий маршрут обмежується лише до майбутнього\nвведіть дату у форматі: ${DateRecord()}`)
       }
     }
   })
@@ -8075,16 +8139,19 @@ async function main() {
         ctx.reply(`от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату ${Time()}\n\nповторіть, будь ласка, ще раз :)`)
       }
       else{
-        const allLessons = await dbProcess.ShowAllInvdividualLessons(),
-          free = checkAvailabilityForLesson(time, user['teacher_trial_date_of_lesson'], allLessons, ctx?.chat?.id ?? -1, 'part_2', 60);
-
-        if (free === 'free'){
-          await set('teacher_time_individual_lesson_set')(time);
-          ctx.reply('додайте посилання на конференцію зі студентом:');
+        if (isTimeNotInPast(time)){
+          const allLessons = await dbProcess.ShowAllInvdividualLessons(),
+            free = checkAvailabilityForLesson(time, user['teacher_trial_date_of_lesson'], allLessons, ctx?.chat?.id ?? -1, 'part_2', 60);
   
-          await set('state')('IndividualLessonTrialRespondLinkAndCreate');
+          if (free === 'free'){
+            await set('teacher_time_individual_lesson_set')(time);
+            ctx.reply('додайте посилання на конференцію зі студентом:');
+    
+            await set('state')('IndividualLessonTrialRespondLinkAndCreate');
+          }
+          else ctx.reply(`на жаль, на цей час у вас заплановане заняття з ${(await dbProcess.ShowOneUser(parseInt(free!)))!.name}(\n\nвкажіть інший час у форматі: ${Time()}`)
         }
-        else ctx.reply(`на жаль, на цей час у вас заплановане заняття з ${(await dbProcess.ShowOneUser(parseInt(free!)))!.name}(\n\nвкажіть інший час у форматі: ${Time()}`)
+        else ctx.reply(`ой, якби ми могли повернутися в часі, але навіть ми не можемо переписати минуле. Але ми можемо розпочати майбутнє разом! Тому введіть, будь ласка, дату у форматі: ${Time()}`)
       }
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);

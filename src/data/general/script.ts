@@ -615,6 +615,10 @@ ${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count} заняття (${c
     userRespond: `будь ласка, поставте своє запитання, ми обов'язково вам допоможемо 🦄`
   },
 
+  deTask: {
+      finalOrMore: `це все, чи ще щось?`
+  },
+
   notification: {
     forStudent: {
       scheduleLesson: (dayOfWeek: string, day: string, month: string, time: string, teacherName: string, miro_link: string, countOfLessons: number) => `📌 <b>Заплановане заняття</b> 📌\n

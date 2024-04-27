@@ -126,3 +126,15 @@ export function formatDateWithTime(date: Date): string {
 
     return `${day} ${month} (${dayOfWeek}) ${year}, ${hours}:${minutes}`;
 }
+
+export function isDateNoInPast(date: string){
+    return new Date(DateProcessToPresentView(date)[1]) >= new Date()
+}
+
+export function isTimeNotInPast(time: string): boolean {
+    const [hours, minutes] = time.split(':').map(Number);
+    const currentTime = new Date();
+    const inputTime = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate(), hours, minutes);
+
+    return inputTime > currentTime;
+}
