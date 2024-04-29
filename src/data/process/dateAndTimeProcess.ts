@@ -139,10 +139,9 @@ export function isDateNoInPast(date: string){
     return inputDate >= currentDate;
 }
 
-export function isTimeNotInPast(time: string): boolean {
-    const [hours, minutes] = time.split(':').map(Number);
+export function isTimeNotInPast(date: string, time: string): boolean {
     const currentTime = new Date();
-    const inputTime = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate(), hours, minutes);
+    const inputTime = new Date(date.replace(/\./g, '-') + 'T' + time);
 
     return inputTime > currentTime;
 }

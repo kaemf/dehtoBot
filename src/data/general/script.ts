@@ -114,6 +114,10 @@ UA773220010000026004330103247
 а також, за потреби, відкриє Вам доступ до усіх відео-лекцій на сайті dehto☺️\n
 гарного дня!🍓`, 
 
+    endWorkIndividual: (name: string) => `дякуємо, ${name}🫶🏽
+найближчим часом із вами звʼяжеться служба турботи та повідомить про стан оплати)\n
+гарного дня!🍓`,
+
     report: (name: string, username: string, phone_number: string, choosedPacket: string, date: string) => 
     `💰 Оплата занять 💰\n
 👉${name} (@${username})
@@ -182,8 +186,8 @@ ${date} (${dayOfWeek}) о ${time} за Києвом🇺🇦`,
     `👉 <b>${position} ${type === 'trial' ? '- Пробне' : ''}</b>\n<b>${time} за Києвом 🇺🇦 (${duration}хв)</b>\n${studentName}\n(@${username}); ${number}\n\n`,
 
     scheduleShowStudent: (time: string, duration: number, teacherName: string, teacherUsername: string, teacherNumber: number, miro_link: string) =>
-    `👉 ${time} за Києвом 🇺🇦 (${duration}хв)\n\nвикладач: ${teacherName}\n(@${teacherUsername});${teacherNumber}\n
-посилання на дошку Miro студента: ${miro_link}\n\n`,
+    `👉 <b>${time} за Києвом 🇺🇦 (${duration}хв)</b>\n\n<b>викладач:</b> ${teacherName}\n(@${teacherUsername});${teacherNumber}\n
+<b>посилання на дошку Miro студента:</b> ${miro_link}\n\n\n`,
 
     trialFinal: (name: string, date: string, dayOfWeek: string, time: string, miro_link: string, zoom_link: string) => `чудово!\n
 заняття з ${name} заплановано на:

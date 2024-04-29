@@ -517,14 +517,19 @@ async function main() {
           await set('state')('RespondStudentDeTaskHandler');
         }
       }
-      else ctx.reply('вибачте, але у вас немає активних деЗавдань :(');
+      else ctx.reply('вибачте, але у вас немає активних деЗавдань :(', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: keyboards.indiviualMenu(userData!.role)
+          }
+        });
     }
     else if (data.text === 'Мій розклад'){
       if (userObject!.role === 'student'){
         const trialLessons = await dbProcess.GetUserTrialLessons(ctx?.chat?.id ?? -1);
         if (userObject!.individual_lessons || trialLessons?.length){
           const lessons = SortSchedule([
-            ...(userObject?.set_individual_lessons?.length ? await dbProcess.GetSpecificIndividualLessons(userObject?.set_individual_lessons) : []),
+            ...(userObject?.individual_lessons?.length ? await dbProcess.GetSpecificIndividualLessons(userObject?.individual_lessons) : []),
             ...(trialLessons?.length ? trialLessons : [])
           ].filter((lesson: any) => Object.keys(lesson).length));
           let lastDateLoop = '', lessonProcess: IndividualArray = {}
@@ -545,7 +550,7 @@ async function main() {
 
           for (let i = 0; i < keys.length; i++){
             const key = keys[i];
-            let message = `📋 ${getDayOfWeek(new Date(key))} ${key}\n\n`;
+            let message = `📋 <b>${getDayOfWeek(new Date(key))} ${(DateProcessToPresentView(key))[1]}</b>\n\n`;
     
             for (let j = 0; j < lessonProcess[key].length; j++) {
               const lesson = lessonProcess[key][j],
@@ -570,7 +575,7 @@ async function main() {
           }
         }
         else {
-          ctx.reply('на данний момент у вас відсутні заняття', {
+          ctx.reply('на даний момент у вас відсутні заплановані заняття😐', {
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.indiviualMenu(userObject!.role)
@@ -632,7 +637,7 @@ async function main() {
           await set('state')('TeacherSchduleHandler');
         }
         else {
-          ctx.reply('на данний момент у вас відсутні заняття', {
+          ctx.reply('на даний момент у вас відсутні заплановані заняття😐', {
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.myScheduleTeacher()
@@ -1080,7 +1085,7 @@ async function main() {
         'photo'
       );
   
-      ctx.reply(script.payInvidualLesson.endWork(await name ?? "учень"), {
+      ctx.reply(script.payInvidualLesson.endWorkIndividual(await name ?? "учень"), {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -1103,7 +1108,7 @@ async function main() {
         'document'
       );
   
-      ctx.reply(script.payInvidualLesson.endWork(await name ?? "учень"), {
+      ctx.reply(script.payInvidualLesson.endWorkIndividual(await name ?? "учень"), {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.toMenu()
@@ -2744,7 +2749,7 @@ async function main() {
         ctx.reply(`от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату ${Time()}\n\nповторіть, будь ласка, ще раз :)`)
       }
       else{
-        if (isTimeNotInPast(time)){
+        if (isTimeNotInPast(user['AP_date'], time)){
           await set('AP_time')(time);
           ctx.reply('кількість місць:');
           await set('state')('ADD_RespondCountAndGetLink');
@@ -3096,7 +3101,7 @@ async function main() {
             ctx.reply(`от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату ${Time()}\n\nповторіть, будь ласка, ще раз :)`)
           }
           else{
-            isTimeNotInPast(time) ? await set('AP_time')(time) : ctx.reply('ви ввели час, який вже минув, повторіть, будь ласка, ще раз :)');
+            isTimeNotInPast(user['AP_date'], time) ? await set('AP_time')(time) : ctx.reply('ви ввели час, який вже минув, повторіть, будь ласка, ще раз :)');
           }
           
           await ctx.reply(script.speakingClub.report.checkClub(
@@ -7115,7 +7120,7 @@ async function main() {
         ctx.reply(`от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату ${Time()}\n\nповторіть, будь ласка, ще раз :)`)
       }
       else{
-        if (isTimeNotInPast(time)){
+        if (isTimeNotInPast(user['teacher_date_individual_lesson_set'], time)){
           const allLessons = await dbProcess.ShowAllInvdividualLessons(),
             free = checkAvailabilityForLesson(time, user['teacher_date_individual_lesson_set'], allLessons, ctx?.chat?.id ?? -1, 'part_1');
   
@@ -7466,7 +7471,7 @@ async function main() {
         ctx.reply(`от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату ${Time()}\n\nповторіть, будь ласка, ще раз :)`)
       }
       else{
-        if (isTimeNotInPast(time)){
+        if (isTimeNotInPast(user['teacher_date_individual_lesson_set'], time)){
           const allLessons = await dbProcess.ShowAllInvdividualLessons(),
           lesson = (await dbProcess.GetSpecificIndividualLessons([ new ObjectId(user['teacher_reschedule_lesson_id_of_lesson']) ]))[0],
             User = await dbProcess.ShowOneUser(lesson?.idStudent),
@@ -8137,7 +8142,7 @@ async function main() {
         ctx.reply(`от халепа.. ви ввели час в неправильному форматі, якщо то взагалі час\nслідуйте цьому формату ${Time()}\n\nповторіть, будь ласка, ще раз :)`)
       }
       else{
-        if (isTimeNotInPast(time)){
+        if (isTimeNotInPast(user['teacher_trial_date_of_lesson'], time)){
           const allLessons = await dbProcess.ShowAllInvdividualLessons(),
             free = checkAvailabilityForLesson(time, user['teacher_trial_date_of_lesson'], allLessons, ctx?.chat?.id ?? -1, 'part_2', 60);
   
