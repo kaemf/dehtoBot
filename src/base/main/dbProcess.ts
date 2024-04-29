@@ -833,10 +833,10 @@ export default async function dbProcess(botdb: MongoClient){
             if (serviceCare){
                 const questions = serviceCare.question;
 
-                if (questions.length){
-                    await this.liveSupport.updateOne({_id: idCare}, {$set: {question: questions.push(question)}});        
+                if (questions?.length){
+                    await this.liveSupport.updateOne({_id: idCare}, {$push: {question: question}});        
                 }
-                else this.liveSupport.updateOne({_id: idCare}, {$set: {question: [ question ]}});
+                else await this.liveSupport.updateOne({_id: idCare}, {$set: {question: [ question ]}});
             }
             else throw new Error('ServiceCare not Found. In function WriteAdditionalQuestionToServiceCare()');
         }

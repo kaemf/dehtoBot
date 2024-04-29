@@ -128,7 +128,15 @@ export function formatDateWithTime(date: Date): string {
 }
 
 export function isDateNoInPast(date: string){
-    return new Date(DateProcessToPresentView(date)[1]) >= new Date()
+    const inputDate = new Date(date.replace(/\./g, '-'));
+    const currentDate = new Date();
+    
+    // Устанавливаем время для обеих дат в 00:00:00:000
+    inputDate.setHours(0, 0, 0, 0);
+    currentDate.setHours(0, 0, 0, 0);
+
+    // Сравниваем даты без времени
+    return inputDate >= currentDate;
 }
 
 export function isTimeNotInPast(time: string): boolean {

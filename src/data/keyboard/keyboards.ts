@@ -6,7 +6,7 @@ const devChatInt = parseInt(devChat),
   eugeneChatInt = parseInt(eugeneChat);
 
 export function checkChats(currentChatId: number){
-  if (currentChatId === devChatInt || currentChatId === confirmationChatInt || currentChatId === supportChatInt || currentChatId === eugeneChatInt){
+  if (currentChatId === devChatInt  || currentChatId === supportChatInt || currentChatId === eugeneChatInt){
     return true;
   } 
   else return false;
@@ -428,7 +428,7 @@ class Keyboard{
     [
       [
         {
-          text: "Дати інше завдання"
+          text: "Дати інше деЗавдання"
         }
       ],
       [
@@ -443,7 +443,7 @@ class Keyboard{
     [
       [
         {
-          text: "Дати завдання"
+          text: "Дати деЗавдання"
         }
       ],
       [
@@ -456,12 +456,12 @@ class Keyboard{
     [
       [
         {
-          text: "Дати завдання"
+          text: "Дати деЗавдання"
         }
       ],
       [
         {
-          text: "Перевірити завдання"
+          text: "Перевірити деЗавдання"
         }
       ]
     ]

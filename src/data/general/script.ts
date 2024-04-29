@@ -611,8 +611,16 @@ ${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count} заняття (${c
   `✅ користувача ${name} успішно додано ${addToTrial? 'на пробне ': ''}до викладача ${teacher}\n\nпосилання на дошку Miro студента: ${miro_link}`,
 
   liveSupport: {
-    userRequest: (name: string, telegram: string, phone: string, dateRequest: string) => `Новий запит на підтримку!\n\nІм'я - ${name} (@${telegram})\nТелефон - ${phone}\n\nДата заявки - ${dateRequest}`,
-    userRespond: `будь ласка, поставте своє запитання, ми обов'язково вам допоможемо 🦄`
+    userRequest: (name: string, telegram: string, phone: string, dateRequest: string) => `⚜️ <b>Новий запит на підтримку!</b> ⚜️\n\n${name}\n(@${telegram}); ${phone}\n\nдата заявки - ${dateRequest}`,
+
+    userRespond: `будь ласка, поставте своє запитання, ми обов'язково вам допоможемо 🦄`,
+    
+    allBusy: `вибачте, але наразі всі оператори заняті(
+зачекайте трошки, ми працюємо над тим, щоб зебезпечити вам швидку відповідь!\n
+у разі чого, можете також звернутися за наступними контактими:
++380975772093
+@dehto_support\n
+вибачте за незручності🫶🏼`
   },
 
   deTask: {
@@ -710,7 +718,7 @@ ${count > 0 ? '✅' : '❌'} <b>Залишок:</b> ${count / 60} занять (
 посилання на дошку Miro: ${miro_link}\n\n✅ <b>Залишок:</b> ${count / 60} занять (${count}хв)`,
 
       changeCountStudentIndividualLesson: (studentName: string, studentUserName: string, studentNumber: string, miro_link: string, count: number) =>
-      `📈 <b>Баланс занять у студента змінено</b> 📈\n\n👉 ${studentName}\n
+      `📈 <b>Баланс занять у студента змінено</b> 📈\n\n👉 ${studentName}
 (@${studentUserName}); ${studentNumber}\n
 <b>посилання на дошку Miro:</b> ${miro_link}\n
 ${count > 0 ? '✅' : '❌'} <b>Залишок:</b> ${count / 60} занять (${count}хв)`,

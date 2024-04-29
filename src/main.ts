@@ -215,7 +215,7 @@ async function main() {
     else if (data.text === 'деЗавдання' && userI!.role === 'teacher'){
       const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
       if (userI!.set_detasks){
-        ctx.reply('вітаю в деЗавданнях, що саме вас цікавить?', {
+        ctx.reply('оберіть одну із кнопок нижче:', {
           reply_markup: {
             one_time_keyboard: true,
             keyboard: keyboards.deTaskMenu()
@@ -340,7 +340,7 @@ async function main() {
 
         if (allBusy){
           await dbProcess.DeleteServiceCare(objectList.insertedId);
-          ctx.reply("вибачте, але наразі всі оператори заняті, спробуйте, будь ласка, пізніше. Вибачте за незручності", {
+          ctx.reply(script.liveSupport.allBusy, {
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role)
@@ -1636,16 +1636,29 @@ async function main() {
         });
       }
 
-      await ctx.reply('виберіть номер шпраха для запису:', {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
-            return [{ text: `${index + 1}` }];
-          })
-        }
-      })
+      if (results.length){
+        await ctx.reply('виберіть номер клуба для запису:', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
+              return [{ text: `${index + 1}` }];
+            })
+          }
+        })
+  
+        await set('state')('GetClubToRegistrationAndCheckPayment');
+      }
+      else{
+        ctx.reply('вибачте, але наразі немає актуальних клубів', {
+          reply_markup: {
+            one_time_keyboard: true,
+            keyboard: await keyboards.speakingClubMenu(userObject!.role)
+          }
+        })
 
-      await set('state')('GetClubToRegistrationAndCheckPayment');
+        await set('state')('ActionClubRespondAndRootAction');
+      }
+
     }
     else if (data.text === 'ні'){
       ctx.reply(script.speakingClub.defaultDecline, {
@@ -4032,23 +4045,8 @@ async function main() {
 
   onTextMessage('CheckAvaibleActivePacketAndChangeCountLesson', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      const results = await dbProcess.ShowAllUsers();
-    
-      for (let i = 0; i < results.length; i++) {
-        await ctx.reply(script.speakingClub.report.showUserToAdmin(i + 1, results[i].name, results[i].id, results[i].username, results[i].number, 
-          results[i].count, ConvertRole(results[i].role).toString(), ConvertToPacket((await db.get(results[i].id)('club-typeclub'))!), ConvertToPrice((await db.get(results[i].id)('club-typeclub'))!)!));
-      }
-
-      await ctx.reply('Виберіть номер студента, якому потрібно додати заняття', {
-        reply_markup: {
-          one_time_keyboard: true,
-          keyboard: results.map(result => result._id).map((value : ObjectId, index : number) => {
-            return [{ text: `${index + 1}` }];
-          })
-        }
-      })
-
-      await set('state')('AddLessonForStudent');
+      ctx.reply('введіть його ID / повне ім’я / номер телефону / нік в телеграмі');
+      await set('state')('StudentFindHandler');
     }
     else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1){
       await set('AP_UserChangeCountLesson_New')(data.text);
@@ -4889,12 +4887,12 @@ async function main() {
 
       if (teachersStudents.length){
         switch(data.text){
-          case "Дати завдання":
+          case "Дати деЗавдання":
             ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання')
             await set('state')('TeachersSetTasksHandler')
             break;
   
-          case "Перевірити завдання":
+          case "Перевірити деЗавдання":
             for (let i = 0; i < teachersStudents.length; i++){
               const userObject = await dbProcess.ShowOneUser(teachersStudents[i]),
                 task = await dbProcess.GetStudentAnswerForDeTask(teachersStudents[i]);
@@ -4931,7 +4929,7 @@ async function main() {
             ctx.reply(script.errorException.chooseButtonError, {
               reply_markup: {
                 one_time_keyboard: true,
-                keyboard: keyboards.deTaskMenu() // TODO
+                keyboard: keyboards.deTaskMenu()
               }
             })
         }
@@ -4953,7 +4951,7 @@ async function main() {
     if (CheckException.BackRoot(data)){
       const userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
       if (userI!.set_detasks){
-        ctx.reply('вітаю в деЗавданнях, що саме вас цікавить?', {
+        ctx.reply('оберіть одну із кнопок нижче:', {
           reply_markup: {
             one_time_keyboard: true,
             keyboard: keyboards.deTaskMenu()
@@ -5107,7 +5105,7 @@ async function main() {
 
   onTextMessage('EndTeacherDeTaskHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      ctx.reply('вітаю в деЗавданнях, що саме вас цікавить?', {
+      ctx.reply('оберіть одну із кнопок нижче:', {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.deTaskMenu()
@@ -5117,13 +5115,13 @@ async function main() {
     }
     else{
       switch(data.text){
-        case "Дати інше завдання":
+        case "Дати інше деЗавдання":
           ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання')
           await set('detask_tmp_endkeyboard')('');
           await set('state')('AnotherTeachersSetTasksHandler');
           break;
 
-        case "Дати завдання":
+        case "Дати деЗавдання":
           ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання')
           await set('detask_tmp_endkeyboard')('');
           await set('state')('AnotherTeachersSetTasksHandler');
@@ -5158,7 +5156,7 @@ async function main() {
 
   onTextMessage('AnotherTeachersSetTasksHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
-      ctx.reply('вітаю в деЗавданнях, що саме вас цікавить?', {
+      ctx.reply('оберіть одну із кнопок нижче:', {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.deTaskMenu()
@@ -8223,14 +8221,14 @@ async function main() {
         await ctx.telegram.editMessageReplyMarkup(chats[n], messages[n], undefined, Markup.inlineKeyboard(liveKeyboard(ctx?.chat?.id ?? -1, 'declined', user['userObjectCloseLiveSupport'])).reply_markup)
       }
 
-      ctx.reply('Канал успішно закрито, сподіваємося ваше питання було вирішено!', {
+      ctx.reply('дякуємо за звернення, сподіваємося, ваше питання було вирішено❤️', {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.toMenu()
         }
       });
 
-      ctx.telegram.sendMessage(user['activeHelperLiveSupport'], "Користувач закрив канал.", {
+      ctx.telegram.sendMessage(user['activeHelperLiveSupport'], "користувач закрив канал, тепер можете випити філіжанку кави", {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.toMenu()
@@ -8381,14 +8379,14 @@ async function main() {
         await ctx.telegram.editMessageReplyMarkup(chats[n], messages[n], undefined, Markup.inlineKeyboard(liveKeyboard(ctx?.chat?.id ?? -1, 'declined', user['operatorObjectCloseLiveSupport'])).reply_markup)
       }
 
-      ctx.reply('Прекрасно, тепер можете відпочивати', {
+      ctx.reply('прекрасно, тепер можете відпочивати', {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.toMenu()
         }
       })
 
-      ctx.telegram.sendMessage(user['activeUserLiveSupport'], "Оператор закрив канал, сподіваємося ваше питання було вирішено.", {
+      ctx.telegram.sendMessage(user['activeUserLiveSupport'], "дякуємо за звернення, сподіваємося, ваше питання було вирішено❤️", {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.toMenu()
@@ -8535,7 +8533,7 @@ async function main() {
     const serviceCare = await dbProcess.GetServiceCareObject(new ObjectId(user['student_tmp_service_care_id']));
 
     if (data.text === 'ВІДМІНИТИ'){
-      ctx.reply('добренько, гадаємо це була помилка, гарного дня', {
+      ctx.reply('окей, гадаємо це була помилка, гарного дня❤️', {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.toMenu()
@@ -8547,21 +8545,24 @@ async function main() {
       }
 
       await dbProcess.DeleteServiceCare(serviceCare!._id);
+      await set('temp_thanks_care_message')('');
       await set('state')('EndRootManager');
     }
     else if (CheckException.TextException(data)){
       await dbProcess.WriteAdditionalQuestionToServiceCare(serviceCare!._id, data.text);
-      ctx.reply('дякуємо', {
+      if (user['temp_thanks_care_message']) ctx.telegram.deleteMessage(ctx?.chat?.id ?? -1, parseInt(user['temp_thanks_care_message']));
+      const temp_thanks_care_message = ctx.reply('супер, уточнюємо це', {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: [[{ text: "ВІДМІНИТИ" }]]
         }
       })
+      await set('temp_thanks_care_message')((await temp_thanks_care_message).message_id.toString());
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
   })
 
-  bot.action(/^goToTaskCheck:(\d+)$/, async (ctx) => {
+  bot.action(/^goToDetaskCheck:(\d+)$/, async (ctx) => {
     const student = await dbProcess.ShowOneUser(parseInt(ctx.match[1])),
         teacher = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
         teacherTasks = teacher ? teacher.set_detasks : false,
@@ -8790,31 +8791,33 @@ async function main() {
           await db.set(chats[n])('state')('OperatorLiveSupportHandler');
           await db.set(id)('state')('UserLiveSupportHandler');
           await dbProcess.ChangeAvaibiltyForOperator(chats[n], false);
+          await db.set(chats[n])('temp_thanks_care_message')('');
         }
         else await ctx.telegram.editMessageReplyMarkup(chats[n], messages[n], undefined, Markup.inlineKeyboard(liveKeyboard(id, 'busy', ctx.match[2])).reply_markup)
       }
       const userObject = await dbProcess.ShowOneUser(id);
-      ctx.telegram.sendMessage(id, `вітаю, ${userObject!.name}! мене звати ${operator}, служба турботи dehto 💪`, {
+      ctx.telegram.sendMessage(id, `вітаємо, ${userObject!.name}! я - ${operator}, служба турботи dehto 💪`, {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.liveSupportProbablyCancel()
         }
       });
-      ctx.reply('ви успішно прийняли запит користувача, можете працювати', {
+      await ctx.reply('ви успішно прийняли запит користувача, можете працювати', {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.liveSupportProbablyCancel()
         }
       })
 
-      if (serviceCare?.quesion !== ''){
-        console.log('yes');
-        ctx.reply(serviceCare!.question, {
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: keyboards.liveSupportProbablyCancel()
-          }
-        })
+      if (serviceCare?.question?.length){
+        for (let u = 0; u < serviceCare?.question?.length; u++){
+          await ctx.reply(serviceCare?.question[u], {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.liveSupportProbablyCancel()
+            }
+          })
+        }
       }
     } catch (e) {
       console.log(e);
