@@ -12,8 +12,8 @@ export function checkChats(currentChatId: number){
   else return false;
 }
 
-function CheckDeveloper(currentChatId: number){
-  return currentChatId === devChatInt ? true : false;
+export function CheckDeveloper(currentChatId: number){
+  return currentChatId === devChatInt;
 }
 
 class Keyboard{

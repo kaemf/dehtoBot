@@ -13,7 +13,7 @@ import arch from './base/main/architecture';
 import getCourses, { Course, Courses, courseNumbersToSkip } from "./data/course/coursesAndTopics";
 import Key from "./base/handlersdb/changeKeyValue";
 import Role, { ConvertRole } from "./base/handlersdb/changeRoleValue";
-import keyboards, { checkChats } from "./data/keyboard/keyboards";
+import keyboards, { CheckDeveloper, checkChats } from "./data/keyboard/keyboards";
 import { ConvertToPrice, ConvertToPacket } from "./data/process/convertPaymentPerLesson";
 import { inlineApprovePayment, inlineAcceptOncePayment, inlineAcceptOncePaymentWithoutClub, 
   inlineAcceptPacketPayment, inlineAcceptClubWithPacketPayment, inlineEventAnnouncementClub,
@@ -66,6 +66,13 @@ async function main() {
     console.log('MENU PRESSED');
     const set = db.set(ctx?.chat?.id ?? -1),
       userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+
+    if (checkChats(ctx?.chat?.id ?? -1)) {
+      if (CheckDeveloper(ctx?.chat?.id ?? -1)) {
+        await dbProcess.ChangeKeyData(userI!, 'role', 'developer', false);
+      }
+      else await dbProcess.ChangeKeyData(userI!, 'role', 'admin', false);
+    }
 
     ctx.reply(script.entire.chooseFunction, {
       parse_mode: "Markdown",

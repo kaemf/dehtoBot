@@ -47,6 +47,8 @@ export default async function init() {
   const notiftoken : string = '7149519033:AAE2qO_VxWQVaBDt7mUJ0SZIZ5zS50Hlo-8';
   // dev
   const token : string = '6192445742:AAHSlflbQoeylaqx3hZAh0WkS3fZ1Bt8sdU';
+  // closed_test
+  // const token : string = '6514563411:AAEjGHaHZMCqu0me9snBZlb0oOywxoWXxCQ'
   const bot = new Telegraf(token),
     bot_notification = new Telegraf(notiftoken);
   console.log("Done\n");

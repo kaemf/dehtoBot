@@ -28,11 +28,11 @@ export default async function dbProcess(botdb: MongoClient){
             await this.clubdbLessons.deleteOne({ _id: new ObjectId(id) });
         }
 
-        async ChangeKeyData(id: Object, key: string, value: string | number | string[] | number[], club: boolean){
+        async ChangeKeyData(id: Object, key: string, value: string | number | string[] | number[], isClubDB: boolean){
             const updateObject = { $set: {} } as { $set: { [key: string]: string | number | string[] | number[] } };
             updateObject.$set[key] = value;
 
-            club ? await this.clubdbLessons.updateOne(id, updateObject) : await this.botdbUsers.updateOne(id, updateObject);
+            isClubDB ? await this.clubdbLessons.updateOne(id, updateObject) : await this.botdbUsers.updateOne(id, updateObject);
         }
 
         async ShowData(id: ObjectId) {
