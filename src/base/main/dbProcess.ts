@@ -2,6 +2,7 @@ import { MongoClient, ObjectId } from "mongodb";
 import { Telegram } from "telegraf";
 import { UniversalSingleDataProcess, formatDateWithTime } from "../../data/process/dateAndTimeProcess"
 import script from "../../data/general/script";
+process.env.TZ = 'Europe/Kiev';
 
 export default async function dbProcess(botdb: MongoClient){
     class DBProcess {
@@ -905,18 +906,15 @@ export default async function dbProcess(botdb: MongoClient){
             const lessons = await this.individualdbLessons.find({}).toArray();
 
             if (lessons.length){
-                console.log('ready to notificate');
+                console.log('Have Lessons ' + lessons.length);
                 for (let i = 0; i < lessons.length; i++){
-                    console.log('in for');
                     const lessonDate = new Date(`${lessons[i].date.replace(/\./g, '-')}T${lessons[i].time}`);
                     if (this.Under40Minutes(lessonDate)){
-                        console.log('in if') 
-                        console.log(lessonDate)
-                        console.log(this.TimeLeft(lessonDate))
                         const sentNotificationAboutLessons = await this.sentIndividualNotifications.find({}).toArray();
                         if (sentNotificationAboutLessons && sentNotificationAboutLessons.length){
                             for (let j = 0; j < sentNotificationAboutLessons.length; j++){
                                 if (sentNotificationAboutLessons[j].id.toString() === lessons[i]._id.toString()){
+                                    console.log('this lesson already notificated ' + formatDateWithTime(lessonDate));
                                     continue;
                                 }
                                 else{
@@ -976,7 +974,7 @@ export default async function dbProcess(botdb: MongoClient){
                     }
                 }
             }
-            else console.log('No Lesson to notificate');
+            else console.log('No lesson to notificate');
         }
 
         async DeleteTeNoticationEntryData(){

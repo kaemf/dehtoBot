@@ -1,3 +1,5 @@
+process.env.TZ = 'Europe/Kiev';
+
 function formatDate(date: Date, onlyDayOfWeek?: boolean): string {
     const daysOfWeek = ["нд", "пн", "вт", "ср", "чт", "пт", "сб"],
         months = [

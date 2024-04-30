@@ -35,6 +35,8 @@ import IndividualArray from "./data/individual/interface";
 import NotificationReg, { SendNotification, SendNotificationWithMedia } from "./data/notifications/notificationProcess";
 import checkAvailabilityForLesson from "./data/general/lessonAvailabiltityCheck";
 
+process.env.TZ = 'Europe/Kiev';
+
 async function main() {
   const [ onTextMessage, onContactMessage, onPhotoMessage, onDocumentationMessage, bot, notifbot, notiftoken, db, dbProcess ] = await arch();
 
