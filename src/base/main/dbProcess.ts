@@ -254,28 +254,31 @@ export default async function dbProcess(botdb: MongoClient){
                                 await this.botdbUsers.updateOne({_id: student._id}, {$set: {trial: true}});
                             }
                         }
-                    }
-                    const teacher = await dbProcess.ShowOneUser(lessons[i].idTeacher);
-
-                    if (teacher){
-                        const student = await dbProcess.ShowOneUser(lessons[i].idStudent),
-                            set_individual_lessons = teacher.set_individual_lessons?.length ? teacher.set_individual_lessons : false,
-                            individual_lessons = student?.individual_lessons?.length ? student.individual_lessons : false,
-                            string_individual_lessons = set_individual_lessons.forEach((element: any) => {
-                                return element.toString();
-                            }),
-                            string_individual_lessons_student = individual_lessons.forEach((element: any) => {
-                                return element.toString();
-                            }),
-                            indexElementTeacher = string_individual_lessons?.indexOf(lessons[i]._id.toString()),
-                            indexElementStudent = string_individual_lessons_student?.indexOf(lessons[i]._id.toString());
-    
-                        if (indexElementTeacher !== -1) set_individual_lessons.splice(indexElementTeacher, 1);
-                        if (indexElementStudent !== -1) individual_lessons.splice(indexElementStudent, 1);
-                        await this.botdbUsers.updateOne({id: teacher.id}, {$set: {set_individual_lessons: set_individual_lessons}});
-                        await this.botdbUsers.updateOne({id: student!.id}, {$set: {individual_lessons: individual_lessons}});
-                        console.log('\nFounded Expired Individual Lessson and Delete\n')
                         await this.SystemDeleteIndividualLesson(lessons[i]._id);
+                    }
+                    else{
+                        const teacher = await dbProcess.ShowOneUser(lessons[i].idTeacher);
+    
+                        if (teacher){
+                            const student = await dbProcess.ShowOneUser(lessons[i].idStudent),
+                                set_individual_lessons = teacher.set_individual_lessons?.length ? teacher.set_individual_lessons : false,
+                                individual_lessons = student?.individual_lessons?.length ? student.individual_lessons : false,
+                                string_individual_lessons = set_individual_lessons.forEach((element: any) => {
+                                    return element.toString();
+                                }),
+                                string_individual_lessons_student = individual_lessons.forEach((element: any) => {
+                                    return element.toString();
+                                }),
+                                indexElementTeacher = string_individual_lessons?.indexOf(lessons[i]._id.toString()),
+                                indexElementStudent = string_individual_lessons_student?.indexOf(lessons[i]._id.toString());
+        
+                            if (indexElementTeacher !== -1) set_individual_lessons.splice(indexElementTeacher, 1);
+                            if (indexElementStudent !== -1) individual_lessons.splice(indexElementStudent, 1);
+                            await this.botdbUsers.updateOne({id: teacher.id}, {$set: {set_individual_lessons: set_individual_lessons}});
+                            await this.botdbUsers.updateOne({id: student!.id}, {$set: {individual_lessons: individual_lessons}});
+                            console.log('\nFounded Expired Individual Lessson and Delete\n')
+                            await this.SystemDeleteIndividualLesson(lessons[i]._id);
+                        }
                     }
                 }
             }
@@ -904,8 +907,12 @@ export default async function dbProcess(botdb: MongoClient){
             if (lessons.length){
                 console.log('ready to notificate');
                 for (let i = 0; i < lessons.length; i++){
+                    console.log('in for');
                     const lessonDate = new Date(`${lessons[i].date.replace(/\./g, '-')}T${lessons[i].time}`);
                     if (this.Under40Minutes(lessonDate)){
+                        console.log('in if') 
+                        console.log(lessonDate)
+                        console.log(this.TimeLeft(lessonDate))
                         const sentNotificationAboutLessons = await this.sentIndividualNotifications.find({}).toArray();
                         if (sentNotificationAboutLessons && sentNotificationAboutLessons.length){
                             for (let j = 0; j < sentNotificationAboutLessons.length; j++){
