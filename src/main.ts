@@ -67,11 +67,8 @@ async function main() {
     const set = db.set(ctx?.chat?.id ?? -1),
       userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
-    if (checkChats(ctx?.chat?.id ?? -1)) {
-      if (CheckDeveloper(ctx?.chat?.id ?? -1)) {
-        await dbProcess.ChangeKeyData(userI!, 'role', 'developer', false);
-      }
-      else await dbProcess.ChangeKeyData(userI!, 'role', 'admin', false);
+    if (CheckDeveloper(ctx?.chat?.id ?? -1)) {
+      await dbProcess.ChangeKeyData(userI!, 'role', 'developer', false);
     }
 
     ctx.reply(script.entire.chooseFunction, {
