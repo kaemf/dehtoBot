@@ -589,11 +589,19 @@ export default async function dbProcess(botdb: MongoClient){
             if (student && teacher){
                 const teachersStudents = teacher.registered_students,
                     trialStudents = teacher.trial_students;
+                let teachersStudentsPush = [], trialStudentsPush = [];
+
                 switch(parametr){
                     case "trial_teacher":
                         await this.ChangeKeyData(student, 'miro_link', miro_link, false);
+                        if (trialStudents && trialStudents.length){
+                            trialStudents.push(student.id)
+                            trialStudentsPush = trialStudents;
+                        }
+                        else trialStudentsPush = [ student.id ];
+                        
                         await this.botdbUsers.updateOne({_id: teacher._id}, {$set: {
-                            trial_students: trialStudents && trialStudents.length? trialStudents.push(student.id): [ student.id ]
+                            trial_students: trialStudentsPush
                         }})
                         break;
 
@@ -603,7 +611,15 @@ export default async function dbProcess(botdb: MongoClient){
                         await this.botdbUsers.updateOne({_id: student._id}, {$set: {
                             role: 'student'
                         }})
-                        await this.ChangeKeyData(teacher, 'registered_students', teachersStudents && teachersStudents.length? teachersStudents.push(student.id) : [ student.id ], false);
+                        if (teachersStudents && teachersStudents.length){
+                            teachersStudents.push(student.id);
+                            teachersStudentsPush = teachersStudents;
+                        }
+                        else teachersStudentsPush = [ student.id ];
+                        
+                        await this.botdbUsers.updateOne({_id: teacher._id}, {$set: {
+                            registered_students: teachersStudentsPush
+                        }})
                         break;
 
                     default:
