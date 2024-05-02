@@ -493,7 +493,24 @@ export default async function dbProcess(botdb: MongoClient){
                         if (usersTeacher && newTeacher){
                             const oldTeacherStudents = usersTeacher.registered_students,
                                 newTeacherStudents = newTeacher.registered_students,
+                                studentDeTask = await this.deTaskDB.findOne({idStudent: user.id}) || false,
                                 indexInMassiveOld = oldTeacherStudents.indexOf(user.id);
+
+                            if (studentDeTask){
+                                await this.botdbUsers.updateOne({id: idStudent}, {$set: {de_task: false}});
+                                const teacherDeTasks = usersTeacher.set_detasks,
+                                    stringTeacherDeTasks = teacherDeTasks.forEach((element: any) => {
+                                        return element.toString();
+                                    }),
+                                    indexInMassiveTeacher = stringTeacherDeTasks.indexOf(studentDeTask._id.toString());
+
+                                if (indexInMassiveTeacher !== -1){
+                                    teacherDeTasks.splice(indexInMassiveTeacher, 1);
+                                    await this.botdbUsers.updateOne({id: usersTeacher.id}, {$set: {set_detasks: teacherDeTasks}});
+                                }
+                                else throw new Error('DeTask not found in teacher');
+                            }
+                            else console.warn('While transfering to new teacher, detask not found');
 
                             if (oldTeacherStudents.includes(user.id)){
                                 oldTeacherStudents.splice(indexInMassiveOld, 1);
@@ -504,7 +521,7 @@ export default async function dbProcess(botdb: MongoClient){
 
                                 await this.botdbUsers.updateOne({_id: usersTeacher._id}, updateObjectTeacher);
                             }
-                            else throw new Error('\n\nUser not found in old Teacher');
+                            else throw new Error('User not found in old Teacher');
 
                             if (!newTeacherStudents.includes(user.id)){
                                 newTeacherStudents.push(user!.id);
@@ -516,7 +533,7 @@ export default async function dbProcess(botdb: MongoClient){
                                 await this.botdbUsers.updateOne({_id: newTeacher._id}, updateObjectTeacher);
                                 await this.botdbUsers.updateOne({_id: user._id}, {$set: {teacher: newTeacher.id}})
                             }
-                            else throw new Error('\n\nNew Teacher already have this student');
+                            else throw new Error('New Teacher already have this student');
                         }
                         else{
                             const newTeacher = await this.ShowOneUser(await this.GetUserIDByName(value.toString())),
@@ -553,16 +570,16 @@ export default async function dbProcess(botdb: MongoClient){
 
                                 await this.botdbUsers.updateOne({_id: currentTeacher._id}, updateObjectTeacher);
                             }
-                            console.log('\n\nUser not found in Teacher');
+                            console.log('nUser not found in Teacher');
                             await this.botdbUsers.updateOne({_id: user._id}, {$set: {teacher: false, role: 'guest'}});
                         }
                         return currentTeacher;
 
                     default:
-                        throw new Error('\n\nUncorrect parametr in IndividualChangeUserData()');
+                        throw new Error('Uncorrect parametr in IndividualChangeUserData()');
                 }
             }
-            else throw new Error('\n\nUser not found in IndividualChangeUserData()');
+            else throw new Error('User not found in IndividualChangeUserData()');
         }
 
         async DeleteTeacherFromPost(idTeacher: number){
