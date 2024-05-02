@@ -5384,7 +5384,7 @@ async function main() {
       const User = await dbProcess.ShowOneUser(parseInt(user['user_to_change_individual_id']));
       switch(data.text){
         case "Редагувати кількість занять":
-          ctx.reply(`введіть кількість хвилин, яка має бути у студента (наразі є: ${User!.individual_count ?? 0} занять)`);
+          ctx.reply(`введіть кількість хвилин, яка має бути у студента (наразі є: ${User!.individual_count / 60 ?? 0} занять (${User!.individual_count ?? 0} хв))`);
           await set('admin_parametr_to_change_individual')('individual_count');
           await set('state')('IndividualChangeUserDataHandler');
           break;
