@@ -492,7 +492,7 @@ export default async function dbProcess(botdb: MongoClient){
 
                         if (usersTeacher && newTeacher){
                             const oldTeacherStudents = usersTeacher.registered_students,
-                                newTeacherStudents = newTeacher.registered_students,
+                                newTeacherStudents = newTeacher.registered_students ?? false,
                                 studentDeTask = await this.deTaskDB.findOne({idStudent: user.id}) || false,
                                 indexInMassiveOld = oldTeacherStudents.indexOf(user.id);
 
@@ -523,17 +523,20 @@ export default async function dbProcess(botdb: MongoClient){
                             }
                             else throw new Error('User not found in old Teacher');
 
-                            if (!newTeacherStudents.includes(user.id)){
-                                newTeacherStudents.push(user!.id);
-
-                                const updateObjectTeacher = {$set : {
-                                    registered_students: newTeacherStudents
-                                }}
-
-                                await this.botdbUsers.updateOne({_id: newTeacher._id}, updateObjectTeacher);
-                                await this.botdbUsers.updateOne({_id: user._id}, {$set: {teacher: newTeacher.id}})
+                            if (newTeacherStudents){
+                                if (!newTeacherStudents.includes(user.id)){
+                                    newTeacherStudents.push(user.id);
+    
+                                    const updateObjectTeacher = {$set : {
+                                        registered_students: newTeacherStudents
+                                    }}
+    
+                                    await this.botdbUsers.updateOne({_id: newTeacher._id}, updateObjectTeacher);
+                                    await this.botdbUsers.updateOne({_id: user._id}, {$set: {teacher: newTeacher.id}});
+                                }
+                                else throw new Error('New Teacher already have this student');
                             }
-                            else throw new Error('New Teacher already have this student');
+                            else await this.botdbUsers.updateOne({_id: newTeacher._id}, {$set: {registered_students: [user!.id]}});
                         }
                         else{
                             const newTeacher = await this.ShowOneUser(await this.GetUserIDByName(value.toString())),
