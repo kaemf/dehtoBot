@@ -947,39 +947,34 @@ export default async function dbProcess(botdb: MongoClient){
                     const lessonDate = new Date(`${lessons[i].date.replace(/\./g, '-')}T${lessons[i].time}`);
                     if (this.Under40Minutes(lessonDate)){
                         const sentNotificationAboutLessons = await this.sentIndividualNotifications.find({}).toArray();
-                        if (sentNotificationAboutLessons && sentNotificationAboutLessons.length){
-                            for (let j = 0; j < sentNotificationAboutLessons.length; j++){
-                                if (sentNotificationAboutLessons[j].id.toString() === lessons[i]._id.toString()){
-                                    console.log('this lesson already notificated ' + formatDateWithTime(lessonDate));
-                                    continue;
-                                }
-                                else{
-                                    ctx.sendMessage(lessons[i].idStudent, script.notification.forStudent.lessonComingNotification(
-                                        lessons[i].type,
-                                        this.TimeLeft(lessonDate),
-                                        UniversalSingleDataProcess(lessonDate, 'day_of_week'),
-                                        UniversalSingleDataProcess(lessonDate, 'day'),
-                                        UniversalSingleDataProcess(lessonDate, 'month'),
-                                        lessons[i].time,
-                                        (await this.ShowOneUser(lessons[i].idTeacher))?.name ?? "сталась помилка",
-                                        (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
-                                        (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
-                                    ), {parse_mode: "HTML"});
-                                    ctx.sendMessage(lessons[i].idTeacher, script.notification.forStudent.lessonComingNotification(
-                                        lessons[i].type,
-                                        this.TimeLeft(lessonDate),
-                                        UniversalSingleDataProcess(lessonDate, 'day_of_week'),
-                                        UniversalSingleDataProcess(lessonDate, 'day'),
-                                        UniversalSingleDataProcess(lessonDate, 'month'),
-                                        lessons[i].time,
-                                        (await this.ShowOneUser(lessons[i].idStudent))?.name ?? "сталась помилка",
-                                        (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
-                                        (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
-                                    ), {parse_mode: "HTML"});
-                                    console.log(`\nNotification Sent. Lesson start in ${formatDateWithTime(lessonDate)}`);
-                                    await this.sentIndividualNotifications.insertOne({id: lessons[i]._id});
-                                }
+                        if (sentNotificationAboutLessons?.length){
+                            if (!sentNotificationAboutLessons.map(item => item.id.toString()).includes(lessons[i]._id.toString())){
+                                ctx.sendMessage(lessons[i].idStudent, script.notification.forStudent.lessonComingNotification(
+                                    lessons[i].type,
+                                    this.TimeLeft(lessonDate),
+                                    UniversalSingleDataProcess(lessonDate, 'day_of_week'),
+                                    UniversalSingleDataProcess(lessonDate, 'day'),
+                                    UniversalSingleDataProcess(lessonDate, 'month'),
+                                    lessons[i].time,
+                                    (await this.ShowOneUser(lessons[i].idTeacher))?.name ?? "сталась помилка",
+                                    (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
+                                    (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
+                                ), {parse_mode: "HTML"});
+                                ctx.sendMessage(lessons[i].idTeacher, script.notification.forStudent.lessonComingNotification(
+                                    lessons[i].type,
+                                    this.TimeLeft(lessonDate),
+                                    UniversalSingleDataProcess(lessonDate, 'day_of_week'),
+                                    UniversalSingleDataProcess(lessonDate, 'day'),
+                                    UniversalSingleDataProcess(lessonDate, 'month'),
+                                    lessons[i].time,
+                                    (await this.ShowOneUser(lessons[i].idStudent))?.name ?? "сталась помилка",
+                                    (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
+                                    (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
+                                ), {parse_mode: "HTML"});
+                                console.log(`\nNotification Sent. Lesson start in ${formatDateWithTime(lessonDate)}`);
+                                await this.sentIndividualNotifications.insertOne({id: lessons[i]._id});
                             }
+                            else console.log('This lesson already notificated ' + formatDateWithTime(lessonDate));
                         }
                         else{
                             ctx.sendMessage(lessons[i].idStudent, script.notification.forStudent.lessonComingNotification(
@@ -1050,56 +1045,51 @@ export default async function dbProcess(botdb: MongoClient){
                 const lessonDate = new Date(`${lessons[i].date.replace(/\./g, '-')}T${lessons[i].time}`);
                 if (this.Under40Minutes(lessonDate)){
                     const sentNotificationAboutLessons = await this.sentIndividualNotifications.find({}).toArray();
-                    if (sentNotificationAboutLessons && sentNotificationAboutLessons.length){
-                        for (let j = 0; j < sentNotificationAboutLessons.length; j++){
-                            if (sentNotificationAboutLessons[j].id.toString() === lessons[i]._id.toString()){
-                                continue;
-                            }
-                            else{
-                                for (let k = 0; k < users.length; k++){
-                                    if (await this.HasThisClubUser(users[k].id, lessons[i]._id)){
-                                        userHaved += `- ${users[k].name} (@${users[k].username})\n📲${users[k].number}\n\n`;
-                                        ctx.sendDocument(users[k].id, lessons[i].documentation,
-                                            { 
-                                                caption: script.notification.forStudent.lessonComingClubNotification(
-                                                    this.TimeLeft(lessonDate),
-                                                    UniversalSingleDataProcess(lessonDate, 'day_of_week'),
-                                                    UniversalSingleDataProcess(lessonDate, 'day'),
-                                                    UniversalSingleDataProcess(lessonDate, 'month'),
-                                                    lessons[i].time,
-                                                    lessons[i].teacher,
-                                                    lessons[i].title,
-                                                    lessons[i].link
-                                                ), parse_mode: "HTML"
-                                            }
-                                        );
-                                        console.log(`\nNotification Club Lesson Sent to Student. Lesson start in ${formatDateWithTime(lessonDate)}`)
-                                    }
+                    if (sentNotificationAboutLessons?.length){
+                        if (!sentNotificationAboutLessons.map(item => item.id.toString()).includes(lessons[i]._id.toString())){
+                            for (let k = 0; k < users.length; k++){
+                                if (await this.HasThisClubUser(users[k].id, lessons[i]._id)){
+                                    userHaved += `- ${users[k].name} (@${users[k].username})\n📲${users[k].number}\n\n`;
+                                    ctx.sendDocument(users[k].id, lessons[i].documentation,
+                                        { 
+                                            caption: script.notification.forStudent.lessonComingClubNotification(
+                                                this.TimeLeft(lessonDate),
+                                                UniversalSingleDataProcess(lessonDate, 'day_of_week'),
+                                                UniversalSingleDataProcess(lessonDate, 'day'),
+                                                UniversalSingleDataProcess(lessonDate, 'month'),
+                                                lessons[i].time,
+                                                lessons[i].teacher,
+                                                lessons[i].title,
+                                                lessons[i].link
+                                            ), parse_mode: "HTML"
+                                        }
+                                    );
+                                    console.log(`\nNotification Club Lesson Sent to Student. Lesson start in ${formatDateWithTime(lessonDate)}`)
                                 }
-
-                                if (userHaved === '\n\n<b>👉Зареєстровані користувачі</b>\n'){
-                                    userHaved = '';
-                                }
-
-                                ctx.sendDocument(lessons[i].teacher_id, lessons[i].documentation, 
-                                    {
-                                        caption: script.notification.forTeachers.lessonComingClubNotification(
-                                            this.TimeLeft(lessonDate),
-                                            UniversalSingleDataProcess(lessonDate, 'day_of_week'),
-                                            UniversalSingleDataProcess(lessonDate, 'day'),
-                                            UniversalSingleDataProcess(lessonDate, 'month'),
-                                            lessons[i].time,
-                                            lessons[i].title,
-                                            lessons[i].link,
-                                            userHaved,
-                                            lessons[i].count
-                                        ), parse_mode: "HTML"
-                                    }
-                                );
-                                
-                                console.log(`Notification Club Lesson Sent to Teacher. Lesson start in ${formatDateWithTime(lessonDate)}`);
-                                await this.sentIndividualNotifications.insertOne({id: lessons[i]._id});
                             }
+
+                            if (userHaved === '\n\n<b>👉Зареєстровані користувачі</b>\n'){
+                                userHaved = '';
+                            }
+
+                            ctx.sendDocument(lessons[i].teacher_id, lessons[i].documentation, 
+                                {
+                                    caption: script.notification.forTeachers.lessonComingClubNotification(
+                                        this.TimeLeft(lessonDate),
+                                        UniversalSingleDataProcess(lessonDate, 'day_of_week'),
+                                        UniversalSingleDataProcess(lessonDate, 'day'),
+                                        UniversalSingleDataProcess(lessonDate, 'month'),
+                                        lessons[i].time,
+                                        lessons[i].title,
+                                        lessons[i].link,
+                                        userHaved,
+                                        lessons[i].count
+                                    ), parse_mode: "HTML"
+                                }
+                            );
+                            
+                            console.log(`Notification Club Lesson Sent to Teacher. Lesson start in ${formatDateWithTime(lessonDate)}`);
+                            await this.sentIndividualNotifications.insertOne({id: lessons[i]._id});
                         }
                     }
                     else{
