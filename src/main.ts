@@ -5349,6 +5349,7 @@ async function main() {
     else if (CheckException.TextException(data)){
       const User = await dbProcess.FindUser(data.text);
       if (User){
+        if (User.role !== 'student') ctx.reply('<b>УВАГА!</b> ЦЕЙ КОРИСТУВАЧ <b>НЕ</b> Є <b>СТУДЕНТОМ</b>')
         const teacher = await dbProcess.ShowOneUser(User.teacher);
         await set('user_to_change_individual_id')(User.id);
         ctx.reply(script.studentFind.generalFind(
@@ -5467,13 +5468,15 @@ async function main() {
             const User = await dbProcess.FindUser(user['user_to_change_individual_id']),
               teacher = await dbProcess.ShowOneUser(User.teacher);
 
-            ctx.telegram.sendMessage(teacher!.id, script.notification.forTeachers.changeCountStudentIndividualLesson(
-              User.name,
-              User.username,
-              User.number,
-              User.miro_link ?? "якогось дідька відсутнє",
-              User.individual_count ?? "якогось дідька 0"
-            ));
+            if (teacher){
+              ctx.telegram.sendMessage(teacher?.id, script.notification.forTeachers.changeCountStudentIndividualLesson(
+                User.name,
+                User.username,
+                User.number,
+                User.miro_link ?? "якогось дідька відсутнє",
+                User.individual_count ?? "якогось дідька 0"
+              ));
+            }
 
             ctx.telegram.sendMessage(User!.id, script.notification.forStudent.changeCountStudentIndividualLesson(
               teacher!.name,
@@ -5940,7 +5943,7 @@ async function main() {
         case "Так":
           await dbProcess.DeleteTeacherFromPost(parseInt(user['admin_teachersoperation_idone']))
           ?
-          ctx.reply(`✅ викладача ${teacher!.name} катерина було успішно видалено`, {
+          ctx.reply(`✅ викладача ${teacher!.name} було успішно видалено`, {
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.toMenu()
