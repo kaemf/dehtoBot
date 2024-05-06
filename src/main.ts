@@ -4908,7 +4908,7 @@ async function main() {
               const userObject = await dbProcess.ShowOneUser(teachersStudents[i]),
                 task = await dbProcess.GetStudentAnswerForDeTask(teachersStudents[i]);
   
-              if (task){
+              if (task[0] !== 'no_answer_available' && task[0] !== 'no_task_available' && userObject?.detask){
                 for (let j = 0; j < teacherTasks.length; j++){
                   if (teacherTasks[j].toString() === userObject!.detask.toString()){
                     keyboard.push([{ text: (await dbProcess.ShowOneUser(teachersStudents[i]))!.name }])
@@ -7820,8 +7820,10 @@ async function main() {
       }
     }
 
-    if (activeLessons){
-      for (let i = 0; i < activeLessons.length; i++){
+    const srtdActiveLessons = SortSchedule(activeLessons);
+
+    if (srtdActiveLessons){
+      for (let i = 0; i < srtdActiveLessons.length; i++){
         keyboardChoose.push([{ text: (i + 1).toString() }]);
       }
     }
@@ -7830,8 +7832,8 @@ async function main() {
       ctx.reply(`вкажіть дату заняття, яке ви хочете видалити у форматі: ${DateRecord()}`);
       await set('state')('IndividualLessonDeleteLessonFindLesson');
     }
-    else if (!isNaN(parseInt(data.text)) && activeLessons[parseInt(data.text) - 1]){
-      await set('teacher_delete_lesson_id_of_lesson')(activeLessons[parseInt(data.text) - 1]._id.toString());
+    else if (!isNaN(parseInt(data.text)) && srtdActiveLessons[parseInt(data.text) - 1]){
+      await set('teacher_delete_lesson_id_of_lesson')(srtdActiveLessons[parseInt(data.text) - 1]._id.toString());
       ctx.reply('вкажіть причину видалення заняття:');
       await set('state')('IndividualLessonDeleteRespondReasonAndVerifyDelete');
     }
