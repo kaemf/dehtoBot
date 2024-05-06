@@ -563,7 +563,7 @@ async function main() {
                 student = await dbProcess.ShowOneUser(lesson.idStudent),
                 teacher = await dbProcess.ShowOneUser(lesson.idTeacher);
               message += script.indivdual.scheduleShowStudent(
-                lesson.time,
+                lesson.time ?? 60,
                 lesson.duration,
                 teacher!.name,
                 teacher!.username,
@@ -5385,7 +5385,7 @@ async function main() {
       const User = await dbProcess.ShowOneUser(parseInt(user['user_to_change_individual_id']));
       switch(data.text){
         case "Редагувати кількість занять":
-          ctx.reply(`введіть кількість хвилин, яка має бути у студента (наразі є: ${User!.individual_count ?? 0} занять)`);
+          ctx.reply(`введіть кількість хвилин, яка має бути у студента (наразі є: ${User!.individual_count / 60 ?? 0} занять (${User!.individual_count ?? 0} хв))`);
           await set('admin_parametr_to_change_individual')('individual_count');
           await set('state')('IndividualChangeUserDataHandler');
           break;
@@ -6076,6 +6076,8 @@ async function main() {
         await set('admin_tmp_usersoperation_user_role')(User.role);
         await set('admin_tmp_usersoperation_user_id')(User.id);
 
+        console.warn(User);
+
         ctx.reply(script.studentFind.diffUserFind(
           User.role,
           User.id,
@@ -6135,7 +6137,7 @@ async function main() {
           let teachersKeyboard = []
 
           for (let i = 0; i < users.length; i++){
-            if (users[i].role === 'teacher' && !users[i].registered_students?.includes(actualStudent)){
+            if (users[i].role === 'teacher' && !users[i].registered_students?.includes(actualStudent) && !users[i].trial_students?.includes(actualStudent)){
               teachersKeyboard.push([{ text: users[i].name }])
             }
           }
@@ -6402,7 +6404,7 @@ async function main() {
         student!.name,
         student!.username,
         student!.number,
-        student!.miro_link
+        data.text
       ), { ...Markup.inlineKeyboard(inline)});
 
       await dbProcess.UsersOperationWithGuest(student!.id, teacher!.id, data.text, 'trial_teacher');
@@ -6909,20 +6911,37 @@ async function main() {
 
         case "Запланувати пробне заняття":
           let keyboardTrials = [];
-          const trialStudents = (await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1))!.trial_students;
+          const trialStudents = (await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1))!.trial_students,
+            allLessons = await dbProcess.ShowAllInvdividualLessons();
 
           if (trialStudents?.length){
             for (let i = 0; i < trialStudents.length; i++){
-              keyboardTrials.push([{ text: (await dbProcess.ShowOneUser(trialStudents[i]))!.name } ]);
+              let alreadyHaveLesson = false;
+              for (let j = 0; j < allLessons.length; j++){
+                if (allLessons[j].type === 'trial' && allLessons[j].idStudent === trialStudents[i]){
+                  alreadyHaveLesson = true;
+                  break;
+                }
+              }
+              if (!alreadyHaveLesson) keyboardTrials.push([{ text: (await dbProcess.ShowOneUser(trialStudents[i]))!.name } ]);
             }
-            ctx.reply('оберіть студента, з яким потрібно запланувати пробне заняття:', {
+
+            if (keyboardTrials.length){
+              ctx.reply('оберіть студента, з яким потрібно запланувати пробне заняття:', {
+                reply_markup: {
+                  one_time_keyboard: true,
+                  keyboard: keyboardTrials
+                }
+              })
+    
+              await set('state')('IndividualLessonsTrialLessonRespondStudent');
+            }
+            else ctx.reply('на данний момент ви не маєте студентів для запланування пробних занять', {
               reply_markup: {
                 one_time_keyboard: true,
-                keyboard: keyboardTrials
+                keyboard: keyboards.myScheduleTeacher()
               }
             })
-  
-            await set('state')('IndividualLessonsTrialLessonRespondStudent');
           }
           else ctx.reply('на данний момент ви не маєте студентів для проведення пробних занять', {
             reply_markup: {
@@ -8696,6 +8715,7 @@ async function main() {
           await db.set(ctx?.chat?.id ?? -1)('state')('EndTeacherDeTaskHandler');
         }
       }
+      else ctx.reply('вибачте, але схоже виникла помилка, у вас немає цього студента або ви просто не давали йому завдання.\n\nякщо ви давали йому деЗавдання, то наразі воно не є активним');
   })
 
   bot.action(/^goToDetaskSolution:(\d+)$/, async (ctx) => {

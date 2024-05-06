@@ -8,7 +8,7 @@ export function ConvertToPrice(packet: string){
         return 280;
     }
     else{
-        return null;
+        return 0;
     }
 }
 
