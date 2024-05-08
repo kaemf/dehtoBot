@@ -742,6 +742,10 @@ export default async function dbProcess(botdb: MongoClient){
                     }
                 }
                 else if (lesson.duration === duration!){
+                    await this.individualdbLessons.updateOne({_id: id}, {$set: {
+                        date: date,
+                        time: time
+                    }});
                     await this.sentIndividualNotifications.deleteOne({id: lesson._id});
                     return true;
                 }
