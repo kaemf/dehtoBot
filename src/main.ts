@@ -7513,9 +7513,9 @@ async function main() {
           let free: string | undefined;
   
           if (lesson?.type === 'trial'){
-            free = checkAvailabilityForLesson(time, allLessons[0].date, allLessons, ctx?.chat?.id ?? -1, 'part_2', 60, true);
+            free = checkAvailabilityForLesson(time, allLessons[0].date, allLessons, ctx?.chat?.id ?? -1, 'part_2', 60, true, lesson);
           }
-          free = checkAvailabilityForLesson(time, allLessons[0].date, allLessons, ctx?.chat?.id ?? -1, 'part_1', undefined, true);
+          free = checkAvailabilityForLesson(time, allLessons[0].date, allLessons, ctx?.chat?.id ?? -1, 'part_1', undefined, true, lesson);
   
           if (free === 'free'){
             if (lesson?.type === 'trial'){
@@ -7608,7 +7608,14 @@ async function main() {
         User = await dbProcess.ShowOneUser(parseInt(user['teacher_individual_lesson_schedule_student_id'])),
         newDate = user['teacher_date_individual_lesson_set'],
         allLessons = await dbProcess.ShowAllInvdividualLessons(),
-        free = checkAvailabilityForLesson(user['teacher_time_individual_lesson_set'], user['teacher_date_individual_lesson_set'], allLessons, ctx?.chat?.id ?? -1, 'part_2', parseInt(data.text.replace(/хв/g, '').trim()), true);
+        free = checkAvailabilityForLesson(
+          user['teacher_time_individual_lesson_set'],
+          user['teacher_date_individual_lesson_set'],
+          allLessons, ctx?.chat?.id ?? -1,
+          'part_2',
+          parseInt(data.text.replace(/хв/g, '').trim()),
+          true, lesson
+        );
 
       if (free === 'free'){
         const updatedLesson = await dbProcess.EditExistIndividualLesson(
