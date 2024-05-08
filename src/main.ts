@@ -7354,18 +7354,20 @@ async function main() {
           if (activeLessons){
             let messageToSend = `📋 ${getDayOfWeek(new Date(date[1]))} ${(DateProcessToPresentView(date[1]))[1]}\n\n`,
               keyboardChoose = [];
+
+            const srtdActiveLessons = SortSchedule(activeLessons);
   
-            for (let i = 0; i < activeLessons.length; i++){
-              const User = await dbProcess.ShowOneUser(activeLessons[i].idStudent);
+            for (let i = 0; i < srtdActiveLessons.length; i++){
+              const User = await dbProcess.ShowOneUser(srtdActiveLessons[i].idStudent);
               keyboardChoose.push([{ text: (i + 1).toString() }])
               messageToSend += script.indivdual.rescheduleForTeacher(
                 i + 1,
-                activeLessons[i].time,
-                activeLessons[i].duration,
+                srtdActiveLessons[i].time,
+                srtdActiveLessons[i].duration,
                 User!.name,
                 User!.username,
                 User!.number,
-                activeLessons[i].type
+                srtdActiveLessons[i].type
               )
             }
   
