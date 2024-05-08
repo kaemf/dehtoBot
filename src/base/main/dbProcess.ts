@@ -264,10 +264,10 @@ export default async function dbProcess(botdb: MongoClient){
                             const student = await dbProcess.ShowOneUser(lessons[i].idStudent),
                                 set_individual_lessons = teacher.set_individual_lessons?.length ? teacher.set_individual_lessons : false,
                                 individual_lessons = student?.individual_lessons?.length ? student.individual_lessons : false,
-                                string_individual_lessons = set_individual_lessons.forEach((element: any) => {
+                                string_individual_lessons = set_individual_lessons.map((element: any) => {
                                     return element.toString();
                                 }),
-                                string_individual_lessons_student = individual_lessons.forEach((element: any) => {
+                                string_individual_lessons_student = individual_lessons.map((element: any) => {
                                     return element.toString();
                                 }),
                                 indexElementTeacher = string_individual_lessons?.indexOf(lessons[i]._id.toString()),
