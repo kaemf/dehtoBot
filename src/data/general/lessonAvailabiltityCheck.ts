@@ -1,4 +1,5 @@
 import { DateProcessToPresentView } from "../process/dateAndTimeProcess";
+process.env.TZ = 'Europe/Kiev';
 
 export default function checkAvailabilityForLesson(timeInputed: string, dateInputed: string, lessonObjects: any, idTeacher: number, part: string, newDuration?: number, reschedule?: boolean) {
     let free = false,

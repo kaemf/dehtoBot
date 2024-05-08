@@ -7400,12 +7400,15 @@ async function main() {
         activeLessons.push(lessons[i]);
       }
     }
+
+    const srtdActiveLessons = SortSchedule(activeLessons);
+
     if (CheckException.BackRoot(data)){
       ctx.reply(`вкажіть дату заняття, яке ви хочете перенести у форматі: ${DateRecord()}`);
       await set('state')('IndividualLessonRescheduleFindLesson');
     }
-    else if (!isNaN(parseInt(data.text)) && activeLessons[parseInt(data.text) - 1]){
-      await set('teacher_reschedule_lesson_id_of_lesson')(activeLessons[parseInt(data.text) - 1]._id.toString());
+    else if (!isNaN(parseInt(data.text)) && srtdActiveLessons[parseInt(data.text) - 1]){
+      await set('teacher_reschedule_lesson_id_of_lesson')(srtdActiveLessons[parseInt(data.text) - 1]._id.toString());
       ctx.reply('вкажіть причину перенесення заняття:');
       await set('state')('IndividualLessonRescheduleRespondReasonAndGetNewDate');
     }
@@ -7510,9 +7513,9 @@ async function main() {
           let free: string | undefined;
   
           if (lesson?.type === 'trial'){
-            free = checkAvailabilityForLesson(time, allLessons[0].date, allLessons, ctx?.chat?.id ?? -1, 'part_2', 60);
+            free = checkAvailabilityForLesson(time, allLessons[0].date, allLessons, ctx?.chat?.id ?? -1, 'part_2', 60, true);
           }
-          free = checkAvailabilityForLesson(time, allLessons[0].date, allLessons, ctx?.chat?.id ?? -1, 'part_1');
+          free = checkAvailabilityForLesson(time, allLessons[0].date, allLessons, ctx?.chat?.id ?? -1, 'part_1', undefined, true);
   
           if (free === 'free'){
             if (lesson?.type === 'trial'){
