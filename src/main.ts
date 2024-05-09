@@ -232,6 +232,7 @@ async function main() {
       else{
         if (userI!.registered_students?.length){
           ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання');
+          await set('detask_teacher_temp_message_continue')('');
           await set('state')('TeachersSetTasksHandler');
         }
         else ctx.reply('наразі у вас немає актуальних студентів', {
@@ -4899,7 +4900,8 @@ async function main() {
       if (teachersStudents.length){
         switch(data.text){
           case "Дати деЗавдання":
-            ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання')
+            ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання');
+            await set('detask_teacher_temp_message_continue')('');
             await set('state')('TeachersSetTasksHandler')
             break;
   
@@ -4918,7 +4920,7 @@ async function main() {
             }
   
             if (!keyboard.length){
-              ctx.reply('на жаль... ви не маєте студентів, яким давали завдання, але ви можете це виправити :)', {
+              ctx.reply('на жаль... ви не маєте студентів, яким давали завдання або вони не надіслали відповідь', {
                 reply_markup: {
                   one_time_keyboard: true,
                   keyboard: keyboards.deTaskMenu()
@@ -4971,7 +4973,8 @@ async function main() {
         await set('state')('TeacherDeTaskHandler');
       }
       else{
-        ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання')
+        ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання');
+        await set('detask_teacher_temp_message_continue')('');
         await set('state')('TeachersSetTasksHandler')
       }
     }
@@ -5129,12 +5132,14 @@ async function main() {
         case "Дати інше деЗавдання":
           ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання')
           await set('detask_tmp_endkeyboard')('');
+          await set('detask_teacher_temp_message_continue')('');
           await set('state')('AnotherTeachersSetTasksHandler');
           break;
 
         case "Дати деЗавдання":
           ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання')
           await set('detask_tmp_endkeyboard')('');
+          await set('detask_teacher_temp_message_continue')('');
           await set('state')('AnotherTeachersSetTasksHandler');
           break;
 
@@ -5692,7 +5697,7 @@ async function main() {
             User!.username,
             User!.number,
             User!.typeOfLessons ?? "Індивідуальні",
-            teacher!.name ?? "Відсутній",
+            teacher?.name ?? "Відсутній",
             User!.individual_count ?? 0,
             User!.miro_link ?? "Відсутня"
             ), {
@@ -5809,7 +5814,7 @@ async function main() {
       switch(data.text){
         case "Переглянути розклад викладача":
           const trialLessons = await dbProcess.GetUserTrialLessons(teacher!.id);
-          if (teacher!.set_individual_lessons || trialLessons.length){
+          if (teacher!.set_individual_lessons?.length || trialLessons.length){
             const lessons = SortSchedule([
               ...(teacher?.set_individual_lessons?.length ? await dbProcess.GetSpecificIndividualLessons(teacher?.set_individual_lessons) : []),
               ...(trialLessons?.length ? trialLessons : [])
@@ -5857,7 +5862,7 @@ async function main() {
             }
           
           }
-          else ctx.reply('на данний момент у викладача вісутні заняття', {
+          else ctx.reply('на данний момент у викладача відсутні заняття', {
             reply_markup: {
               one_time_keyboard: true,
               keyboard: keyboards.ourTeachersMenu()
@@ -7605,7 +7610,7 @@ async function main() {
     }
     else if (data.text === '60хв' || data.text === '90хв' || data.text === '30хв'){
       const lesson = (await dbProcess.GetSpecificIndividualLessons([new ObjectId(user['teacher_reschedule_lesson_id_of_lesson'])]))[0],
-        User = await dbProcess.ShowOneUser(parseInt(user['teacher_individual_lesson_schedule_student_id'])),
+        User = await dbProcess.ShowOneUser(parseInt(lesson!.idStudent)),
         newDate = user['teacher_date_individual_lesson_set'],
         allLessons = await dbProcess.ShowAllInvdividualLessons(),
         free = checkAvailabilityForLesson(
@@ -7625,7 +7630,7 @@ async function main() {
           parseInt(data.text.replace(/хв/g, '').trim())
         )
   
-        const newUserObject = await dbProcess.ShowOneUser(parseInt(user['teacher_individual_lesson_schedule_student_id']));
+        const newUserObject = await dbProcess.ShowOneUser(parseInt(lesson!.idStudent));
   
         if (updatedLesson){
           if (User){
