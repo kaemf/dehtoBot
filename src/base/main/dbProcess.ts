@@ -602,7 +602,7 @@ export default async function dbProcess(botdb: MongoClient){
             else return false;
         }
 
-        async UsersOperationWithGuest(idStudent: number, idTeacher: number, miro_link: string, parametr: string){
+        async UsersOperationWithGuest(idStudent: number, idTeacher: number, miro_link: string, count: number, parametr: string){
             const student = await this.ShowOneUser(idStudent),
                 teacher = await this.ShowOneUser(idTeacher);
 
@@ -628,6 +628,7 @@ export default async function dbProcess(botdb: MongoClient){
                     case "just_teacher":
                         await this.ChangeKeyData(student, 'teacher', teacher.id, false);
                         await this.ChangeKeyData(student, 'miro_link', miro_link, false);
+                        await this.ChangeKeyData(student, 'individual_count', count, false);
                         await this.botdbUsers.updateOne({_id: student._id}, {$set: {
                             role: 'student'
                         }})
@@ -897,16 +898,26 @@ export default async function dbProcess(botdb: MongoClient){
             return await this.liveSupport.findOne({_id: idCare});
         }
 
-        async WriteAdditionalQuestionToServiceCare(idCare: ObjectId, question: string){
+        async WriteAdditionalQuestionToServiceCare(idCare: ObjectId, question?: string, questionType?: string, questionFiles?: string){
             const serviceCare = await this.liveSupport.findOne({_id: idCare});
 
             if (serviceCare){
-                const questions = serviceCare.question;
+                const questions = serviceCare.question,
+                    questionsType = serviceCare.questionsType,
+                    questionsFiles = serviceCare.questionsFiles;
 
-                if (questions?.length){
-                    await this.liveSupport.updateOne({_id: idCare}, {$push: {question: question}});        
+                if (question){
+                    if (questions?.length){
+                        await this.liveSupport.updateOne({_id: idCare}, {$push: {question: question}});        
+                    }
+                    else await this.liveSupport.updateOne({_id: idCare}, {$set: {question: [ question ]}});
                 }
-                else await this.liveSupport.updateOne({_id: idCare}, {$set: {question: [ question ]}});
+                else if (questionType && questionFiles){
+                    if (questionsType?.length && questionsFiles?.length){
+                        await this.liveSupport.updateOne({_id: idCare}, {$push: {questionsType: questionType, questionsFiles: questionFiles}});
+                    }
+                    else await this.liveSupport.updateOne({_id: idCare}, {$set: {questionsType: [ questionType ], questionsFiles: [ questionFiles ]}});
+                }
             }
             else throw new Error('ServiceCare not Found. In function WriteAdditionalQuestionToServiceCare()');
         }

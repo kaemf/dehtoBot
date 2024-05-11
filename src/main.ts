@@ -4549,7 +4549,7 @@ async function main() {
           students.push([{ text: (await dbProcess.ShowOneUser(teacherStudents[i]))!.name }]);
         }
 
-        ctx.reply('виберіть стундента, котрому адресоване дане завдання', {
+        ctx.reply('оберіть студента, якому ви хочете надіслати завдання', {
           reply_markup: {
             one_time_keyboard: true,
             keyboard: students
@@ -4696,16 +4696,17 @@ async function main() {
       if (userID){
         const userObject = await dbProcess.ShowOneUser(userID),
           previousTask = userObject!.detask ? userObject!.detask : false,
-          message_operation = await dbProcess.WriteNewDeTask(
+          inline = inlineGoToDetaskSolution(userID);
+        
+        await dbProcess.WriteNewDeTask(
           ctx?.chat?.id ?? -1, 
           userID,
           user['teacher_content_detask'] ? user['teacher_content_detask'].split(',') : false,
           user['teacher_filecontent_detask'] ? user['teacher_filecontent_detask'].split(',') : false,
           user['teacher_typeofcontent_detask'] ? user['teacher_typeofcontent_detask'].split(',') : false
-        ),
-        inline = inlineGoToDetaskSolution(userID);
+        )
 
-        ctx.reply(`${message_operation === 'student_task_rewrited' ? 'попереднє деЗавдання було видалено у студента, та додане нове успішно!' : 'завдання успішно додано студенту!'}`, {
+        ctx.reply(`✅ завдання успішно надіслано ${(await dbProcess.ShowOneUser(userID))!.name}`, {
           reply_markup: {
             one_time_keyboard: true,
             keyboard: keyboards.toMenu()
@@ -4900,7 +4901,7 @@ async function main() {
       if (teachersStudents.length){
         switch(data.text){
           case "Дати деЗавдання":
-            ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання');
+            ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню');
             await set('detask_teacher_temp_message_continue')('');
             await set('state')('TeachersSetTasksHandler')
             break;
@@ -4973,7 +4974,7 @@ async function main() {
         await set('state')('TeacherDeTaskHandler');
       }
       else{
-        ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання');
+        ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню');
         await set('detask_teacher_temp_message_continue')('');
         await set('state')('TeachersSetTasksHandler')
       }
@@ -5002,7 +5003,61 @@ async function main() {
       }
 
       if (student && teacherTasks && regularCheck.includes(data.text)){
-        const answer = await dbProcess.GetStudentAnswerForDeTask(studentID);
+        const task = await dbProcess.GetDeTaskForStudent(studentID),
+          answer = await dbProcess.GetStudentAnswerForDeTask(studentID);
+        await ctx.reply(`супер!\n👉 завдання, яке було дано студентові:`);
+        
+        if (task){
+          if (task.content){
+            const content = task.content;
+            for (let i = 0; i < content.length; i++){
+              await ctx.reply(content[i]);
+            }
+          }
+          if (task.files && task.typeOfFiles){
+            const files = task.files,
+              idAddress = ctx?.chat?.id ?? -1;
+            for (let i = 0; i < files.length; i++){
+              switch (task.typeOfFiles[i]) {
+                case "file":
+                  const file = files[i].split(';');
+                  await ctx.telegram.sendDocument(idAddress, file[0], {caption: file[1] ? file[1] : ''});
+                  break;
+
+                case "photo":
+                  const photo = files[i].split(';');
+                  await ctx.telegram.sendPhoto(idAddress, photo[0], {caption: photo[1] ? photo[1] : ''});
+                  break;
+
+                case "audio":
+                  await ctx.telegram.sendAudio(idAddress, files[i]);
+                  break;
+
+                case "location":
+                  const loc = files[i].split(';');
+                  await ctx.telegram.sendLocation(idAddress, loc[0], loc[1]);
+                  break;
+
+                case "video_circle":
+                  await ctx.telegram.sendVideoNote(idAddress, files[i]);
+                  break;
+
+                case "voice":
+                  await ctx.telegram.sendVoice(idAddress, files[i]);
+                  break;
+
+                case "contact":
+                  const phone = files[i].split(';');
+                  await ctx.telegram.sendContact(idAddress, phone[0], phone[1]);
+                  break;
+
+                default:
+                  ctx.reply('нам прикро, але надісланий вами тип файлу наразі не підтримується, вибачте за труднощі...');
+
+              }
+            }
+          }
+        }
 
         await set('tmp_userid_detask')(studentID);
 
@@ -5010,7 +5065,7 @@ async function main() {
           if (teacherHaveThisTask){
             console.log(answer[0])
             if (answer[0] !== 'no_answer_available'){
-              await ctx.reply('чудова новина! з радістю повідомляємо, що студент дав відповідь на ваше завдання!');
+              await ctx.reply('✅ виконане завдання:');
               new Promise(resolve => setTimeout(() => resolve, 2000));
               if (answer){
                 if (answer[0]){
@@ -5130,14 +5185,14 @@ async function main() {
     else{
       switch(data.text){
         case "Дати інше деЗавдання":
-          ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання')
+          ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню')
           await set('detask_tmp_endkeyboard')('');
           await set('detask_teacher_temp_message_continue')('');
           await set('state')('AnotherTeachersSetTasksHandler');
           break;
 
         case "Дати деЗавдання":
-          ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню та після виберіть студента, якому адресовано деЗавдання')
+          ctx.reply('надішліть сюди усі матеріали, якщо їх декілька, надішліть по одному повідомленню')
           await set('detask_tmp_endkeyboard')('');
           await set('detask_teacher_temp_message_continue')('');
           await set('state')('AnotherTeachersSetTasksHandler');
@@ -6412,7 +6467,7 @@ async function main() {
         data.text
       ), { ...Markup.inlineKeyboard(inline)});
 
-      await dbProcess.UsersOperationWithGuest(student!.id, teacher!.id, data.text, 'trial_teacher');
+      await dbProcess.UsersOperationWithGuest(student!.id, teacher!.id, data.text, 0, 'trial_teacher');
       ctx.reply(script.operationWithGuest(student!.name, teacher!.name, data.text, true), {
         reply_markup: {
           one_time_keyboard: true,
@@ -6511,6 +6566,19 @@ async function main() {
       await set('state')('AdminAddUserToTeacher_RespondTeacher');
     }
     else if (data.text.startsWith("https://miro")){
+      await set('admin_tmp_usersoperation_miro_link')(data.text);
+      ctx.reply('впишіть кількість хвилин на балансі студента');
+      await set('state')('AdminAddUserToTeacher_RespondCount');
+    }
+    else ctx.reply('це не схоже на лінк для міро...');
+  })
+
+  onTextMessage('AdminAddUserToTeacher_RespondCount', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      ctx.reply('додайте лінк на дошку студента');
+        await set('state')('AdminAddUserToTeacher_RespondMiro');
+    }
+    else if (!isNaN(parseInt(data.text)) && parseInt(data.text) >= 0){
       const student = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_user_id'])),
         teacher = await dbProcess.ShowOneUser(parseInt(user['admin_tmp_usersoperation_teacher_id']));
 
@@ -6518,8 +6586,8 @@ async function main() {
         student!.name,
         student!.username,
         student!.number,
-        data.text,
-        student!.individual_count ?? 0
+        user['admin_tmp_usersoperation_miro_link'],
+        parseInt(data.text)
       ))
 
       ctx.telegram.sendMessage(student!.id, script.notification.forStudent.addStudentForTeacher(
@@ -6527,11 +6595,11 @@ async function main() {
         teacher!.name,
         teacher!.username,
         teacher!.number,
-        data.text,
-        student!.individual_count ?? 0
+        user['admin_tmp_usersoperation_miro_link'],
+        parseInt(data.text)
       ))
-      await dbProcess.UsersOperationWithGuest(student!.id, teacher!.id, data.text, 'just_teacher');
-      ctx.reply(script.operationWithGuest(student!.name, teacher!.name, data.text), {
+      await dbProcess.UsersOperationWithGuest(student!.id, teacher!.id, user['admin_tmp_usersoperation_miro_link'], parseInt(data.text), 'just_teacher');
+      ctx.reply(script.operationWithGuest(student!.name, teacher!.name, user['admin_tmp_usersoperation_miro_link']), {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.toMenu()
@@ -6539,7 +6607,7 @@ async function main() {
       });
       await set('state')('EndRootManager');
     }
-    else ctx.reply('це не схоже на лінк для міро...');
+    else ctx.reply('значення не може бути менше 0-ля');
   })
 
   onTextMessage('AdminSpeakingClubPersonalFindUser', async(ctx, user, set, data) => {
@@ -6689,7 +6757,119 @@ async function main() {
       await set('state')('FunctionRoot');
     }
     else if (CheckException.TextException(data)){
+      await set('admin_notification_type_of_files')('text');
       await set('admin_notification_text')(data.text);
+      ctx.reply('кому ви хочете віправити це сповіщення?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.notificationSenders()
+        }
+      })
+
+      await set('state')('AdminNotificationHandler');
+    }
+    else if (CheckException.PhotoException(data)){
+      await set('admin_notification_type_of_files')('photo');
+      await set('admin_notification_capture_text')(data.photo[1]);
+      await set('admin_notification_media')(data.photo[0]);
+      ctx.reply('кому ви хочете віправити це сповіщення?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.notificationSenders()
+        }
+      })
+
+      await set('state')('AdminNotificationHandler');
+    }
+    else if (CheckException.FileException(data)){
+      await set('admin_notification_type_of_files')('file');
+      await set('admin_notification_capture_text')(data.file[1]);
+      await set('admin_notification_media')(data.file[0]);
+      ctx.reply('кому ви хочете віправити це сповіщення?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.notificationSenders()
+        }
+      })
+
+      await set('state')('AdminNotificationHandler');
+    }
+    else if (CheckException.VideoNoteException(data)){
+      await set('admin_notification_type_of_files')('video_circle');
+      await set('admin_notification_media')(data.video_circle);
+      ctx.reply('кому ви хочете віправити це сповіщення?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.notificationSenders()
+        }
+      })
+
+      await set('state')('AdminNotificationHandler');
+    }
+    else if (CheckException.VoiceException(data)){
+      await set('admin_notification_type_of_files')('voice');
+      await set('admin_notification_media')(data.voice);
+      ctx.reply('кому ви хочете віправити це сповіщення?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.notificationSenders()
+        }
+      })
+
+      await set('state')('AdminNotificationHandler');
+    }
+    else if (CheckException.VideoException(data)){
+      await set('admin_notification_type_of_files')('video');
+      await set('admin_notification_capture_text')(data.video[1]);
+      await set('admin_notification_media')(data.video[0]);
+      ctx.reply('кому ви хочете віправити це сповіщення?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.notificationSenders()
+        }
+      })
+
+      await set('state')('AdminNotificationHandler');
+    }
+    else if (CheckException.AudioException(data)){
+      await set('admin_notification_type_of_files')('audio');
+      await set('admin_notification_media')(data.audio);
+      ctx.reply('кому ви хочете віправити це сповіщення?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.notificationSenders()
+        }
+      })
+
+      await set('state')('AdminNotificationHandler');
+    }
+    else if (CheckException.StickerException(data)){
+      await set('admin_notification_type_of_files')('sticker');
+      await set('admin_notification_media')(data.stickers);
+      ctx.reply('кому ви хочете віправити це сповіщення?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.notificationSenders()
+        }
+      })
+
+      await set('state')('AdminNotificationHandler');
+    }
+    else if (CheckException.LocationException(data)){
+      await set('admin_notification_type_of_files')('location');
+      await set('admin_notification_media')(`${data.location[0]},${data.location[1]}`);
+      ctx.reply('кому ви хочете віправити це сповіщення?', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.notificationSenders()
+        }
+      })
+
+      await set('state')('AdminNotificationHandler');
+    }
+    else if (CheckException.PhoneException(data)){
+      await set('admin_notification_type_of_files')('phone');
+      await set('admin_notification_media')(`${data.phone_number[0]},${data.phone_number[1]}`);
       ctx.reply('кому ви хочете віправити це сповіщення?', {
         reply_markup: {
           one_time_keyboard: true,
@@ -6713,9 +6893,77 @@ async function main() {
         case "Усім користувачам":
           for (let i = 0; i < AllUsers.length; i++){
             try{
-              ctx.telegram.sendMessage(AllUsers[i].id, user['admin_notification_text'])
+              switch(user['admin_notification_type_of_files']){
+                case "text":
+                  ctx.telegram.sendMessage(AllUsers[i].id, user['admin_notification_text']);
+                  await set('admin_notification_type_of_files')('');
+                  await set('admin_notification_capture_text')('');
+                  await set('admin_notification_media')('');
+                  break;
+
+                case "photo":
+                  ctx.telegram.sendPhoto(AllUsers[i].id, user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
+                  await set('admin_notification_type_of_files')('');
+                  await set('admin_notification_capture_text')('');
+                  await set('admin_notification_media')('');
+                  break;
+
+                case "file":
+                  ctx.telegram.sendDocument(AllUsers[i].id, user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
+                  await set('admin_notification_type_of_files')('');
+                  await set('admin_notification_capture_text')('');
+                  await set('admin_notification_media')('');
+                  break;
+
+                case "voice":
+                  ctx.telegram.sendVoice(AllUsers[i].id, user['admin_notification_media']);
+                  await set('admin_notification_type_of_files')('');
+                  await set('admin_notification_capture_text')('');
+                  await set('admin_notification_media')('');
+                  break;
+
+                case "video":
+                  ctx.telegram.sendVideo(AllUsers[i].id, user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
+                  await set('admin_notification_type_of_files')('');
+                  await set('admin_notification_capture_text')('');
+                  await set('admin_notification_media')('');
+                  break;
+
+                case "location":
+                  ctx.telegram.sendLocation(AllUsers[i].id, parseInt(user['admin_notification_media'].split(',')[0]), parseInt(user['admin_notification_media'].split(',')[1]));
+                  await set('admin_notification_type_of_files')('');
+                  await set('admin_notification_capture_text')('');
+                  await set('admin_notification_media')('');
+                  break;
+
+                case "phone":
+                  ctx.telegram.sendContact(AllUsers[i].id, user['admin_notification_media'].split(',')[0], user['admin_notification_media'].split(',')[1]);
+                  await set('admin_notification_type_of_files')('');
+                  await set('admin_notification_capture_text')('');
+                  await set('admin_notification_media')('');
+                  break;
+
+                case "sticker":
+                  ctx.telegram.sendSticker(AllUsers[i].id, user['admin_notification_media']);
+                  await set('admin_notification_type_of_files')('');
+                  await set('admin_notification_capture_text')('');
+                  await set('admin_notification_media')('');
+                  break;
+
+                case "audio":
+                  ctx.telegram.sendAudio(AllUsers[i].id, user['admin_notification_media']);
+                  await set('admin_notification_type_of_files')('');
+                  await set('admin_notification_capture_text')('');
+                  await set('admin_notification_media')('');
+                  break;
+
+                default:
+                  ctx.reply('невідомий тип файлу, спробуйте ще раз, будь ласка');
+                  break;
+
+              }
             } catch (err){
-              console.log("Error to send message to user " +AllUsers[i].name +":"+err);
+              console.log("Error to send message to user " +AllUsers[i].name +": "+err);
               ctx.reply(`не вдалося надіслати сповіщення користувачу ${AllUsers[i].name} :( Скоріш за все він нас заблокував)`)
             }
           }
@@ -6732,7 +6980,75 @@ async function main() {
           for (let i = 0; i < AllUsers.length; i++){
             if (AllUsers[i].role === 'teacher'){
               try{
-                ctx.telegram.sendMessage(AllUsers[i].id, user['admin_notification_text']);
+                switch(user['admin_notification_type_of_files']){
+                  case "text":
+                    ctx.telegram.sendMessage(AllUsers[i].id, user['admin_notification_text']);
+                    await set('admin_notification_type_of_files')('');
+                    await set('admin_notification_capture_text')('');
+                    await set('admin_notification_media')('');
+                    break;
+  
+                  case "photo":
+                    ctx.telegram.sendPhoto(AllUsers[i].id, user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
+                    await set('admin_notification_type_of_files')('');
+                    await set('admin_notification_capture_text')('');
+                    await set('admin_notification_media')('');
+                    break;
+  
+                  case "file":
+                    ctx.telegram.sendDocument(AllUsers[i].id, user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
+                    await set('admin_notification_type_of_files')('');
+                    await set('admin_notification_capture_text')('');
+                    await set('admin_notification_media')('');
+                    break;
+  
+                  case "voice":
+                    ctx.telegram.sendVoice(AllUsers[i].id, user['admin_notification_media']);
+                    await set('admin_notification_type_of_files')('');
+                    await set('admin_notification_capture_text')('');
+                    await set('admin_notification_media')('');
+                    break;
+  
+                  case "video":
+                    ctx.telegram.sendVideo(AllUsers[i].id, user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
+                    await set('admin_notification_type_of_files')('');
+                    await set('admin_notification_capture_text')('');
+                    await set('admin_notification_media')('');
+                    break;
+  
+                  case "location":
+                    ctx.telegram.sendLocation(AllUsers[i].id, parseInt(user['admin_notification_media'].split(',')[0]), parseInt(user['admin_notification_media'].split(',')[1]));
+                    await set('admin_notification_type_of_files')('');
+                    await set('admin_notification_capture_text')('');
+                    await set('admin_notification_media')('');
+                    break;
+  
+                  case "phone":
+                    ctx.telegram.sendContact(AllUsers[i].id, user['admin_notification_media'].split(',')[0], user['admin_notification_media'].split(',')[1]);
+                    await set('admin_notification_type_of_files')('');
+                    await set('admin_notification_capture_text')('');
+                    await set('admin_notification_media')('');
+                    break;
+  
+                  case "sticker":
+                    ctx.telegram.sendSticker(AllUsers[i].id, user['admin_notification_media']);
+                    await set('admin_notification_type_of_files')('');
+                    await set('admin_notification_capture_text')('');
+                    await set('admin_notification_media')('');
+                    break;
+  
+                  case "audio":
+                    ctx.telegram.sendAudio(AllUsers[i].id, user['admin_notification_media']);
+                    await set('admin_notification_type_of_files')('');
+                    await set('admin_notification_capture_text')('');
+                    await set('admin_notification_media')('');
+                    break;
+  
+                  default:
+                    ctx.reply('невідомий тип файлу, спробуйте ще раз, будь ласка');
+                    break;
+  
+                }
               } catch (err){
                 console.log("Error to send message to user " +AllUsers[i].name +":"+err);
                 ctx.reply(`не вдалося надіслати сповіщення користувачу ${AllUsers[i].name} :( Скоріш за все він нас заблокував)`)
@@ -6752,7 +7068,75 @@ async function main() {
           for (let i = 0; i < AllUsers.length; i++){
             if (AllUsers[i].role === 'student'){
               try{
-                ctx.telegram.sendMessage(AllUsers[i].id, user['admin_notification_text']);
+                switch(user['admin_notification_type_of_files']){
+                  case "text":
+                    ctx.telegram.sendMessage(AllUsers[i].id, user['admin_notification_text']);
+                    await set('admin_notification_type_of_files')('');
+                    await set('admin_notification_capture_text')('');
+                    await set('admin_notification_media')('');
+                    break;
+  
+                  case "photo":
+                    ctx.telegram.sendPhoto(AllUsers[i].id, user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
+                    await set('admin_notification_type_of_files')('');
+                    await set('admin_notification_capture_text')('');
+                    await set('admin_notification_media')('');
+                    break;
+  
+                  case "file":
+                    ctx.telegram.sendDocument(AllUsers[i].id, user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
+                    await set('admin_notification_type_of_files')('');
+                    await set('admin_notification_capture_text')('');
+                    await set('admin_notification_media')('');
+                    break;
+  
+                  case "voice":
+                    ctx.telegram.sendVoice(AllUsers[i].id, user['admin_notification_media']);
+                    await set('admin_notification_type_of_files')('');
+                    await set('admin_notification_capture_text')('');
+                    await set('admin_notification_media')('');
+                    break;
+  
+                  case "video":
+                    ctx.telegram.sendVideo(AllUsers[i].id, user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
+                    await set('admin_notification_type_of_files')('');
+                    await set('admin_notification_capture_text')('');
+                    await set('admin_notification_media')('');
+                    break;
+  
+                  case "location":
+                    ctx.telegram.sendLocation(AllUsers[i].id, parseInt(user['admin_notification_media'].split(',')[0]), parseInt(user['admin_notification_media'].split(',')[1]));
+                    await set('admin_notification_type_of_files')('');
+                    await set('admin_notification_capture_text')('');
+                    await set('admin_notification_media')('');
+                    break;
+  
+                  case "phone":
+                    ctx.telegram.sendContact(AllUsers[i].id, user['admin_notification_media'].split(',')[0], user['admin_notification_media'].split(',')[1]);
+                    await set('admin_notification_type_of_files')('');
+                    await set('admin_notification_capture_text')('');
+                    await set('admin_notification_media')('');
+                    break;
+  
+                  case "sticker":
+                    ctx.telegram.sendSticker(AllUsers[i].id, user['admin_notification_media']);
+                    await set('admin_notification_type_of_files')('');
+                    await set('admin_notification_capture_text')('');
+                    await set('admin_notification_media')('');
+                    break;
+  
+                  case "audio":
+                    ctx.telegram.sendAudio(AllUsers[i].id, user['admin_notification_media']);
+                    await set('admin_notification_type_of_files')('');
+                    await set('admin_notification_capture_text')('');
+                    await set('admin_notification_media')('');
+                    break;
+  
+                  default:
+                    ctx.reply('невідомий тип файлу, спробуйте ще раз, будь ласка');
+                    break;
+  
+                }
               } catch (err){
                 console.log("Error to send message to user " +AllUsers[i].name +":"+err);
                 ctx.reply(`не вдалося надіслати сповіщення користувачу ${AllUsers[i].name} :( Скоріш за все він нас заблокував)`)
@@ -6838,6 +7222,48 @@ async function main() {
           try{
             ctx.telegram.sendMessage(parseInt(user['admin_specific_user_send_notification_id']),
             user['admin_notification_text']);
+            switch(user['admin_notification_type_of_files']){
+              case "text":
+                ctx.telegram.sendMessage(parseInt(user['admin_specific_user_send_notification_id']), user['admin_notification_text']);
+                break;
+
+              case "photo":
+                ctx.telegram.sendPhoto(parseInt(user['admin_specific_user_send_notification_id']), user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
+                break;
+
+              case "file":
+                ctx.telegram.sendDocument(parseInt(user['admin_specific_user_send_notification_id']), user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
+                break;
+
+              case "voice":
+                ctx.telegram.sendVoice(parseInt(user['admin_specific_user_send_notification_id']), user['admin_notification_media']);
+                break;
+
+              case "video":
+                ctx.telegram.sendVideo(parseInt(user['admin_specific_user_send_notification_id']), user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
+                break;
+
+              case "location":
+                ctx.telegram.sendLocation(parseInt(user['admin_specific_user_send_notification_id']), parseInt(user['admin_notification_media'].split(',')[0]), parseInt(user['admin_notification_media'].split(',')[1]));
+                break;
+
+              case "phone":
+                ctx.telegram.sendContact(parseInt(user['admin_specific_user_send_notification_id']), user['admin_notification_media'].split(',')[0], user['admin_notification_media'].split(',')[1]);
+                break;
+
+              case "sticker":
+                ctx.telegram.sendSticker(parseInt(user['admin_specific_user_send_notification_id']), user['admin_notification_media']);
+                break;
+
+              case "audio":
+                ctx.telegram.sendAudio(parseInt(user['admin_specific_user_send_notification_id']), user['admin_notification_media']);
+                break;
+
+              default:
+                ctx.reply('невідомий тип файлу, спробуйте ще раз, будь ласка');
+                break;
+
+            }
           } catch (err){
             const User = await dbProcess.ShowOneUser(parseInt(user['admin_specific_user_send_notification_id']))
             console.log("Error to send message to user " +User?.name ?? '??' +":"+err);
@@ -8611,6 +9037,105 @@ async function main() {
       })
       await set('temp_thanks_care_message')((await temp_thanks_care_message).message_id.toString());
     }
+    else if (CheckException.PhotoException(data)){
+      await dbProcess.WriteAdditionalQuestionToServiceCare(serviceCare!._id, undefined, 'photo', `${data.photo[0]};${data.photo[1]}`);
+      if (user['temp_thanks_care_message']) ctx.telegram.deleteMessage(ctx?.chat?.id ?? -1, parseInt(user['temp_thanks_care_message']));
+      const temp_thanks_care_message = ctx.reply('супер, уточнюємо це', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{ text: "ВІДМІНИТИ" }]]
+        }
+      })
+      await set('temp_thanks_care_message')((await temp_thanks_care_message).message_id.toString());
+    }
+    else if (CheckException.VideoException(data)){
+      await dbProcess.WriteAdditionalQuestionToServiceCare(serviceCare!._id, undefined, 'video', `${data.video[0]};${data.video[1]}`);
+      if (user['temp_thanks_care_message']) ctx.telegram.deleteMessage(ctx?.chat?.id ?? -1, parseInt(user['temp_thanks_care_message']));
+      const temp_thanks_care_message = ctx.reply('супер, уточнюємо це', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{ text: "ВІДМІНИТИ" }]]
+        }
+      })
+      await set('temp_thanks_care_message')((await temp_thanks_care_message).message_id.toString());
+    }
+    else if (CheckException.AudioException(data)){
+      await dbProcess.WriteAdditionalQuestionToServiceCare(serviceCare!._id, undefined, 'audio', data.audio);
+      if (user['temp_thanks_care_message']) ctx.telegram.deleteMessage(ctx?.chat?.id ?? -1, parseInt(user['temp_thanks_care_message']));
+      const temp_thanks_care_message = ctx.reply('супер, уточнюємо це', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{ text: "ВІДМІНИТИ" }]]
+        }
+      })
+      await set('temp_thanks_care_message')((await temp_thanks_care_message).message_id.toString());
+    }
+    else if (CheckException.StickerException(data)){
+      await dbProcess.WriteAdditionalQuestionToServiceCare(serviceCare!._id, undefined, 'sticker', data.stickers);
+      if (user['temp_thanks_care_message']) ctx.telegram.deleteMessage(ctx?.chat?.id ?? -1, parseInt(user['temp_thanks_care_message']));
+      const temp_thanks_care_message = ctx.reply('супер, уточнюємо це', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{ text: "ВІДМІНИТИ" }]]
+        }
+      })
+      await set('temp_thanks_care_message')((await temp_thanks_care_message).message_id.toString());
+    }
+    else if (CheckException.LocationException(data)){
+      await dbProcess.WriteAdditionalQuestionToServiceCare(serviceCare!._id, undefined, 'location', `${data.location[0]};${data.location[1]}`);
+      if (user['temp_thanks_care_message']) ctx.telegram.deleteMessage(ctx?.chat?.id ?? -1, parseInt(user['temp_thanks_care_message']));
+      const temp_thanks_care_message = ctx.reply('супер, уточнюємо це', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{ text: "ВІДМІНИТИ" }]]
+        }
+      })
+      await set('temp_thanks_care_message')((await temp_thanks_care_message).message_id.toString());
+    }
+    else if (CheckException.VideoNoteException(data)){
+      await dbProcess.WriteAdditionalQuestionToServiceCare(serviceCare!._id, undefined, 'video_note', data.video_circle);
+      if (user['temp_thanks_care_message']) ctx.telegram.deleteMessage(ctx?.chat?.id ?? -1, parseInt(user['temp_thanks_care_message']));
+      const temp_thanks_care_message = ctx.reply('супер, уточнюємо це', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{ text: "ВІДМІНИТИ" }]]
+        }
+      })
+      await set('temp_thanks_care_message')((await temp_thanks_care_message).message_id.toString());
+    }
+    else if (CheckException.VoiceException(data)){
+      await dbProcess.WriteAdditionalQuestionToServiceCare(serviceCare!._id, undefined, 'voice', data.voice);
+      if (user['temp_thanks_care_message']) ctx.telegram.deleteMessage(ctx?.chat?.id ?? -1, parseInt(user['temp_thanks_care_message']));
+      const temp_thanks_care_message = ctx.reply('супер, уточнюємо це', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{ text: "ВІДМІНИТИ" }]]
+        }
+      })
+      await set('temp_thanks_care_message')((await temp_thanks_care_message).message_id.toString());
+    }
+    else if (CheckException.PhoneException(data)){
+      await dbProcess.WriteAdditionalQuestionToServiceCare(serviceCare!._id, undefined, 'phone', `${data.phone_number[0]};${data.phone_number[1]}`);
+      if (user['temp_thanks_care_message']) ctx.telegram.deleteMessage(ctx?.chat?.id ?? -1, parseInt(user['temp_thanks_care_message']));
+      const temp_thanks_care_message = ctx.reply('супер, уточнюємо це', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{ text: "ВІДМІНИТИ" }]]
+        }
+      })
+      await set('temp_thanks_care_message')((await temp_thanks_care_message).message_id.toString());
+    }
+    else if (CheckException.FileException(data)){
+      await dbProcess.WriteAdditionalQuestionToServiceCare(serviceCare!._id, undefined, 'file', `${data.file[0]};${data.file[1]}`);
+      if (user['temp_thanks_care_message']) ctx.telegram.deleteMessage(ctx?.chat?.id ?? -1, parseInt(user['temp_thanks_care_message']));
+      const temp_thanks_care_message = ctx.reply('супер, уточнюємо це', {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [[{ text: "ВІДМІНИТИ" }]]
+        }
+      })
+      await set('temp_thanks_care_message')((await temp_thanks_care_message).message_id.toString());
+    }
     else ctx.reply(script.errorException.textGettingError.defaultException);
   })
 
@@ -8870,6 +9395,49 @@ async function main() {
               keyboard: keyboards.liveSupportProbablyCancel()
             }
           })
+        }
+      }
+      if (serviceCare?.questionsType?.length){
+        const files = serviceCare.questionsFiles,
+          idAddress = ctx?.chat?.id ?? -1;
+        for (let u = 0; u < serviceCare.questionsType.length; u++){
+          switch (serviceCare.questionType[u]) {
+            case "file":
+              const file = files[u].split(';');
+              await ctx.telegram.sendDocument(idAddress, file[0], {caption: file[1] ? file[1] : ''});
+              break;
+
+            case "photo":
+              const photo = files[u].split(';');
+              await ctx.telegram.sendPhoto(idAddress, photo[0], {caption: photo[1] ? photo[1] : ''});
+              break;
+
+            case "audio":
+              await ctx.telegram.sendAudio(idAddress, files[u]);
+              break;
+
+            case "location":
+              const loc = files[u].split(';');
+              await ctx.telegram.sendLocation(idAddress, loc[0], loc[1]);
+              break;
+
+            case "video_circle":
+              await ctx.telegram.sendVideoNote(idAddress, files[u]);
+              break;
+
+            case "voice":
+              await ctx.telegram.sendVoice(idAddress, files[u]);
+              break;
+
+            case "contact":
+              const phone = files[u].split(';');
+              await ctx.telegram.sendContact(idAddress, phone[0], phone[1]);
+              break;
+
+            default:
+              ctx.reply('нам прикро, але надісланий викладачем тип файлу наразі не підтримується, вибачте за труднощі...');
+
+          }
         }
       }
     } catch (e) {
