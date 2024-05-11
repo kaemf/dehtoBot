@@ -7213,7 +7213,7 @@ async function main() {
           User.count ?? 0,
           User.miro_link ?? "відсутнє",
           data.text,
-          User.registered_students ?? 0 
+          User.registered_students?.length ?? 0 
         ), {
           reply_markup: {
             one_time_keyboard: true,
