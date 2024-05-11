@@ -6898,6 +6898,7 @@ async function main() {
                   ctx.telegram.sendMessage(AllUsers[i].id, user['admin_notification_text']);
                   await set('admin_notification_type_of_files')('');
                   await set('admin_notification_capture_text')('');
+                  await set('admin_notification_text')('');
                   await set('admin_notification_media')('');
                   break;
 
@@ -6905,6 +6906,7 @@ async function main() {
                   ctx.telegram.sendPhoto(AllUsers[i].id, user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
                   await set('admin_notification_type_of_files')('');
                   await set('admin_notification_capture_text')('');
+                  await set('admin_notification_text')('');
                   await set('admin_notification_media')('');
                   break;
 
@@ -6912,6 +6914,7 @@ async function main() {
                   ctx.telegram.sendDocument(AllUsers[i].id, user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
                   await set('admin_notification_type_of_files')('');
                   await set('admin_notification_capture_text')('');
+                  await set('admin_notification_text')('');
                   await set('admin_notification_media')('');
                   break;
 
@@ -6919,6 +6922,7 @@ async function main() {
                   ctx.telegram.sendVoice(AllUsers[i].id, user['admin_notification_media']);
                   await set('admin_notification_type_of_files')('');
                   await set('admin_notification_capture_text')('');
+                  await set('admin_notification_text')('');
                   await set('admin_notification_media')('');
                   break;
 
@@ -6926,6 +6930,7 @@ async function main() {
                   ctx.telegram.sendVideo(AllUsers[i].id, user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
                   await set('admin_notification_type_of_files')('');
                   await set('admin_notification_capture_text')('');
+                  await set('admin_notification_text')('');
                   await set('admin_notification_media')('');
                   break;
 
@@ -6940,6 +6945,7 @@ async function main() {
                   ctx.telegram.sendContact(AllUsers[i].id, user['admin_notification_media'].split(',')[0], user['admin_notification_media'].split(',')[1]);
                   await set('admin_notification_type_of_files')('');
                   await set('admin_notification_capture_text')('');
+                  await set('admin_notification_text')('');
                   await set('admin_notification_media')('');
                   break;
 
@@ -6947,6 +6953,7 @@ async function main() {
                   ctx.telegram.sendSticker(AllUsers[i].id, user['admin_notification_media']);
                   await set('admin_notification_type_of_files')('');
                   await set('admin_notification_capture_text')('');
+                  await set('admin_notification_text')('');
                   await set('admin_notification_media')('');
                   break;
 
@@ -6954,6 +6961,7 @@ async function main() {
                   ctx.telegram.sendAudio(AllUsers[i].id, user['admin_notification_media']);
                   await set('admin_notification_type_of_files')('');
                   await set('admin_notification_capture_text')('');
+                  await set('admin_notification_text')('');
                   await set('admin_notification_media')('');
                   break;
 
@@ -7073,6 +7081,7 @@ async function main() {
                     ctx.telegram.sendMessage(AllUsers[i].id, user['admin_notification_text']);
                     await set('admin_notification_type_of_files')('');
                     await set('admin_notification_capture_text')('');
+                    await set('admin_notification_text')('');
                     await set('admin_notification_media')('');
                     break;
   
@@ -7080,6 +7089,7 @@ async function main() {
                     ctx.telegram.sendPhoto(AllUsers[i].id, user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
                     await set('admin_notification_type_of_files')('');
                     await set('admin_notification_capture_text')('');
+                    await set('admin_notification_text')('');
                     await set('admin_notification_media')('');
                     break;
   
@@ -7087,6 +7097,7 @@ async function main() {
                     ctx.telegram.sendDocument(AllUsers[i].id, user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
                     await set('admin_notification_type_of_files')('');
                     await set('admin_notification_capture_text')('');
+                    await set('admin_notification_text')('');
                     await set('admin_notification_media')('');
                     break;
   
@@ -7094,6 +7105,7 @@ async function main() {
                     ctx.telegram.sendVoice(AllUsers[i].id, user['admin_notification_media']);
                     await set('admin_notification_type_of_files')('');
                     await set('admin_notification_capture_text')('');
+                    await set('admin_notification_text')('');
                     await set('admin_notification_media')('');
                     break;
   
@@ -7101,6 +7113,7 @@ async function main() {
                     ctx.telegram.sendVideo(AllUsers[i].id, user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
                     await set('admin_notification_type_of_files')('');
                     await set('admin_notification_capture_text')('');
+                    await set('admin_notification_text')('');
                     await set('admin_notification_media')('');
                     break;
   
@@ -7115,6 +7128,7 @@ async function main() {
                     ctx.telegram.sendContact(AllUsers[i].id, user['admin_notification_media'].split(',')[0], user['admin_notification_media'].split(',')[1]);
                     await set('admin_notification_type_of_files')('');
                     await set('admin_notification_capture_text')('');
+                    await set('admin_notification_text')('');
                     await set('admin_notification_media')('');
                     break;
   
@@ -7122,6 +7136,7 @@ async function main() {
                     ctx.telegram.sendSticker(AllUsers[i].id, user['admin_notification_media']);
                     await set('admin_notification_type_of_files')('');
                     await set('admin_notification_capture_text')('');
+                    await set('admin_notification_text')('');
                     await set('admin_notification_media')('');
                     break;
   
@@ -7129,6 +7144,7 @@ async function main() {
                     ctx.telegram.sendAudio(AllUsers[i].id, user['admin_notification_media']);
                     await set('admin_notification_type_of_files')('');
                     await set('admin_notification_capture_text')('');
+                    await set('admin_notification_text')('');
                     await set('admin_notification_media')('');
                     break;
   
@@ -7197,7 +7213,7 @@ async function main() {
           User.count ?? 0,
           User.miro_link ?? "відсутнє",
           data.text,
-          User.registered_student ?? 0 
+          User.registered_students ?? 0 
         ), {
           reply_markup: {
             one_time_keyboard: true,
@@ -7225,38 +7241,74 @@ async function main() {
             switch(user['admin_notification_type_of_files']){
               case "text":
                 ctx.telegram.sendMessage(parseInt(user['admin_specific_user_send_notification_id']), user['admin_notification_text']);
+                await set('admin_notification_type_of_files')('');
+                await set('admin_notification_capture_text')('');
+                await set('admin_notification_text')('');
+                await set('admin_notification_media')('');
                 break;
 
               case "photo":
                 ctx.telegram.sendPhoto(parseInt(user['admin_specific_user_send_notification_id']), user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
+                await set('admin_notification_type_of_files')('');
+                await set('admin_notification_capture_text')('');
+                await set('admin_notification_text')('');
+                await set('admin_notification_media')('');
                 break;
 
               case "file":
                 ctx.telegram.sendDocument(parseInt(user['admin_specific_user_send_notification_id']), user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
+                await set('admin_notification_type_of_files')('');
+                await set('admin_notification_capture_text')('');
+                await set('admin_notification_text')('');
+                await set('admin_notification_media')('');
                 break;
 
               case "voice":
                 ctx.telegram.sendVoice(parseInt(user['admin_specific_user_send_notification_id']), user['admin_notification_media']);
+                await set('admin_notification_type_of_files')('');
+                await set('admin_notification_capture_text')('');
+                await set('admin_notification_text')('');
+                await set('admin_notification_media')('');
                 break;
 
               case "video":
                 ctx.telegram.sendVideo(parseInt(user['admin_specific_user_send_notification_id']), user['admin_notification_media'], {caption: user['admin_notification_capture_text']});
+                await set('admin_notification_type_of_files')('');
+                await set('admin_notification_capture_text')('');
+                await set('admin_notification_text')('');
+                await set('admin_notification_media')('');
                 break;
 
               case "location":
                 ctx.telegram.sendLocation(parseInt(user['admin_specific_user_send_notification_id']), parseInt(user['admin_notification_media'].split(',')[0]), parseInt(user['admin_notification_media'].split(',')[1]));
+                await set('admin_notification_type_of_files')('');
+                await set('admin_notification_capture_text')('');
+                await set('admin_notification_text')('');
+                await set('admin_notification_media')('');
                 break;
 
               case "phone":
                 ctx.telegram.sendContact(parseInt(user['admin_specific_user_send_notification_id']), user['admin_notification_media'].split(',')[0], user['admin_notification_media'].split(',')[1]);
+                await set('admin_notification_type_of_files')('');
+                await set('admin_notification_capture_text')('');
+                await set('admin_notification_text')('');
+                await set('admin_notification_media')('');
                 break;
 
               case "sticker":
                 ctx.telegram.sendSticker(parseInt(user['admin_specific_user_send_notification_id']), user['admin_notification_media']);
+                await set('admin_notification_type_of_files')('');
+                await set('admin_notification_capture_text')('');
+                await set('admin_notification_text')('');
+                await set('admin_notification_media')('');
                 break;
 
               case "audio":
                 ctx.telegram.sendAudio(parseInt(user['admin_specific_user_send_notification_id']), user['admin_notification_media']);
+                await set('admin_notification_type_of_files')('');
+                await set('admin_notification_capture_text')('');
+                await set('admin_notification_text')('');
+                await set('admin_notification_media')('');
                 break;
 
               default:
