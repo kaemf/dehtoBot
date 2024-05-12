@@ -626,10 +626,10 @@ export default async function dbProcess(botdb: MongoClient){
                         break;
 
                     case "just_teacher":
-                        await this.ChangeKeyData(student, 'teacher', teacher.id, false);
-                        await this.ChangeKeyData(student, 'miro_link', miro_link, false);
-                        await this.ChangeKeyData(student, 'individual_count', count, false);
                         await this.botdbUsers.updateOne({_id: student._id}, {$set: {
+                            teacher: teacher.id,
+                            miro_link: miro_link,
+                            individual_count: count,
                             role: 'student'
                         }})
                         if (teachersStudents && teachersStudents.length){

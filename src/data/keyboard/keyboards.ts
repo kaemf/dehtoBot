@@ -680,14 +680,6 @@ class Keyboard{
     ]
   }
 
-  deTaskTeacher(){
-    return [
-      [
-        { text: "НАЗНАЧИТИ ЗАВДАННЯ" }
-      ]
-    ]
-  }
-
   deTaskTeacherFirstAttempt(){
     return [
       [
