@@ -520,7 +520,7 @@ async function main() {
               }
             }
           }
-          await ctx.reply('*можна надсилати усі види файлів (фото, відео, кружечки, войси і тд)');
+          await ctx.reply('❗️*можна надсилати усі види файлів (фото, відео, кружечки, войси і тд)\n\nнадішліть сюди усі відповіді, якщо їх декілька, надішліть по одному повідомленню');
           await set('state')('RespondStudentDeTaskHandler');
         }
       }
@@ -4540,7 +4540,7 @@ async function main() {
 
       await set('state')('FunctionRoot');
     }
-    else if (data.text === 'ОБРАТИ СТУДЕНТА'){
+    else if (data.text === 'Обрати студента'){
       const teacher = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
         teacherStudents = teacher!.registered_students;
       if (teacherStudents){
@@ -4750,7 +4750,7 @@ async function main() {
 
       await set('state')('IndividualHandler');
     }
-    else if (data.text === 'ВІДПРАВИТИ ВІДПОВІДЬ'){
+    else if (data.text === 'Відправити'){
       const deTask = await dbProcess.GetDeTaskForStudent(student!.detask),
         inline = inlineGoToDetaskCheck(student!.id);
 
@@ -4767,7 +4767,7 @@ async function main() {
 
       ctx.telegram.sendMessage(deTask!.idTeacher, `студент ${student!.name} дав відповідь на ваше деЗавдання!`, {reply_markup: {inline_keyboard: inline}});
 
-      ctx.reply('завдання успішно здані!', {
+      ctx.reply('✅ відповіді успішно надіслано!', {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.toMenu()
@@ -4778,99 +4778,99 @@ async function main() {
     }
     else if (CheckException.TextException(data)){
       await set('student_content_detask')(`${user['student_content_detask'] ? `${user['student_content_detask']},` : ''}${data.text}`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
     }
     else if (CheckException.FileException(data)){
       await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.file[0]};${data.file[1]}`);
       await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}file`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
     }
     else if (CheckException.LocationException(data)){
       await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.location[0]};${data.location[1]}`);
       await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}location`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
     }
     else if (CheckException.PhoneException(data)){
       await set('student_content_detask')(`${user['student_content_detask'] ? `${user['student_content_detask']},` : ''}${data.phone_number[0]};${data.phone_number[1]}`)
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
     }
     else if (CheckException.PhotoException(data)){
       await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.photo[0]};${data.photo[1]}`);
       await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}photo`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
     }
     else if (CheckException.StickerException(data)){
       await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.stickers}`);
       await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}sticker`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
     }
     else if (CheckException.VideoException(data)){
       await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.video[0]};${data.video[1]}`);
       await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']}` : ''}video`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
     }
     else if (CheckException.AudioException(data)){
       await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.audio}`);
       await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}audio`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
     }
     else if (CheckException.VoiceException(data)){
       await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.voice}`);
       await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}voice`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
     }
     else if (CheckException.VideoNoteException(data)){
       await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.video_circle}`);
       await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}video_circle`);
-      await ctx.reply('добренько, що далі? чи вже готово?', {
+      await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: [[{text: "ВІДПРАВИТИ ВІДПОВІДЬ"}]]
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
     }
@@ -5235,22 +5235,23 @@ async function main() {
       })
       await set('state')('TeacherDeTaskHandler');
     }
-    else if (data.text === 'НАЗНАЧИТИ ЗАВДАННЯ'){
+    else if (data.text === 'Надіслати'){
       const userID = parseInt(user['tmp_userid_detask']),
         userObject = await dbProcess.ShowOneUser(userID);
 
       if (userObject){
         const previousTask = userObject!.detask ? userObject!.detask : false,
-          message_operation = await dbProcess.WriteNewDeTask(
+          inline = inlineGoToDetaskSolution(userID);
+
+          await dbProcess.WriteNewDeTask(
             ctx?.chat?.id ?? -1, 
             userID, 
             user['teacher_content_detask'] ? user['teacher_content_detask'].split(',') : false, 
             user['teacher_filecontent_detask'] ? user['teacher_filecontent_detask'].split(',') : false,
             user['teacher_typeofcontent_detask'] ? user['teacher_typeofcontent_detask'].split(',') : false
-          ),
-          inline = inlineGoToDetaskSolution(userID);
+          )
 
-        ctx.reply(`${message_operation === 'student_task_rewrited' ? 'попереднє деЗавдання було видалено у студента, та додане нове успішно!' : 'завдання успішно додано студенту!'}`, {
+        ctx.reply(`✅ завдання успішно надіслано ${userObject.name}`, {
           reply_markup: {
             one_time_keyboard: true,
             keyboard: keyboards.toMenu()

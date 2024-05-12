@@ -691,7 +691,15 @@ class Keyboard{
   deTaskTeacherFirstAttempt(){
     return [
       [
-        { text: "ОБРАТИ СТУДЕНТА" }
+        { text: "Обрати студента" }
+      ]
+    ]
+  }
+
+  deTaskStudentFinishAttempt(){
+    return [
+      [
+        {text: "Відправити"}
       ]
     ]
   }
