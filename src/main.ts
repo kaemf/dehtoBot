@@ -1,7 +1,7 @@
 // DehtoBot for dehto German School
 // Developed by Yaroslav Volkivskyi (TheLaidSon)
 
-// Actual v2.0 Rebirth Closed Beta
+// Actual v2.0 Rebirth
 
 // Main File
 import script from "./data/general/script";
@@ -523,13 +523,22 @@ async function main() {
                   await ctx.telegram.sendContact(idAddress, phone[0], phone[1]);
                   break;
 
+                case "sticker":
+                  await ctx.telegram.sendSticker(idAddress, files[i]);
+                  break;
+
+                case "video":
+                  const video = files[i].split(';');
+                  await ctx.telegram.sendVideo(idAddress, video[0], {caption: video[1] ? video[1] : ''});
+                  break;
+
                 default:
                   ctx.reply('нам прикро, але надісланий викладачем тип файлу наразі не підтримується, вибачте за труднощі...');
 
               }
             }
           }
-          await ctx.reply('❗️*можна надсилати усі види файлів (фото, відео, кружечки, войси і тд)\n\nнадішліть сюди усі відповіді, якщо їх декілька, надішліть по одному повідомленню');
+          await ctx.reply('❗️*можна надсилати текстові повідомлення та усі види файлів (фото, відео, кружечки, войси і тд)\n\nнадішліть сюди усі відповіді, якщо їх декілька, надішліть по одному повідомленню');
           await set('state')('RespondStudentDeTaskHandler');
         }
       }
@@ -5083,6 +5092,15 @@ async function main() {
                   await ctx.telegram.sendContact(idAddress, phone[0], phone[1]);
                   break;
 
+                case "sticker":
+                  await ctx.telegram.sendSticker(idAddress, files[i]);
+                  break;
+
+                case "video":
+                  const video = files[i].split(';');
+                  await ctx.telegram.sendVideo(idAddress, video[0], {caption: video[1] ? video[1] : ''});
+                  break;
+
                 default:
                   ctx.reply('нам прикро, але надісланий вами тип файлу наразі не підтримується, вибачте за труднощі...');
 
@@ -5141,6 +5159,15 @@ async function main() {
                       case "contact":
                         const phone = files[i].split(';');
                         await ctx.telegram.sendContact(idAddress, phone[0], phone[1]);
+                        break;
+
+                      case "sticker":
+                        await ctx.telegram.sendSticker(idAddress, files[i]);
+                        break;
+
+                      case "video":
+                        const video = files[i].split(';');
+                        await ctx.telegram.sendVideo(idAddress, video[0], {caption: video[1] ? video[1] : ''});
                         break;
       
                       default:
@@ -9292,6 +9319,15 @@ async function main() {
                   await ctx.telegram.sendContact(idAddress, phone[0], phone[1]);
                   break;
 
+                case "sticker":
+                  await ctx.telegram.sendSticker(idAddress, files[i]);
+                  break;
+
+                case "video":
+                  const video = files[i].split(';');
+                  await ctx.telegram.sendVideo(idAddress, video[0], {caption: video[1] ? video[1] : ''});
+                  break;
+
                 default:
                   ctx.reply('нам прикро, але надісланий вами тип файлу наразі не підтримується, вибачте за труднощі...');
 
@@ -9350,6 +9386,15 @@ async function main() {
                       case "contact":
                         const phone = files[i].split(';');
                         await ctx.telegram.sendContact(idAddress, phone[0], phone[1]);
+                        break;
+
+                      case "sticker":
+                        await ctx.telegram.sendSticker(idAddress, files[i]);
+                        break;
+
+                      case "video":
+                        const video = files[i].split(';');
+                        await ctx.telegram.sendVideo(idAddress, video[0], {caption: video[1] ? video[1] : ''});
                         break;
       
                       default:
@@ -9464,13 +9509,22 @@ async function main() {
                   await ctx.telegram.sendContact(idAddress, phone[0], phone[1]);
                   break;
 
+                case "sticker":
+                  await ctx.telegram.sendSticker(idAddress, files[i]);
+                  break;
+
+                case "video":
+                  const video = files[i].split(';');
+                  await ctx.telegram.sendVideo(idAddress, video[0], {caption: video[1] ? video[1] : ''});
+                  break;
+
                 default:
                   ctx.reply('нам прикро, але надісланий викладачем тип файлу наразі не підтримується, вибачте за труднощі...');
 
               }
             }
           }
-          await ctx.reply('*можна надсилати усі види файлів (фото, відео, кружечки, войси і тд)');
+          await ctx.reply('*можна надсилати текстові повідомлення та усі види файлів (фото, відео, кружечки, войси і тд)');
           await db.set(userData!.id)('state')('RespondStudentDeTaskHandler');
           return ctx.answerCbQuery(`Завдання успішно завантажені`);
         }
@@ -9590,6 +9644,15 @@ async function main() {
             case "contact":
               const phone = files[u].split(';');
               await ctx.telegram.sendContact(idAddress, phone[0], phone[1]);
+              break;
+
+            case "sticker":
+              await ctx.telegram.sendSticker(idAddress, files[u]);
+              break;
+
+            case "video":
+              const video = files[u].split(';');
+              await ctx.telegram.sendVideo(idAddress, video[0], {caption: video[1] ? video[1] : ''});
               break;
 
             default:

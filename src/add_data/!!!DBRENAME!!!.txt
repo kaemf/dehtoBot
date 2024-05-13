@@ -1,7 +1,7 @@
 SpeakingClub (database) -> dehtoBDB
 availableLessons (collection) -> clubLessons
 
-new collection - 
+new collection - (mongodb auto create this)
                 |
                 v
 individualLessons (collection)

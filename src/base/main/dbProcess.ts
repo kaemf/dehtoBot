@@ -334,11 +334,13 @@ export default async function dbProcess(botdb: MongoClient){
             if (teacher && teacher.set_detasks){
                 tasksIDsForTeacher = teacher.set_detasks;
                 const tasksIDsForTeacherString = teacher.set_detasks.map((element: any) => {
-                    element.toString();
+                    return element.toString();
                 });
 
-                if (tasksIDsForTeacherString.includes(student!.detask.toString())){
-                    tasksIDsForTeacher = tasksIDsForTeacher.filter((element: any) => element.toString() !== student!.detask.toString());
+                if (tasksIDsForTeacherString.includes(student!.detask?.toString())){
+                    console.warn(true)
+                    const index = tasksIDsForTeacherString.indexOf(student!.detask?.toString());
+                    tasksIDsForTeacher.splice(index, 1);
                 }
                 tasksIDsForTeacher.push(document.insertedId);
             }

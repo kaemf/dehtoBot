@@ -1,7 +1,7 @@
 // DehtoBot for dehto German School
 // Developed by Yaroslav Volkivskyi (TheLaidSon)
 
-// Actual v2.0 Rebirth Closed Beta
+// Actual v2.0 Rebirth
 
 // Initialization File
 
