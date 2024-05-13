@@ -311,39 +311,41 @@ export default async function dbProcess(botdb: MongoClient){
 
         async WriteNewDeTask(idTeacher: number, idStudent: number, content: string[] | boolean, files: string[] | boolean, typeOfFiles: string[] | boolean){
             let tasksIDsForStudent: ObjectId,
-                tasksIDsForTeacher: ObjectId[],
-                system_message = '';
+                tasksIDsForTeacher: ObjectId[];
             const student = await this.ShowOneUser(idStudent),
                 teacher = await this.ShowOneUser(idTeacher),
                 document = await this.deTaskDB.insertOne({
-                idTeacher: idTeacher,
-                idStudent: idStudent,
-                content: content,
-                files: files,
-                typeOfFiles: typeOfFiles,
-                answer: false,
-                answerFiles: false,
-                answerTypeOfFiles: false
+                    idTeacher: idTeacher,
+                    idStudent: idStudent,
+                    content: content,
+                    files: files,
+                    typeOfFiles: typeOfFiles,
+                    answer: false,
+                    answerFiles: false,
+                    answerTypeOfFiles: false
                 })
 
             if (student && student.detask){
-                tasksIDsForStudent = document.insertedId;
-                system_message = 'student_task_rewrited';
+                await this.deTaskDB.deleteOne({_id: student.detask});
             }
-            else{
-                tasksIDsForStudent = document.insertedId;
-                system_message = 'student_task_writed';
-            }
+
+            tasksIDsForStudent = document.insertedId;
 
             if (teacher && teacher.set_detasks){
                 tasksIDsForTeacher = teacher.set_detasks;
+                const tasksIDsForTeacherString = teacher.set_detasks.map((element: any) => {
+                    element.toString();
+                });
+
+                if (tasksIDsForTeacherString.includes(student!.detask.toString())){
+                    tasksIDsForTeacher = tasksIDsForTeacher.filter((element: any) => element.toString() !== student!.detask.toString());
+                }
                 tasksIDsForTeacher.push(document.insertedId);
             }
             else tasksIDsForTeacher = [ document.insertedId ];
 
             await this.botdbUsers.updateOne({id: idStudent}, {$set : {detask: tasksIDsForStudent}})
             await this.botdbUsers.updateOne({id: idTeacher}, {$set : {set_detasks: tasksIDsForTeacher}})
-            return system_message;
         }
 
         async WriteAnswerToDeTask(id: ObjectId, content: string[] | boolean, files: string[] | boolean, typeOfFiles: string[] | boolean){

@@ -4741,6 +4741,9 @@ async function main() {
   onTextMessage('RespondStudentDeTaskHandler', async(ctx, user, set, data) => {
     const student = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
     if (CheckException.BackRoot(data)){
+      await set('student_content_detask')('');
+      await set('student_filecontent_detask')('');
+      await set('student_typeofcontent_detask')('');
       ctx.reply(script.indivdual.entire(student!.role), {
         reply_markup: {
           one_time_keyboard: true,
@@ -5227,6 +5230,11 @@ async function main() {
 
   onTextMessage('AnotherTeachersSetTasksHandler', async(ctx, user, set, data) => {
     if (CheckException.BackRoot(data)){
+      await set('teacher_content_detask')('');
+      await set('teacher_filecontent_detask')('');
+      await set('teacher_typeofcontent_detask')('');
+      await set('tmp_userid_detask')('');
+      await set('detask_teacher_temp_message_continue')('');
       ctx.reply('оберіть одну із кнопок нижче:', {
         reply_markup: {
           one_time_keyboard: true,
