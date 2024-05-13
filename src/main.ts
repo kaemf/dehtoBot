@@ -73,6 +73,12 @@ async function main() {
       await dbProcess.ChangeKeyData(userI!, 'role', 'developer', false);
     }
 
+    await set('teacher_content_detask')('');
+    await set('teacher_filecontent_detask')('');
+    await set('teacher_typeofcontent_detask')('');
+    await set('tmp_userid_detask')('');
+    await set('detask_teacher_temp_message_continue')('');
+
     ctx.reply(script.entire.chooseFunction, {
       parse_mode: "Markdown",
       reply_markup: {
@@ -218,7 +224,7 @@ async function main() {
 
       await set('state')('IndividualHandler');
     }
-    else if (data.text === 'деЗавдання' && userI!.role === 'teacher'){
+    else if (data.text === 'деЗавдання' && (userI!.role === 'admin' || userI!.role === 'developer' || userI!.role === 'teacher')){
       const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
       if (userI!.set_detasks){
         ctx.reply('оберіть одну із кнопок нижче:', {
@@ -468,7 +474,7 @@ async function main() {
 
       if (actualTask){
         const task = await dbProcess.GetDeTaskForStudent(actualTask);
-        await ctx.reply(`😏 хах, ${user['name']}, ваше актуальне завдання:`);
+        await ctx.reply(`😏 ${user['name']}, ваше актуальне завдання:`);
         
         if (task){
           if (task.content){
@@ -5006,7 +5012,7 @@ async function main() {
       }
 
       if (student && teacherTasks && regularCheck.includes(data.text)){
-        const task = await dbProcess.GetDeTaskForStudent(studentID),
+        const task = await dbProcess.GetDeTaskForStudent(student.detask),
           answer = await dbProcess.GetStudentAnswerForDeTask(studentID);
         await ctx.reply(`супер!\n👉 завдання, яке було дано студентові:`);
         
@@ -5243,7 +5249,7 @@ async function main() {
       })
       await set('state')('TeacherDeTaskHandler');
     }
-    else if (data.text === 'Надіслати'){
+    else if (data.text === 'Відправити'){
       const userID = parseInt(user['tmp_userid_detask']),
         userObject = await dbProcess.ShowOneUser(userID);
 
@@ -5288,7 +5294,7 @@ async function main() {
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.deTaskTeacher()
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
@@ -5300,7 +5306,7 @@ async function main() {
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.deTaskTeacher()
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
@@ -5312,7 +5318,7 @@ async function main() {
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.deTaskTeacher()
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
@@ -5323,7 +5329,7 @@ async function main() {
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.deTaskTeacher()
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
@@ -5335,7 +5341,7 @@ async function main() {
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.deTaskTeacher()
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
@@ -5347,7 +5353,7 @@ async function main() {
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.deTaskTeacher()
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
@@ -5359,7 +5365,7 @@ async function main() {
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.deTaskTeacher()
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
@@ -5371,7 +5377,7 @@ async function main() {
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.deTaskTeacher()
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
@@ -5383,7 +5389,7 @@ async function main() {
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.deTaskTeacher()
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
@@ -5395,7 +5401,7 @@ async function main() {
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
           one_time_keyboard: true,
-          keyboard: keyboards.deTaskTeacher()
+          keyboard: keyboards.deTaskStudentFinishAttempt()
         }
       })
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
@@ -6477,7 +6483,7 @@ async function main() {
       ), { ...Markup.inlineKeyboard(inline)});
 
       await dbProcess.UsersOperationWithGuest(student!.id, teacher!.id, data.text, 0, 'trial_teacher');
-      ctx.reply(script.operationWithGuest(student!.name, teacher!.name, data.text, true), {
+      ctx.reply(script.operationWithGuest(student!.name, teacher!.name, data.text, 0, true), {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.toMenu()
@@ -6608,7 +6614,7 @@ async function main() {
         parseInt(data.text)
       ))
       await dbProcess.UsersOperationWithGuest(student!.id, teacher!.id, user['admin_tmp_usersoperation_miro_link'], parseInt(data.text), 'just_teacher');
-      ctx.reply(script.operationWithGuest(student!.name, teacher!.name, user['admin_tmp_usersoperation_miro_link']), {
+      ctx.reply(script.operationWithGuest(student!.name, teacher!.name, user['admin_tmp_usersoperation_miro_link'], parseInt(data.text)), {
         reply_markup: {
           one_time_keyboard: true,
           keyboard: keyboards.toMenu()
@@ -9215,7 +9221,61 @@ async function main() {
       }
 
       if (student && teacherTasks && teacherRegisterStudents.includes(student.id)){
-        const answer = await dbProcess.GetStudentAnswerForDeTask(student.id);
+        const answer = await dbProcess.GetStudentAnswerForDeTask(student.id),
+          task = await dbProcess.GetDeTaskForStudent(student.detask);
+        await ctx.reply(`супер!\n👉 завдання, яке було дано студентові:`);
+        
+        if (task){
+          if (task.content){
+            const content = task.content;
+            for (let i = 0; i < content.length; i++){
+              await ctx.reply(content[i]);
+            }
+          }
+          if (task.files && task.typeOfFiles){
+            const files = task.files,
+              idAddress = ctx?.chat?.id ?? -1;
+            for (let i = 0; i < files.length; i++){
+              switch (task.typeOfFiles[i]) {
+                case "file":
+                  const file = files[i].split(';');
+                  await ctx.telegram.sendDocument(idAddress, file[0], {caption: file[1] ? file[1] : ''});
+                  break;
+
+                case "photo":
+                  const photo = files[i].split(';');
+                  await ctx.telegram.sendPhoto(idAddress, photo[0], {caption: photo[1] ? photo[1] : ''});
+                  break;
+
+                case "audio":
+                  await ctx.telegram.sendAudio(idAddress, files[i]);
+                  break;
+
+                case "location":
+                  const loc = files[i].split(';');
+                  await ctx.telegram.sendLocation(idAddress, loc[0], loc[1]);
+                  break;
+
+                case "video_circle":
+                  await ctx.telegram.sendVideoNote(idAddress, files[i]);
+                  break;
+
+                case "voice":
+                  await ctx.telegram.sendVoice(idAddress, files[i]);
+                  break;
+
+                case "contact":
+                  const phone = files[i].split(';');
+                  await ctx.telegram.sendContact(idAddress, phone[0], phone[1]);
+                  break;
+
+                default:
+                  ctx.reply('нам прикро, але надісланий вами тип файлу наразі не підтримується, вибачте за труднощі...');
+
+              }
+            }
+          }
+        }
 
         await db.set(ctx?.chat?.id ?? -1)('tmp_userid_detask')(student.id);
 
@@ -9223,7 +9283,7 @@ async function main() {
           if (teacherHaveThisTask){
             console.log(answer[0])
             if (answer[0] !== 'no_answer_available'){
-              await ctx.reply('всі відповіді студента в студію!');
+              await ctx.reply('✅ виконане завдання:');
               new Promise(resolve => setTimeout(() => resolve, 2000));
               if (answer){
                 if (answer[0]){
@@ -9296,6 +9356,7 @@ async function main() {
               });
               await db.set(ctx?.chat?.id ?? -1)('state')('EndTeacherDeTaskHandler');
             }
+            return ctx.answerCbQuery(`Завантажено всі доступні відповіді`);
           }
           else{
             ctx.reply('вибачте, але схоже виникла помилка, ви не давали цьому студенту деЗавдання...', {
@@ -9306,6 +9367,7 @@ async function main() {
             });
             ctx.telegram.sendMessage(devChat, `ERROR:\n\nTeacher ${await db.get(ctx?.chat?.id ?? -1)('name')} (id: ${ctx?.chat?.id ?? -1}, tg: @${await db.get(ctx?.chat?.id ?? -1)('username')}) has a student who did not give the assignment\n\nвибачте, але ви не давали цьому студенту деЗавдання...`);
             await db.set(ctx?.chat?.id ?? -1)('state')('EndRootManager');
+            return ctx.answerCbQuery(`Помилка, доповідаю в підтримку`);
           }
         }
         else{
@@ -9318,9 +9380,13 @@ async function main() {
           })
 
           await db.set(ctx?.chat?.id ?? -1)('state')('EndTeacherDeTaskHandler');
+          return ctx.answerCbQuery(`Помилка, студент не має деЗавдання`);
         }
       }
-      else ctx.reply('вибачте, але схоже виникла помилка, у вас немає цього студента або ви просто не давали йому завдання.\n\nякщо ви давали йому деЗавдання, то наразі воно не є активним');
+      else{
+        ctx.reply('вибачте, але схоже виникла помилка, у вас немає цього студента або ви просто не давали йому завдання.\n\nякщо ви давали йому деЗавдання, то наразі воно не є активним');
+        return ctx.answerCbQuery(`Єрор :()`);
+      }
   })
 
   bot.action(/^goToDetaskSolution:(\d+)$/, async (ctx) => {
@@ -9329,7 +9395,7 @@ async function main() {
 
       if (actualTask){
         const task = await dbProcess.GetDeTaskForStudent(actualTask);
-        await ctx.reply(`😏 хах, ${await db.get(userData!.id)('name')}, ваше актуальне завдання:`);
+        await ctx.reply(`😏 ${await db.get(userData!.id)('name')}, ваше актуальне завдання:`);
         
         if (task){
           if (task.content){
@@ -9383,9 +9449,13 @@ async function main() {
           }
           await ctx.reply('*можна надсилати усі види файлів (фото, відео, кружечки, войси і тд)');
           await db.set(userData!.id)('state')('RespondStudentDeTaskHandler');
+          return ctx.answerCbQuery(`Завдання успішно завантажені`);
         }
       }
-      else ctx.reply('вибачте, але у вас немає активних деЗавдань :(');
+      else{
+        ctx.reply('вибачте, але у вас немає активних деЗавдань :(');
+        return ctx.answerCbQuery(`Помилка, завдань не знайдено.`);
+      }
   })
 
   bot.action(/^scheduleTrialLessonTeacher:(\d+),(.+)$/, async (ctx) => {
@@ -9407,8 +9477,12 @@ async function main() {
       ))
       await ctx.reply(`вкажіть день, місяць та рік у форматі:\n${DateRecord()}`);
       await db.set(parseInt(ctx.match[1]))('state')('IndividualLessonsTrialLessonRespondDate');
+      return ctx.answerCbQuery(`Ви прийняли цього користувача.`);
     }
-    else ctx.reply('помилка :( користувача не знайдено')
+    else{
+      ctx.reply('помилка :( користувача не знайдено');
+      return ctx.answerCbQuery(`Помилка :(`);
+    }
   });
 
   bot.action(/^acceptSupport:(\d+),(.+)$/, async (ctx) => {
@@ -9501,11 +9575,11 @@ async function main() {
           }
         }
       }
+      return ctx.answerCbQuery(`Ви успішно взяли замовлення`);
     } catch (e) {
       console.log(e);
+      return ctx.answerCbQuery(`Помилка :(`);
     }
-
-    return ctx.answerCbQuery(`Ви успішно взяли замовлення`);
   });
 
   bot.action(/^acceptedCheck$/, (ctx) => {
@@ -9590,9 +9664,7 @@ async function main() {
   bot.action(/^acceptPayment:(\d+),(.+),(.+)$/, async (ctx) => {
     const idUser = Number.parseInt(ctx.match[1]),
       idClub = await dbProcess.ShowData(new ObjectId(ctx.match[2])),
-      dateRecord = ctx.match[3],
-      users = await dbProcess.ShowAllUsers(),
-      currentUser = await dbProcess.ShowOneUser(idUser);
+      users = await dbProcess.ShowAllUsers();
 
     let currentAvailableCount = idClub!.count - 1
 
