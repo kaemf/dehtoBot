@@ -503,7 +503,7 @@ export default async function dbProcess(botdb: MongoClient){
                             if (studentDeTask){
                                 await this.botdbUsers.updateOne({id: idStudent}, {$set: {de_task: false}});
                                 const teacherDeTasks = usersTeacher.set_detasks,
-                                    stringTeacherDeTasks = teacherDeTasks.forEach((element: any) => {
+                                    stringTeacherDeTasks = teacherDeTasks.map((element: any) => {
                                         return element.toString();
                                     }),
                                     indexInMassiveTeacher = stringTeacherDeTasks.indexOf(studentDeTask._id.toString());
