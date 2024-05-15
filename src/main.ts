@@ -6783,7 +6783,7 @@ async function main() {
     else if (data.text === 'Разове заняття (300uah)' || data.text === 'Пакет занять (280uah)'){
       const User = await dbProcess.ShowOneUser(parseInt(user['admin_speakingclub_personal_find_user'])),
         teacher = await dbProcess.ShowOneUser(User!.teacher);
-      await set('club-typeclub')(data.text);
+      await db.set(User!.id)('club-typeclub')(data.text);
       await ctx.reply('✅ успішно виконана операція!');
 
       await ctx.reply(script.studentFind.diffUserFind(
@@ -8073,7 +8073,7 @@ async function main() {
                 time
               )
         
-              bot.telegram.sendMessage(User!.id,
+              ctx.telegram.sendMessage(User!.id,
                 script.notification.forStudent.rescheduleTrialLesson(
                   UniversalSingleDataProcess(new Date(lesson!.date), 'day_of_week'),
                   UniversalSingleDataProcess(new Date(lesson!.date), 'day'),
