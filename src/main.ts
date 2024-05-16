@@ -4579,7 +4579,7 @@ async function main() {
       else ctx.reply('на жаль... у вас немає активних студентів :(');
     }
     else if (CheckException.TextException(data)){
-      await set('teacher_content_detask')(`${user['teacher_content_detask'] ? `${user['teacher_content_detask']},` : ''}${data.text}`);
+      await set('teacher_content_detask')(`${user['teacher_content_detask'] ? `${user['teacher_content_detask']}§` : ''}${data.text}`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
@@ -4590,7 +4590,7 @@ async function main() {
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.FileException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.file[0]};${data.file[1]}`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']}§` : ''}${data.file[0]};${data.file[1]}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}file`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
@@ -4602,7 +4602,7 @@ async function main() {
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.LocationException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.location[0]};${data.location[1]}`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']}§` : ''}${data.location[0]};${data.location[1]}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}location`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
@@ -4614,7 +4614,7 @@ async function main() {
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.PhoneException(data)){
-      await set('teacher_content_detask')(`${user['teacher_content_detask'] ? `${user['teacher_content_detask']},` : ''}${data.phone_number[0]};${data.phone_number[1]}`);
+      await set('teacher_content_detask')(`${user['teacher_content_detask'] ? `${user['teacher_content_detask']}§` : ''}${data.phone_number[0]};${data.phone_number[1]}`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
@@ -4625,7 +4625,7 @@ async function main() {
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.PhotoException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.photo[0]};${data.photo[1]}`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']}§` : ''}${data.photo[0]};${data.photo[1]}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}photo`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
@@ -4637,7 +4637,7 @@ async function main() {
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.StickerException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.stickers}`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']}§` : ''}${data.stickers}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}sticker`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
@@ -4649,7 +4649,7 @@ async function main() {
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.VideoException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.video[0]};${data.video[1]}`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']}§` : ''}${data.video[0]};${data.video[1]}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']}` : ''}video`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
@@ -4661,7 +4661,7 @@ async function main() {
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.AudioException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.audio}`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']}§` : ''}${data.audio}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}audio`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
@@ -4673,7 +4673,7 @@ async function main() {
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.VoiceException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.voice}`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']}§` : ''}${data.voice}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}voice`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
@@ -4685,7 +4685,7 @@ async function main() {
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.VideoNoteException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.video_circle}`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']}§` : ''}${data.video_circle}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}video_circle`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
@@ -4719,8 +4719,8 @@ async function main() {
         await dbProcess.WriteNewDeTask(
           ctx?.chat?.id ?? -1, 
           userID,
-          user['teacher_content_detask'] ? user['teacher_content_detask'].split(',') : false,
-          user['teacher_filecontent_detask'] ? user['teacher_filecontent_detask'].split(',') : false,
+          user['teacher_content_detask'] ? user['teacher_content_detask'].split('§') : false,
+          user['teacher_filecontent_detask'] ? user['teacher_filecontent_detask'].split('§') : false,
           user['teacher_typeofcontent_detask'] ? user['teacher_typeofcontent_detask'].split(',') : false
         )
 
@@ -4777,8 +4777,8 @@ async function main() {
 
       await dbProcess.WriteAnswerToDeTask(
         deTask!._id, 
-        user['student_content_detask'] ? user['student_content_detask'].split(',') : false, 
-        user['student_filecontent_detask'] ? user['student_filecontent_detask'].split(',') : false, 
+        user['student_content_detask'] ? user['student_content_detask'].split('§') : false, 
+        user['student_filecontent_detask'] ? user['student_filecontent_detask'].split('§') : false, 
         user['student_typeofcontent_detask'] ? user['student_typeofcontent_detask'].split(',') : false
       );
 
@@ -4799,7 +4799,7 @@ async function main() {
     }
     else if (CheckException.TextException(data)){
       if (user['detask_student_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_student_temp_message_continue'])).then().catch((err) => console.log(err));
-      await set('student_content_detask')(`${user['student_content_detask'] ? `${user['student_content_detask']},` : ''}${data.text}`);
+      await set('student_content_detask')(`${user['student_content_detask'] ? `${user['student_content_detask']}§` : ''}${data.text}`);
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
           one_time_keyboard: true,
@@ -4810,7 +4810,7 @@ async function main() {
     }
     else if (CheckException.FileException(data)){
       if (user['detask_student_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_student_temp_message_continue'])).then().catch((err) => console.log(err));
-      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.file[0]};${data.file[1]}`);
+      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']}§` : ''}${data.file[0]};${data.file[1]}`);
       await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}file`);
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
@@ -4822,7 +4822,7 @@ async function main() {
     }
     else if (CheckException.LocationException(data)){
       if (user['detask_student_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_student_temp_message_continue'])).then().catch((err) => console.log(err));
-      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.location[0]};${data.location[1]}`);
+      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']}§` : ''}${data.location[0]};${data.location[1]}`);
       await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}location`);
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
@@ -4834,7 +4834,7 @@ async function main() {
     }
     else if (CheckException.PhoneException(data)){
       if (user['detask_student_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_student_temp_message_continue'])).then().catch((err) => console.log(err));
-      await set('student_content_detask')(`${user['student_content_detask'] ? `${user['student_content_detask']},` : ''}${data.phone_number[0]};${data.phone_number[1]}`)
+      await set('student_content_detask')(`${user['student_content_detask'] ? `${user['student_content_detask']}§` : ''}${data.phone_number[0]};${data.phone_number[1]}`)
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
           one_time_keyboard: true,
@@ -4845,7 +4845,7 @@ async function main() {
     }
     else if (CheckException.PhotoException(data)){
       if (user['detask_student_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_student_temp_message_continue'])).then().catch((err) => console.log(err));
-      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.photo[0]};${data.photo[1]}`);
+      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']}§` : ''}${data.photo[0]};${data.photo[1]}`);
       await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}photo`);
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
@@ -4857,7 +4857,7 @@ async function main() {
     }
     else if (CheckException.StickerException(data)){
       if (user['detask_student_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_student_temp_message_continue'])).then().catch((err) => console.log(err));
-      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.stickers}`);
+      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']}§` : ''}${data.stickers}`);
       await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}sticker`);
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
@@ -4869,7 +4869,7 @@ async function main() {
     }
     else if (CheckException.VideoException(data)){
       if (user['detask_student_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_student_temp_message_continue'])).then().catch((err) => console.log(err));
-      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.video[0]};${data.video[1]}`);
+      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']}§` : ''}${data.video[0]};${data.video[1]}`);
       await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']}` : ''}video`);
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
@@ -4881,7 +4881,7 @@ async function main() {
     }
     else if (CheckException.AudioException(data)){
       if (user['detask_student_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_student_temp_message_continue'])).then().catch((err) => console.log(err));
-      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.audio}`);
+      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']}§` : ''}${data.audio}`);
       await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}audio`);
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
@@ -4893,7 +4893,7 @@ async function main() {
     }
     else if (CheckException.VoiceException(data)){
       if (user['detask_student_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_student_temp_message_continue'])).then().catch((err) => console.log(err));
-      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.voice}`);
+      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']}§` : ''}${data.voice}`);
       await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}voice`);
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
@@ -4905,7 +4905,7 @@ async function main() {
     }
     else if (CheckException.VideoNoteException(data)){
       if (user['detask_student_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_student_temp_message_continue'])).then().catch((err) => console.log(err));
-      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']},` : ''}${data.video_circle}`);
+      await set('student_filecontent_detask')(`${user['student_filecontent_detask'] ? `${user['student_filecontent_detask']}§` : ''}${data.video_circle}`);
       await set('student_typeofcontent_detask')(`${user['student_typeofcontent_detask'] ? `${user['student_typeofcontent_detask']},` : ''}video_circle`);
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMoreStudentEdition, {
         reply_markup: {
@@ -5310,8 +5310,8 @@ async function main() {
           await dbProcess.WriteNewDeTask(
             ctx?.chat?.id ?? -1, 
             userID, 
-            user['teacher_content_detask'] ? user['teacher_content_detask'].split(',') : false, 
-            user['teacher_filecontent_detask'] ? user['teacher_filecontent_detask'].split(',') : false,
+            user['teacher_content_detask'] ? user['teacher_content_detask'].split('§') : false, 
+            user['teacher_filecontent_detask'] ? user['teacher_filecontent_detask'].split('§') : false,
             user['teacher_typeofcontent_detask'] ? user['teacher_typeofcontent_detask'].split(',') : false
           )
 
@@ -5339,7 +5339,7 @@ async function main() {
       await set('state')('EndRootManager');
     }
     else if (CheckException.TextException(data)){
-      await set('teacher_content_detask')(`${user['teacher_content_detask'] ? `${user['teacher_content_detask']},` : ''}${data.text}`);
+      await set('teacher_content_detask')(`${user['teacher_content_detask'] ? `${user['teacher_content_detask']}§` : ''}${data.text}`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
@@ -5350,7 +5350,7 @@ async function main() {
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.FileException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.file[0]};${data.file[1]}`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']}§` : ''}${data.file[0]};${data.file[1]}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}file`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
@@ -5362,7 +5362,7 @@ async function main() {
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.LocationException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.location[0]};${data.location[1]}`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']}§` : ''}${data.location[0]};${data.location[1]}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}location`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
@@ -5374,7 +5374,7 @@ async function main() {
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.PhoneException(data)){
-      await set('teacher_content_detask')(`${user['teacher_content_detask'] ? `${user['teacher_content_detask']},` : ''}${data.phone_number[0]};${data.phone_number[1]}`);
+      await set('teacher_content_detask')(`${user['teacher_content_detask'] ? `${user['teacher_content_detask']}§` : ''}${data.phone_number[0]};${data.phone_number[1]}`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
@@ -5385,7 +5385,7 @@ async function main() {
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.PhotoException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.photo[0]};${data.photo[1]}`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']}§` : ''}${data.photo[0]};${data.photo[1]}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}photo`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
@@ -5397,7 +5397,7 @@ async function main() {
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.StickerException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.stickers}`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']}§` : ''}${data.stickers}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}sticker`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
@@ -5409,8 +5409,8 @@ async function main() {
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.VideoException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.video[0]};${data.video[1]}`);
-      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']}` : ''}video`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']}§` : ''}${data.video[0]};${data.video[1]}`);
+      await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}video`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
         reply_markup: {
@@ -5421,7 +5421,7 @@ async function main() {
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.AudioException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.audio}`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']}§` : ''}${data.audio}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}audio`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
@@ -5433,7 +5433,7 @@ async function main() {
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.VoiceException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.voice}`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']}§` : ''}${data.voice}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}voice`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
@@ -5445,7 +5445,7 @@ async function main() {
       await set('detask_teacher_temp_message_continue')(`${temp_message_continue.message_id}`);
     }
     else if (CheckException.VideoNoteException(data)){
-      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']},` : ''}${data.video_circle}`);
+      await set('teacher_filecontent_detask')(`${user['teacher_filecontent_detask'] ? `${user['teacher_filecontent_detask']}§` : ''}${data.video_circle}`);
       await set('teacher_typeofcontent_detask')(`${user['teacher_typeofcontent_detask'] ? `${user['teacher_typeofcontent_detask']},` : ''}video_circle`);
       if (user['detask_teacher_temp_message_continue']) await ctx.deleteMessage(parseInt(user['detask_teacher_temp_message_continue'])).then().catch((err) => console.log(err));
       const temp_message_continue = await ctx.reply(script.deTask.finalOrMore, {
@@ -8177,7 +8177,7 @@ async function main() {
   
         if (updatedLesson){
           if (User){
-            bot.telegram.sendMessage(User!.id,
+            ctx.telegram.sendMessage(User!.id,
               script.notification.forStudent.rescheduleLesson(
                 UniversalSingleDataProcess(new Date(lesson!.date), 'day_of_week'),
                 UniversalSingleDataProcess(new Date(lesson!.date), 'day'),
