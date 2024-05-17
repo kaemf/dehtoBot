@@ -8056,6 +8056,7 @@ async function main() {
           const allLessons = await dbProcess.ShowAllInvdividualLessons(),
           lesson = (await dbProcess.GetSpecificIndividualLessons([ new ObjectId(user['teacher_reschedule_lesson_id_of_lesson']) ]))[0],
             User = await dbProcess.ShowOneUser(lesson?.idStudent),
+            Teacher = await dbProcess.ShowOneUser(lesson?.idTeacher),
             newDate = user['teacher_date_individual_lesson_set'];
   
           let free: string | undefined;
@@ -8091,7 +8092,7 @@ async function main() {
                 User!.name,
                 User!.username,
                 User!.number,
-                user['name'],
+                Teacher!.name,
                 UniversalSingleDataProcess(new Date(newDate), 'day'),
                 UniversalSingleDataProcess(new Date(newDate), 'month'),
                 time,
@@ -8154,6 +8155,7 @@ async function main() {
     else if (data.text === '60хв' || data.text === '90хв' || data.text === '30хв'){
       const lesson = (await dbProcess.GetSpecificIndividualLessons([new ObjectId(user['teacher_reschedule_lesson_id_of_lesson'])]))[0],
         User = await dbProcess.ShowOneUser(parseInt(lesson!.idStudent)),
+        Teacher = await dbProcess.ShowOneUser(parseInt(lesson!.idTeacher)),
         newDate = user['teacher_date_individual_lesson_set'],
         allLessons = await dbProcess.ShowAllInvdividualLessons(),
         free = checkAvailabilityForLesson(
@@ -8195,7 +8197,7 @@ async function main() {
               User!.name,
               User!.username,
               User!.number,
-              user['name'],
+              Teacher!.name,
               UniversalSingleDataProcess(new Date(newDate), 'day'),
               UniversalSingleDataProcess(new Date(newDate), 'month'),
               user['teacher_time_individual_lesson_set'],
