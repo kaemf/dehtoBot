@@ -966,6 +966,7 @@ export default async function dbProcess(botdb: MongoClient){
                         if (sentNotificationAboutLessons?.length){
                             if (!sentNotificationAboutLessons.map(item => item.id.toString()).includes(lessons[i]._id.toString())){
                                 ctx.sendMessage(lessons[i].idStudent, script.notification.forStudent.lessonComingNotification(
+                                    'student',
                                     lessons[i].type,
                                     this.TimeLeft(lessonDate),
                                     UniversalSingleDataProcess(lessonDate, 'day_of_week'),
@@ -977,6 +978,7 @@ export default async function dbProcess(botdb: MongoClient){
                                     (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
                                 ), {parse_mode: "HTML"});
                                 ctx.sendMessage(lessons[i].idTeacher, script.notification.forStudent.lessonComingNotification(
+                                    'teacher',
                                     lessons[i].type,
                                     this.TimeLeft(lessonDate),
                                     UniversalSingleDataProcess(lessonDate, 'day_of_week'),
@@ -994,6 +996,7 @@ export default async function dbProcess(botdb: MongoClient){
                         }
                         else{
                             ctx.sendMessage(lessons[i].idStudent, script.notification.forStudent.lessonComingNotification(
+                                'student',
                                 lessons[i].type,
                                 this.TimeLeft(lessonDate),
                                 UniversalSingleDataProcess(lessonDate, 'day_of_week'),
@@ -1005,6 +1008,7 @@ export default async function dbProcess(botdb: MongoClient){
                                 (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
                             ), {parse_mode: "HTML"});
                             ctx.sendMessage(lessons[i].idTeacher, script.notification.forStudent.lessonComingNotification(
+                                'teacher',
                                 lessons[i].type,
                                 this.TimeLeft(lessonDate),
                                 UniversalSingleDataProcess(lessonDate, 'day_of_week'),

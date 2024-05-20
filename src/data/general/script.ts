@@ -688,10 +688,10 @@ ${count > 0 ? '✅' : '❌'} <b>Залишок:</b> ${count / 60} занять (
       deleteStudent: (nameTeacher: string) =>
       `🙂 <b>вас було прибрано від викладача ${nameTeacher}</b>\n\nбажаємо вам натхнення та успіхів у вивченні мови!\n\nз любовʼю, команда dehto🍓 `,
 
-      lessonComingNotification: (classType: string, minute: number, dayOfWeek: string, day: string, month: string, time: string, teacherName: string, miro_link: string, count: number) =>
+      lessonComingNotification: (endUser: string, classType: string, minute: number, dayOfWeek: string, day: string, month: string, time: string, teacherName: string, miro_link: string, count: number) =>
       `🌤 <b> ${classType === 'trial' ? 'Пробне заняття' : 'Заняття'} розпочнеться за ${minute}хв</b> 🌤\n
 <b>Коли</b>: ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦
-<b>Викладач</b>: ${teacherName}\n\n<b>посилання на дошку Miro</b>: ${miro_link ?? "відстнє"}\n
+<b>${endUser === 'student' ? 'Студент' : 'Викладач'}</b>: ${teacherName}\n\n<b>посилання на дошку Miro</b>: ${miro_link ?? "відстнє"}\n
 ${classType !== 'trial' ? `${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count / 60} занять (${count}хв)` : ''}`,
 
       changeCountLessonsOnClub: (count: number) =>
@@ -776,22 +776,22 @@ ${miro_link}\n
     forAdmins: {
       notEnoughCountOfLessons: (name: string, username: string, number: string, teacherName: string) => `🤷‍♂️ <b>Немає оплачених занять</b> 🤷‍♂️\n\n<b>Студент:</b> ${name} \n(@${username}); ${number}\n<b>Викладач:</b> ${teacherName}`,
 
-      rescheduleLesson: (studentName: string, username: string, number: string, teacherName: string, day: string, month: string, time: string, reason: string, miro_link: string, count: number) => 
+      rescheduleLesson: (studentName: string, username: string, number: string, teacherName: string, day: string, dayOfWeek: string, month: string, time: string, reason: string, miro_link: string, count: number) => 
       `♻️️️ <b>Перенесення заняття</b> ♻️\n
 <b>Студент:</b> ${studentName}
 (@${username}); ${number}
 <b>Викладач:</b> ${teacherName}\n
-👉 заняття перенесено на субота, ${day} ${month} о ${time} за Києвом 🇺🇦
+👉 заняття перенесено на ${dayOfWeek}, ${day} ${month} о ${time} за Києвом 🇺🇦
 <b>Причина:</b> ${reason}
 <b>посилання на дошку Miro:</b> ${miro_link}\n
 ${count > 0 ? '✅' : '❌'} <b>Залишок:</b> ${count / 60} занять (${count}хв)`,
 
-      rescheduleTrialLesson: (studentName: string, username: string, number: string, teacherName: string, day: string, month: string, time: string, reason: string, miro_link: string) => 
+      rescheduleTrialLesson: (studentName: string, username: string, number: string, teacherName: string, day: string, dayOfWeek: string,  month: string, time: string, reason: string, miro_link: string) => 
       `♻️️️ <b>Перенесення пробного заняття</b> ♻️\n
 <b>Студент:</b> ${studentName}
 (@${username}); ${number}
 <b>Викладач:</b> ${teacherName}\n
-👉 заняття перенесено на субота, ${day} ${month} о ${time} за Києвом 🇺🇦
+👉 заняття перенесено на ${dayOfWeek}, ${day} ${month} о ${time} за Києвом 🇺🇦
 <b>Причина:</b> ${reason}
 <b>посилання на дошку Miro:</b> ${miro_link}`,
 
