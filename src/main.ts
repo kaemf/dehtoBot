@@ -1014,10 +1014,9 @@ async function main() {
       await set('courseLevel')(data.text);
   
       ctx.reply(script.payInvidualLesson.choosePacket(
-        showLevel['🔵 Мінімальний: 5 занять']['price'], 
-        showLevel['🔴 Економний: 10 занять']['price'],
-        showLevel['🟢 Популярний: 20 занять']['price'], 
-        showLevel['🟡 Вигідний: 50 занять']['price']),
+        showLevel['🔵 Мінімальний: 6 занять']['price'],
+        showLevel['🟢 Популярний: 12 занять']['price'], 
+        showLevel['🟡 Вигідний: 24 занять']['price']),
       {
         parse_mode: "Markdown",
         reply_markup: {
@@ -1051,10 +1050,9 @@ async function main() {
 
       await set('state')('RespondCourseAndGetPacket');
     }
-    else if (data.text === '🟡 Вигідний: 50 занять' 
-      || data.text === '🟢 Популярний: 20 занять' 
-      || data.text === '🔴 Економний: 10 занять' 
-      || data.text === '🔵 Мінімальний: 5 занять'){
+    else if (data.text === '🟡 Вигідний: 24 занять' 
+      || data.text === '🟢 Популярний: 12 занять'
+      || data.text === '🔵 Мінімальний: 6 занять'){
       const answer = data.text,
       showPacket = packet[user['courseLevel'] as keyof typeof packet][answer];
 
@@ -1087,7 +1085,7 @@ async function main() {
     if (CheckException.BackRoot(data)){
       const showLevel = packet[data.text as keyof typeof packet];
 
-      ctx.reply(script.payInvidualLesson.choosePacket(showLevel['🔵']['price'], showLevel['🔴']['price'], showLevel['🟢']['price'], showLevel['🟡']['price']), {
+      ctx.reply(script.payInvidualLesson.choosePacket(showLevel['🔵']['price'], showLevel['🟢']['price'], showLevel['🟡']['price']), {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -2257,11 +2255,7 @@ async function main() {
 
             if (currentUser!.count === 1){
               // For Developer
-              await bot.telegram.sendMessage(devChat, script.speakingClub.report.notEnoughLessons(
-                user['name'], user['username'], user['phone_number'], currentUser!.email !== undefined ? currentUser!.email : "Пошта відсутня", user['club-typeclub']
-              ));
-                
-              await bot.telegram.sendMessage(confirmationChat, script.speakingClub.report.notEnoughLessons(
+              SendNotification(notifbot, script.speakingClub.report.notEnoughLessons(
                 user['name'], user['username'], user['phone_number'], currentUser!.email !== undefined ? currentUser!.email : "Пошта відсутня", user['club-typeclub']
               ));
                 
@@ -7745,7 +7739,6 @@ async function main() {
         ),
         count = (await dbProcess.ShowOneUser(parseInt(user['teacher_individual_lesson_schedule_student_id'])))!.individual_count;
 
-
         if (minuteCheck === 'success'){
           const Teacher = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1),
             User = await dbProcess.ShowOneUser(parseInt(user['teacher_individual_lesson_schedule_student_id']));
@@ -10025,17 +10018,13 @@ async function main() {
 
         if (currentUser!.count === 1){
           // For Developer
-          await ctx.telegram.sendMessage(devChat, script.speakingClub.report.notEnoughLessons(
+          SendNotification(notifbot, script.speakingClub.report.notEnoughLessons(
             notEnoughLessons.name!, 
             notEnoughLessons.username!, 
             notEnoughLessons.number!, 
             currentUser!.email !== undefined ? currentUser!.email : "Пошта відсутня", 
             notEnoughLessons.typeClub!
-          ));
-            
-          await ctx.telegram.sendMessage(confirmationChat, script.speakingClub.report.notEnoughLessons(
-            notEnoughLessons.name!, notEnoughLessons.username!, notEnoughLessons.number!, currentUser!.email !== undefined ? currentUser!.email : "Пошта відсутня", notEnoughLessons.typeClub!
-          ));
+          ))
             
           // await sheets.changeAvaibleLessonStatus(ctx?.chat?.id ?? -1, false);
         }
@@ -10055,9 +10044,7 @@ async function main() {
         // await sheets.appendLessonToUser(currentUser!.id, currentUser!.name, currentUser!.number, currentUser!.username, currentUser!.email !== undefined ? currentUser!.email : 'пошта відсутня',
         //   DateRecord(), idClub!.title, idClub!.teacher);
       }
-      else{
-        ctx.reply('ви вже зареєстровані на цей шпрах!');
-      }
+      else ctx.reply('ви вже зареєстровані на цей шпрах!');
     }
     else{
       if (!await dbProcess.HasThisClubUser(ctx?.chat?.id ?? -1, idClub!._id)){
@@ -10071,9 +10058,7 @@ async function main() {
 
         await db.set(idUser)('state')('RegistrationChooseHandlerPayment');
       }
-      else{
-        ctx.reply('ви вже зареєстровані на цей шпрах!');
-      }
+      else ctx.reply('ви вже зареєстровані на цей шпрах!');
     }
 
     return ctx.answerCbQuery(`Слідуйте інструкціям далі`);
@@ -10108,7 +10093,7 @@ async function main() {
   })
 
   bot.launch();
-  notifbot.launch();
+  // notifbot.launch();
 }
 
 main();

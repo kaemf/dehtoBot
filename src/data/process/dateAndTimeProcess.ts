@@ -84,9 +84,9 @@ export function DateProcessToPresentView(dateString: string){
 
     if (isValidDate){
         const dateCheck = new Date(
-            parseInt(dateSplitted[2], 10), 
-            parseInt(dateSplitted[1], 10) - 1,
-            parseInt(dateSplitted[0], 10)
+            parseInt(dateSplitted[0]), 
+            parseInt(dateSplitted[1]) - 1,
+            parseInt(dateSplitted[2]),
         );
         
         return !isNaN(dateCheck.getTime()) ? [ formatDate(dateCheck, true), `${dateSplitted[2]}.${dateSplitted[1]}.${dateSplitted[0]}` ] : [ 'date_uncorrect' ];
@@ -137,7 +137,6 @@ export function isDateNoInPast(date: string){
     inputDate.setHours(0, 0, 0, 0);
     currentDate.setHours(0, 0, 0, 0);
 
-    // Сравниваем даты без времени
     return inputDate >= currentDate;
 }
 

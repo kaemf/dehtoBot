@@ -85,11 +85,10 @@ const script = {
   payInvidualLesson: {
     chooseLevelCourse: `dehto дякує за довіру❤\nоберіть свій рівень`,
 
-    choosePacket: (minimal: number, econom: number, popular: number, large: number) => `оберіть, будь ласка, пакет занять, який вас цікавить:\n\n
-🔵 Мінімальний: 5 занять (${minimal}uah - 1 заняття) 
-🔴 Економний: 10 занять (${econom}uah - 1 заняття) 
-🟢 Популярний: 20 занять (${popular}uah - 1 заняття) 
-🟡 вигідний: 50 занять (${large}uah - 1 заняття)`,
+    choosePacket: (minimal: number, popular: number, large: number) => `оберіть, будь ласка, пакет занять, який вас цікавить:\n\n
+🔵 Мінімальний: 6 занять (${minimal}uah - 1 заняття)
+🟢 Популярний: 12 занять (${popular}uah - 1 заняття) 
+🟡 Вигідний: 24 занять (${large}uah - 1 заняття)`,
 
     statsAboutChoosedPacket: (packetName: string, priceSingle: number, countOfLessons: number) => `🤭 індивідуальне заняття пакету «${packetName}» вартує
 ${priceSingle} uah / 60 хв. цей пакет включає ${countOfLessons} занять\n
