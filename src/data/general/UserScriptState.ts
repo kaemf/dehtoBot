@@ -134,3 +134,5 @@ export type UserScriptState =
   | "CheckCorrectCollectedDataWhileAddingClubHandler"
   | "CheckCorrectCollectedDataWhileAddingClubHandlerDocumentaion"
   | "AdminAddUserToTeacher_RespondCount"
+  | "SummerCampEntire"
+  | "SummerCampHandler"

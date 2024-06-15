@@ -375,6 +375,16 @@ async function main() {
           await set('state')('CareServiceQuestionHandler')
         }
     }
+    else if (data.text === 'Літній кемп' && (userI!.role === 'student' || userI!.role === 'guest')){
+      ctx.reply(script.summerCamp.entire, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.yesNo(true)
+        }
+      })
+
+      await set('state')('SummerCampEntire');
+    }
     else{
       ctx.reply(script.errorException.chooseFunctionError, {
         parse_mode: "Markdown",
@@ -9251,6 +9261,103 @@ async function main() {
       await set('temp_thanks_care_message')((await temp_thanks_care_message).message_id.toString());
     }
     else ctx.reply(script.errorException.textGettingError.defaultException);
+  })
+
+  onTextMessage('SummerCampEntire', async(ctx, user, set, data) => {
+    const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+
+    if (CheckException.BackRoot(data)){
+      ctx.reply(script.entire.chooseFunction, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userObject && userObject!.role !== undefined && userObject!.role !== null ? userObject!.role : 'guest')
+        }
+      })
+
+      await set('state')('FunctionRoot');
+    }
+    else if (CheckException.TextException(data)){
+      switch(data.text){
+        case "Так":
+          ctx.reply(script.summerCamp.chooseLevel, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.campLevelChoose()
+            }
+          })
+          await set('state')("SummerCampHandler");
+          break;
+
+        case "Ні":
+          ctx.reply(script.speakingClub.trialLesson.ifNo, {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: keyboards.toMenu()
+            }
+          })
+          await set('state')('EndRootManager');
+          break;
+
+        default:
+          ctx.reply(script.errorException.chooseButtonError, {
+            reply_markup: {
+              one_time_keyboard: true, 
+              keyboard: keyboards.yesNo(true)
+            }
+          })
+          break;
+      }
+    }
+    else ctx.reply(script.errorException.chooseButtonError, {
+      reply_markup: {
+        one_time_keyboard: true, 
+        keyboard: keyboards.yesNo(true)
+      }
+    })
+  })
+
+  onTextMessage('SummerCampHandler', async(ctx, user, set, data) => {
+    if (CheckException.BackRoot(data)){
+      ctx.reply(script.summerCamp.entire, {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.yesNo(true)
+        }
+      })
+
+      await set('state')('SummerCampEntire');
+    }
+    else if (keyboards.campLevelChoose().map((object: any) => {return object[0].text}).includes(data.text)){
+      const userObject = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+
+      ctx.reply(script.summerCamp.registerationComplet(user['name']), {
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.toMenu()
+        }
+      })
+
+      SendNotification(
+        notifbot,
+        script.summerCamp.notification(
+          userObject?.name ?? "‼️ імʼя студента не знайдено в базі даних ‼️",
+          userObject?.username ?? "‼️ телеграм користувача не знайдено в базі даних ‼️",
+          userObject?.number ?? "‼️ номер користувача не знайдено в базі даних ‼️",
+          data.text,
+          DateRecord()
+        ),
+        true
+      );
+      //TO DO: CREATE NOTOFICATION ABOUT NEW REGISTRATION ON SUMMER CAMP
+      await set('state')('EndRootManager');
+    }
+    else ctx.reply(script.errorException.chooseButtonError, {
+      reply_markup: {
+        one_time_keyboard: true,
+        keyboard: keyboards.campLevelChoose()
+      }
+    })
   })
 
   bot.action(/^goToDetaskCheck:(\d+)$/, async (ctx) => {

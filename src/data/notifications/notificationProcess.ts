@@ -7,14 +7,19 @@ export default async function NotificationReg(ctx: Context<Update>, token: strin
     return { url: `https://api.telegram.org/file/bot${token}/${(await ctx.telegram.getFile(file)).file_path}` };
 }
 
-export function SendNotification(notifbot: Telegraf<Context<Update>>, message: string){
-    notifbot.telegram.sendMessage(devChat, message, {parse_mode: "HTML"});
-
-    notifbot.telegram.sendMessage(confirmationChat, message, {parse_mode: "HTML"});
-
-    notifbot.telegram.sendMessage(supportChat, message, {parse_mode: "HTML"});
-
-    notifbot.telegram.sendMessage(eugeneChat, message, {parse_mode: "HTML"});
+export function SendNotification(notifbot: Telegraf<Context<Update>>, message: string, debug?: boolean){
+    if (debug){
+        notifbot.telegram.sendMessage(devChat, message, {parse_mode: "HTML"});    
+    }
+    else{
+        notifbot.telegram.sendMessage(devChat, message, {parse_mode: "HTML"});
+    
+        notifbot.telegram.sendMessage(confirmationChat, message, {parse_mode: "HTML"});
+    
+        notifbot.telegram.sendMessage(supportChat, message, {parse_mode: "HTML"});
+    
+        notifbot.telegram.sendMessage(eugeneChat, message, {parse_mode: "HTML"});
+    }
 }
 
 export function SendNotificationWithMedia(notifbot: Telegraf<Context<Update>>, message: string, url: string, type: string){
