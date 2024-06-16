@@ -7,7 +7,7 @@
 import script from "./data/general/script";
 import packet from "./data/course/packets";
 import * as schedule from 'node-schedule';
-import { confirmationChat, supportChat, devChat, versionBot } from './data/general/chats';
+import { supportChat, devChat, versionBot } from './data/general/chats';
 import { CheckException } from "./base/handlers/check";
 import arch from './base/main/architecture';
 import getCourses, { Course, Courses, courseNumbersToSkip } from "./data/course/coursesAndTopics";
@@ -44,6 +44,10 @@ async function main() {
   bot.start( (ctx) => {
     console.log('MAIN BOT STARTED');
 
+    db.set(ctx.chat.id)('name')('');
+    db.set(ctx.chat.id)('username')('');
+    db.set(ctx.chat.id)('phone_number')('');
+
     try {
       ctx.reply(script.entire.greeting, {reply_markup: { remove_keyboard: true }});
     } catch (error) {
@@ -54,8 +58,8 @@ async function main() {
       }
     }
     const username = ctx.chat.type === "private" ? ctx.chat.username ?? null : null;
-    db.set(ctx.chat.id)('username')(username ?? 'unknown')
-    db.set(ctx.chat.id)('state')('WaitingForName')
+    db.set(ctx.chat.id)('username')(username ?? 'unknown');
+    db.set(ctx.chat.id)('state')('WaitingForName');
   });
 
   notifbot.start( (ctx) => {
@@ -65,32 +69,62 @@ async function main() {
   });
   
   bot.command('menu', async (ctx) => {
+    const userRegularInformation = db.get(ctx?.chat?.id ?? -1);
+
     console.log('MENU PRESSED');
-    const set = db.set(ctx?.chat?.id ?? -1),
-      userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
 
-    if (CheckDeveloper(ctx?.chat?.id ?? -1)) {
-      await dbProcess.ChangeKeyData(userI!, 'role', 'developer', false);
+    if (!(await userRegularInformation('name')) || (await userRegularInformation('name') === 'unknown')) {
+      ctx.reply('для початку Вам потрібно ввести своє ім`я, щоб ми знали як до вас звертатись');
+      await db.set(ctx.chat.id)('state')('WaitingForName');
     }
-
-    await set('teacher_content_detask')('');
-    await set('teacher_filecontent_detask')('');
-    await set('teacher_typeofcontent_detask')('');
-    await set('tmp_userid_detask')('');
-    await set('detask_teacher_temp_message_continue')('');
-    await set('student_content_detask')('');
-    await set('student_filecontent_detask')('');
-    await set('student_typeofcontent_detask')('');
-
-    ctx.reply(script.entire.chooseFunction, {
-      parse_mode: "Markdown",
-      reply_markup: {
-        one_time_keyboard: true,
-        keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role ?? 'guest')
+    else if (!(await userRegularInformation('username')) || (await userRegularInformation('username') === 'undefined')) {
+      const username = ctx.chat.type === "private" ? ctx.chat.username ?? null : null;
+      db.set(ctx.chat.id)('username')(username ?? 'unknown')
+    }
+    else if (!(await userRegularInformation('phone_number')) || (await userRegularInformation('phone_number') === 'undefined')) {
+      ctx.reply(`${userRegularInformation('name') ?? "користувач"}, Вам потрібно натиснути на кнопку "Поділитись своїм номером телефону"`), {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: [
+            [
+              {
+                text: script.entire.shareYourPhone,
+                request_contact: true,
+              },
+            ],
+          ],
+        },
+      };
+      await db.set(ctx.chat.id)('state')('AskingForPhoneNumber');
+    }
+    else{
+      const set = db.set(ctx?.chat?.id ?? -1),
+        userI = await dbProcess.ShowOneUser(ctx?.chat?.id ?? -1);
+  
+      if (CheckDeveloper(ctx?.chat?.id ?? -1)) {
+        await dbProcess.ChangeKeyData(userI!, 'role', 'developer', false);
       }
-    })
-
-    await set('state')('FunctionRoot');
+  
+      await set('teacher_content_detask')('');
+      await set('teacher_filecontent_detask')('');
+      await set('teacher_typeofcontent_detask')('');
+      await set('tmp_userid_detask')('');
+      await set('detask_teacher_temp_message_continue')('');
+      await set('student_content_detask')('');
+      await set('student_filecontent_detask')('');
+      await set('student_typeofcontent_detask')('');
+  
+      ctx.reply(script.entire.chooseFunction, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          one_time_keyboard: true,
+          keyboard: keyboards.mainMenu(ctx?.chat?.id ?? -1, userI!.role ?? 'guest')
+        }
+      })
+  
+      await set('state')('FunctionRoot');
+    }
   });
 
   bot.command('sysinfo', async (ctx) => {
@@ -9346,10 +9380,8 @@ async function main() {
           userObject?.number ?? "‼️ номер користувача не знайдено в базі даних ‼️",
           data.text,
           DateRecord()
-        ),
-        true
+        )
       );
-      //TO DO: CREATE NOTOFICATION ABOUT NEW REGISTRATION ON SUMMER CAMP
       await set('state')('EndRootManager');
     }
     else ctx.reply(script.errorException.chooseButtonError, {
