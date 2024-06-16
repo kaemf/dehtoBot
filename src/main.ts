@@ -1,7 +1,7 @@
 // DehtoBot for dehto German School
 // Developed by Yaroslav Volkivskyi (TheLaidSon)
 
-// Actual v2.1 Rebirth
+// Actual v2.2 Rebirth
 
 // Main File
 import script from "./data/general/script";
@@ -43,10 +43,6 @@ async function main() {
   //Begin bot work, collecting user data (his telegram name) set up state_1
   bot.start( (ctx) => {
     console.log('MAIN BOT STARTED');
-
-    db.set(ctx.chat.id)('name')('');
-    db.set(ctx.chat.id)('username')('');
-    db.set(ctx.chat.id)('phone_number')('');
 
     try {
       ctx.reply(script.entire.greeting, {reply_markup: { remove_keyboard: true }});
