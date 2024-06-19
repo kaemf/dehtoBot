@@ -4112,7 +4112,7 @@ async function main() {
       ctx.reply('введіть його ID / повне ім’я / номер телефону / нік в телеграмі');
       await set('state')('StudentFindHandler');
     }
-    else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1){
+    else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 0){
       await set('AP_UserChangeCountLesson_New')(data.text);
       await ctx.reply('✅ число занять змінено!');
       await ctx.reply('оберіть, за яким пакетом будуть додані заняття:', {
