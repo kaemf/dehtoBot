@@ -501,7 +501,8 @@ export default async function dbProcess(botdb: MongoClient){
                                 indexInMassiveOld = oldTeacherStudents.indexOf(user.id);
 
                             if (studentDeTask){
-                                await this.botdbUsers.updateOne({id: idStudent}, {$set: {de_task: false}});
+                                await this.botdbUsers.updateOne({id: idStudent}, {$set: {detask: false}});
+                                await this.deTaskDB.deleteOne({_id: studentDeTask._id});
                                 const teacherDeTasks = usersTeacher.set_detasks,
                                     stringTeacherDeTasks = teacherDeTasks.map((element: any) => {
                                         return element.toString();
