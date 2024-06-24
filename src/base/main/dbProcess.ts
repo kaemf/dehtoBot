@@ -541,7 +541,10 @@ export default async function dbProcess(botdb: MongoClient){
                                 }
                                 else throw new Error('New Teacher already have this student');
                             }
-                            else await this.botdbUsers.updateOne({_id: newTeacher._id}, {$set: {registered_students: [user!.id]}});
+                            else{
+                                await this.botdbUsers.updateOne({_id: newTeacher._id}, {$set: {registered_students: [user!.id]}});
+                                await this.botdbUsers.updateOne({_id: user._id}, {$set: {teacher: newTeacher.id}});
+                            }
                         }
                         else{
                             const newTeacher = await this.ShowOneUser(await this.GetUserIDByName(value.toString())),
