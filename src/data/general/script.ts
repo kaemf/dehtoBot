@@ -690,7 +690,7 @@ ${count > 0 ? '✅' : '❌'} <b>Залишок:</b> ${count / 60} занять (
       lessonComingNotification: (endUser: string, classType: string, minute: number, dayOfWeek: string, day: string, month: string, time: string, teacherName: string, miro_link: string, count: number) =>
       `🌤 <b> ${classType === 'trial' ? 'Пробне заняття' : 'Заняття'} розпочнеться за ${minute}хв</b> 🌤\n
 <b>Коли</b>: ${dayOfWeek}, ${day} ${month} о ${time} за Києвом🇺🇦
-<b>${endUser === 'student' ? 'Студент' : 'Викладач'}</b>: ${teacherName}\n\n<b>посилання на дошку Miro</b>: ${miro_link ?? "відстнє"}\n
+<b>${endUser === 'student' ? 'Викладач' : 'Студент'}</b>: ${teacherName}\n\n<b>посилання на дошку Miro</b>: ${miro_link ?? "відстнє"}\n
 ${classType !== 'trial' ? `${count > 0 ? '✅' : '❌'} <b>Залишок</b>: ${count / 60} занять (${count}хв)` : ''}`,
 
       changeCountLessonsOnClub: (count: number) =>
