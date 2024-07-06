@@ -12,6 +12,7 @@ import { versionBot } from "../../data/general/chats";
 import dotenv from 'dotenv';
 import { load } from 'ts-dotenv';
 import path from "path";
+import { InputFile } from "telegraf/typings/core/types/typegram";
 
 dotenv.config({path: path.resolve(__dirname, 'config.env')});
 
@@ -56,14 +57,33 @@ export default async function init() {
   console.log("Done\n");
 
   bot.use(async (ctx, next) => {
-    const originalSendMessage = ctx.telegram.sendMessage;
-    const originalReply = ctx.reply;
+    const originalSendMessage = ctx.telegram.sendMessage,
+      originalSendPhoto = ctx.telegram.sendPhoto,
+      originalSendDocument = ctx.telegram.sendDocument,
+      originalReply = ctx.reply;
+
     ctx.telegram.sendMessage = async (chatId: string | number, text: string, extra?: any) => {
       let finalExtra = { ...extra, parse_mode: 'HTML' };
       if (extra && !extra.reply_markup) {
         finalExtra.reply_markup = { remove_keyboard: true };
       }
       return originalSendMessage.call(ctx.telegram, chatId, text, finalExtra);
+    };
+
+    ctx.telegram.sendPhoto = async (chatId: string | number, photo: string | InputFile, extra?: any) => {
+      let finalExtra = { ...extra, parse_mode: 'HTML' };
+      if (extra && !extra.reply_markup) {
+        finalExtra.reply_markup = { remove_keyboard: true };
+      }
+      return originalSendPhoto.call(ctx.telegram, chatId, photo, finalExtra);
+    };
+
+    ctx.telegram.sendDocument = async (chatId: string | number, document: string | InputFile, extra?: any) => {
+      let finalExtra = { ...extra, parse_mode: 'HTML' };
+      if (extra && !extra.reply_markup) {
+        finalExtra.reply_markup = { remove_keyboard: true };
+      }
+      return originalSendDocument.call(ctx.telegram, chatId, document, finalExtra);
     };
 
     ctx.reply = async (text: string, extra?: any) => {
