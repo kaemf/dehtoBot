@@ -1,4 +1,5 @@
 import { devChat, confirmationChat, supportChat, eugeneChat } from "../general/chats";
+import script from "../general/script";
 
 const devChatInt = parseInt(devChat),
   confirmationChatInt = parseInt(confirmationChat),
@@ -49,11 +50,12 @@ class Keyboard{
             {
               text: "Моя служба турботи"
             }
-          ],[
-            {
-              text: "Літній кемп"
-            }
-          ]
+          ],
+          // [
+          //   {
+          //     text: "Літній кемп"
+          //   }
+          // ]
         ]
     }
     else if (checkChats(currentChatId)){
@@ -68,7 +70,7 @@ class Keyboard{
           }
         ],[
           {
-            text: "Розмовні клуби",
+            text: "Розмовні клуби"
           },
         ],[
           {
@@ -87,11 +89,13 @@ class Keyboard{
           {
             text: "Розмовні клуби"
           }
-        ],[
-          {
-            text: "Літній кемп"
-          }
-        ],[
+        ],
+        // [
+        //   {
+        //     text: "Літній кемп"
+        //   }
+        // ],
+        [
           {
             text: "Вчитель на годину",
           }
@@ -726,6 +730,30 @@ class Keyboard{
       [
         { text: "B2.2" }
       ],
+    ]
+  }
+
+  teacherOnHourAdditionalQuestionsYesNo(){
+    return [
+      [
+        {
+          text: script.teacherOnHour.additionalQuestions.yes,
+        },
+        {
+          text: script.teacherOnHour.additionalQuestions.no,
+        }
+      ],
+    ]
+  }
+
+  sharePhoneKeyboard(){
+    return [
+      [
+        {
+          text: script.entire.shareYourPhone,
+          request_contact: true,
+        }
+      ]
     ]
   }
 }

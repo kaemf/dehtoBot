@@ -9,6 +9,16 @@ import { Telegraf } from "telegraf";
 import { createClient } from "redis";
 import { MongoClient } from "mongodb";
 import { versionBot } from "../../data/general/chats";
+import dotenv from 'dotenv';
+import { load } from 'ts-dotenv';
+import path from "path";
+
+dotenv.config({path: path.resolve(__dirname, 'config.env')});
+
+const env = load({
+  MAIN: String,
+  NOTIF: String
+})
 
 async function connectToClubDB() {
   try {
@@ -41,16 +51,8 @@ export default async function init() {
   const botdb = await connectToClubDB();
 
   console.log("Creating telegraf bots instanse...");
-  // prod
-  // const token : string = '6503582186:AAF-dg1FCpXR0jI_tXXoeEpw7lFJSmbwGUs';
-  // notif
-  const notiftoken : string = '7149519033:AAE2qO_VxWQVaBDt7mUJ0SZIZ5zS50Hlo-8';
-  // dev
-  const token : string = '6192445742:AAHSlflbQoeylaqx3hZAh0WkS3fZ1Bt8sdU';
-  // closed_test
-  // const token : string = '6514563411:AAEjGHaHZMCqu0me9snBZlb0oOywxoWXxCQ'
-  const bot = new Telegraf(token),
-    bot_notification = new Telegraf(notiftoken);
+  const bot = new Telegraf(env.MAIN),
+    bot_notification = new Telegraf(env.NOTIF);
   console.log("Done\n");
 
   bot.use(async (ctx, next) => {
@@ -84,5 +86,5 @@ export default async function init() {
     set: (id: number) => (property: string) => async (new_value: string) => await redis.hSet(`${id}`, property, new_value)
   })
 
-  return [bot, bot_notification, token, wRedis, botdb] as const;
+  return [bot, bot_notification, env.MAIN, wRedis, botdb] as const;
 }
