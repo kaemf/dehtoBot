@@ -7775,8 +7775,7 @@ async function main() {
                   UniversalSingleDataProcess(new Date(newDate), 'day_of_week'),
                   UniversalSingleDataProcess(new Date(newDate), 'day'),
                   UniversalSingleDataProcess(new Date(newDate), 'month'),
-                  time,
-                  User!.miro_link ?? "відсутнє"
+                  time
                 ), {parse_mode: "HTML"}
               )
         
@@ -7789,8 +7788,7 @@ async function main() {
                 UniversalSingleDataProcess(new Date(newDate), 'day_of_week'),
                 UniversalSingleDataProcess(new Date(newDate), 'month'),
                 time,
-                user['teacher_reschedule_lesson_reason'],
-                User!.miro_link ?? "відсутнє",
+                user['teacher_reschedule_lesson_reason']
               ))
         
               if (updatedLesson){
@@ -7882,7 +7880,6 @@ async function main() {
                 UniversalSingleDataProcess(new Date(newDate), 'day'),
                 UniversalSingleDataProcess(new Date(newDate), 'month'),
                 user['teacher_time_individual_lesson_set'],
-                User!.miro_link ?? "відсутнє",
                 newUserObject!.individual_count ?? 0
               ))
       
@@ -7896,7 +7893,6 @@ async function main() {
               UniversalSingleDataProcess(new Date(newDate), 'month'),
               user['teacher_time_individual_lesson_set'],
               user['teacher_reschedule_lesson_reason'],
-              User!.miro_link,
               newUserObject!.individual_count
             ))
             const date = DateProcessToPresentView(user['teacher_date_individual_lesson_set'])

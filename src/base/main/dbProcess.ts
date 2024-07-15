@@ -978,8 +978,8 @@ export default async function dbProcess(botdb: MongoClient){
                                     UniversalSingleDataProcess(lessonDate, 'month'),
                                     lessons[i].time,
                                     (await this.ShowOneUser(lessons[i].idTeacher))?.name ?? "сталась помилка",
-                                    (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
-                                    (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
+                                    (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0,
+                                    lessons[i].zoom_link ?? '...'
                                 ), {parse_mode: "HTML"});
                                 ctx.sendMessage(lessons[i].idTeacher, script.notification.forStudent.lessonComingNotification(
                                     'teacher',
@@ -990,8 +990,8 @@ export default async function dbProcess(botdb: MongoClient){
                                     UniversalSingleDataProcess(lessonDate, 'month'),
                                     lessons[i].time,
                                     (await this.ShowOneUser(lessons[i].idStudent))?.name ?? "сталась помилка",
-                                    (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
-                                    (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
+                                    (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0,
+                                    lessons[i].zoom_link ?? '...'
                                 ), {parse_mode: "HTML"});
                                 console.log(`\nNotification Sent. Lesson start in ${formatDateWithTime(lessonDate)}`);
                                 await this.sentIndividualNotifications.insertOne({id: lessons[i]._id});
@@ -1008,8 +1008,8 @@ export default async function dbProcess(botdb: MongoClient){
                                 UniversalSingleDataProcess(lessonDate, 'month'),
                                 lessons[i].time,
                                 (await this.ShowOneUser(lessons[i].idTeacher))?.name ?? "сталась помилка",
-                                (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
-                                (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
+                                (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0,
+                                lessons[i].zoom_link ?? '...'
                             ), {parse_mode: "HTML"});
                             ctx.sendMessage(lessons[i].idTeacher, script.notification.forStudent.lessonComingNotification(
                                 'teacher',
@@ -1020,8 +1020,8 @@ export default async function dbProcess(botdb: MongoClient){
                                 UniversalSingleDataProcess(lessonDate, 'month'),
                                 lessons[i].time,
                                 (await this.ShowOneUser(lessons[i].idStudent))?.name ?? "сталась помилка",
-                                (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
-                                (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
+                                (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0,
+                                lessons[i].zoom_link ?? '...'
                             ), {parse_mode: "HTML"});
                             console.log(`\nNotification Sent. Lesson start in ${formatDateWithTime(lessonDate)}`);
                             await this.sentIndividualNotifications.insertOne({id: lessons[i]._id});
