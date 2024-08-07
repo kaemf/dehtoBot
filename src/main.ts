@@ -1090,9 +1090,13 @@ async function main() {
     // Оплата занять
 
     if (CheckException.BackRoot(data)){
-      const showLevel = packet[data.text as keyof typeof packet];
+      const showLevel = packet[user['courseLevel'] as keyof typeof packet];
 
-      ctx.reply(script.payInvidualLesson.choosePacket(showLevel['🔵']['price'], showLevel['🟢']['price'], showLevel['🟡']['price']), {
+      ctx.reply(script.payInvidualLesson.choosePacket(
+        showLevel['🔵 Мінімальний: 6 занять']['price'],
+        showLevel['🟢 Популярний: 12 занять']['price'], 
+        showLevel['🟡 Вигідний: 24 занять']['price']
+      ), {
         parse_mode: "Markdown",
         reply_markup: {
           one_time_keyboard: true,
@@ -1124,7 +1128,7 @@ async function main() {
       SendNotificationWithMedia(
         notifbot,
         script.payInvidualLesson.report(user['name'], user['username'], user['phone_number'], user['choosedPacket'], DateRecord()),
-        (await NotificationReg(ctx, notiftoken, data.photo[0])).url,
+        (await NotificationReg(ctx, notiftoken, data.file[0])).url,
         'document'
       );
   
@@ -3144,7 +3148,7 @@ async function main() {
       await set('state')('RespondAdminActionAndRootChoose');
     }
     else if (CheckException.TextException(data) && !isNaN(parseInt(data.text)) && parseInt(data.text) >= 1 && parseInt(data.text) <= results.length){
-      await set('AP_respondkeydata_clubid')(data.text);
+      await set('AP_respondkeydata_clubid')((parseInt(data.text) - 1).toString());
       console.log(results[parseInt(data.text) - 1].title);
 
       ctx.reply("Який саме пункт тре змінити?", {
@@ -3207,43 +3211,39 @@ async function main() {
           break;
 
         case "Дата":
+          ctx.reply("Введіть день:");
+          await set('state')('ChangeDateDayAndGetChangeMonth');
+          break;
 
-      }
+        case "Час":
+          ctx.reply('Введіть години');
+          await set('state')('ChangeTimeHourAndGetChangeMinute');
+          break;
 
-      if (data.text === 'Документація'){
-        ctx.reply("Завантажте файл");
-        await set('state')('ChangeThisDocAndCheckThis');
-      }
-      else if (data.text === 'Дата'){
-        ctx.reply("Введіть день:");
-        await set('state')('ChangeDateDayAndGetChangeMonth');
-      }
-      else if (data.text === 'Час'){
-        ctx.reply('Введіть години');
-        await set('state')('ChangeTimeHourAndGetChangeMinute');
-      }
-      else if (data.text === 'Викладач'){
-        const users = await dbProcess.ShowAllUsers();
-        let teachers = [];
+        case "Викладач":
+          const users = await dbProcess.ShowAllUsers();
+          let teachers = [];
 
-        for(let i = 0; i < users.length; i++){
-          if (users[i].role === 'teacher'){
-            teachers.push([{text: users[i].name}])
+          for(let i = 0; i < users.length; i++){
+            if (users[i].role === 'teacher'){
+              teachers.push([{text: users[i].name}])
+            }
           }
-        }
 
-        ctx.reply('Виберіть викладача', {
-          reply_markup: {
-            one_time_keyboard: true,
-            keyboard: teachers
-          }
-        })
+          ctx.reply('Виберіть викладача', {
+            reply_markup: {
+              one_time_keyboard: true,
+              keyboard: teachers
+            }
+          })
 
-        await set('state')('ChangeTeacherAndSubmit');
-      }
-      else{
-        ctx.reply("Введіть нові дані");
-        await set('state')('ChangeThisAndCheckThis');
+          await set('state')('ChangeTeacherAndSubmit');
+          break;
+
+        default:
+          ctx.reply("Введіть нові дані");
+          await set('state')('ChangeThisAndCheckThis');
+          break;
       }
     }
     else{
@@ -3257,8 +3257,7 @@ async function main() {
   })
 
   onTextMessage('ChangeThisAndCheckThis', async(ctx, user, set, data) => {
-    const results = await dbProcess.ShowAll(),
-      currentItem = results.map(result => result._id);
+    const results = await dbProcess.ShowAll();
 
     if (CheckException.BackRoot(data)){
       ctx.reply("Який саме пункт тре змінити?", {
@@ -3279,17 +3278,10 @@ async function main() {
           ctx.reply('Кількість можливих місць не може бути менше 0-я');
         }
         else{
-          const getCurrentClub: (MongoDBReturnType | Object | null)[] = [
-            await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]),
-            dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
-          ], keyForChange = user['AP_keyforchange'];
-    
-          await set('AP_prev_keyvalue(backup)')(Array(getCurrentClub[0]).filter((club): club is MongoDBReturnType => typeof club === 'object')
-          .map((club) => club[keyForChange as keyof MongoDBReturnType].toString()).join(''));
-    
           await set('AP_keydatatochange')(data.text);
     
-          await dbProcess.ChangeKeyData(dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid'])]), keyForChange, parseInt(data.text), true);
+          console.warn(results[parseInt(user['AP_respondkeydata_clubid'])].title);
+          await dbProcess.ChangeKeyData(results[parseInt(user['AP_respondkeydata_clubid'])], 'count', parseInt(data.text), true);
           ctx.reply('Успішно виконана операція!', {
             parse_mode: "Markdown",
             reply_markup: {
@@ -3302,26 +3294,21 @@ async function main() {
         }
       }
       else{
-        const getCurrentClub: (MongoDBReturnType | Object | null)[] = [
-          await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]),
-          dbProcess.GetObject(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1])
-        ], keyForChange = user['AP_keyforchange'], keyForChangeService = user['AP_keyforchange_services'];
-  
-        await set('AP_prev_keyvalue(backup)')(Array(getCurrentClub[0]).filter((club): club is MongoDBReturnType => typeof club === 'object')
-        .map((club) => club[keyForChange as keyof MongoDBReturnType].toString()).join(''));
+        const keyForChange = user['AP_keyforchange'], 
+          keyForChangeService = user['AP_keyforchange_services'];
   
         await set('AP_keydatatochange')(data.text);
 
-        const object = await dbProcess.ShowData(currentItem[parseInt(user['AP_respondkeydata_clubid']) - 1]),
+        const object = results[parseInt(user['AP_respondkeydata_clubid'])],
           users = await dbProcess.ShowAllUsers();
           
         ctx.telegram.sendMessage(object!.teacher_id, `${object!.teacher}!\n\nХочемо вас повідомити, що на шпрах-клубі ${object!.title}, котрий на ${dbProcess.getDateClub(new Date(object!.date))} о ${object!.time} були змінені наступні дані:\n\n\n👉🏽Було змінено - ${keyForChangeService}\n✅Нові дані - ${data.text}`);
         for (let i = 0; i < users.length; i++){
           if (await dbProcess.HasThisClubUser(users[i].id, object!._id)){
-            ctx.telegram.sendMessage(users[i].id, `${users[i].name}!\n\nХочемо вас повідомити, що на шпрах-клубі ${object!.title}, котрий на ${dbProcess.getDateClub(new Date(object!.date))} о ${object!.time} були змінені наступні дані:\n\n\n👉🏽Було змінено - ${keyForChangeService}\n✅Нові дані - ${data.text}`);
+            ctx.telegram.sendMessage(users[i].id, `${users[i].name}!\n\nХочемо вас повідомити, що на шпрах-клубі ${object!.title}, котрий на ${dbProcess.getDateClub(new Date(object!.date))} о ${object!.time} були змінені наступні дані:\n\n\n👉🏽Було змінено - ${keyForChangeService}\n✅Нові дані - ${data.text}`).then().catch((e) => {console.log(e)});
           }
         }
-        await dbProcess.ChangeKeyData(getCurrentClub[0]!, keyForChange, data.text, true);
+        await dbProcess.ChangeKeyData(results[parseInt(user['AP_respondkeydata_clubid'])], keyForChange, data.text, true);
         ctx.reply('Успішно виконана операція!', {
           parse_mode: "Markdown",
           reply_markup: {
