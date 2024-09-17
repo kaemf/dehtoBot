@@ -1069,7 +1069,7 @@ async function main() {
       await set('choosedPacket')(`${user['courseLevel']}, ${showPacket.name} (${showPacket.countOfLessons} занять) - ${showPacket.price}`);
   
       await ctx.reply(script.payInvidualLesson.statsAboutChoosedPacket(showPacket.name, showPacket.price, showPacket.countOfLessons));
-      await ctx.reply(script.payInvidualLesson.payment.require);
+      await ctx.reply(script.payInvidualLesson.payment.require(showPacket.countOfLessons));
       await ctx.reply(script.payInvidualLesson.payment.proofRequest);
       await set('state')('RespondPaymentAndSendData');
     }
