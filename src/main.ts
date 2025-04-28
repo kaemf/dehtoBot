@@ -294,7 +294,7 @@ async function main() {
 
       // For Teachers
       for (let i = 0; i < results.length; i++){
-        if (parseInt(results[i].teacher_id) === ctx?.chat?.id ?? -1){
+        if (parseInt(results[i].teacher_id) === ctx?.chat?.id){
           let userHaved : string = '\n\n<b>👉Зареєстровані користувачі</b>\n';
           for (let j = 0; j < users.length; j++) {
             if (await dbProcess.HasThisClubUser(users[j].id, results[i]._id)){
@@ -5193,7 +5193,7 @@ async function main() {
       const User = await dbProcess.ShowOneUser(parseInt(user['user_to_change_individual_id']));
       switch(data.text){
         case "Редагувати кількість занять":
-          ctx.reply(`введіть кількість хвилин, яка має бути у студента (наразі є: ${User!.individual_count / 60 ?? 0} занять (${User!.individual_count ?? 0} хв))`);
+          ctx.reply(`введіть кількість хвилин, яка має бути у студента (наразі є: ${User?.individual_count ? User.individual_count / 60 : 0} занять (${User!.individual_count ?? 0} хв))`);
           await set('admin_parametr_to_change_individual')('individual_count');
           await set('state')('IndividualChangeUserDataHandler');
           break;
@@ -6637,7 +6637,7 @@ async function main() {
       switch(data.text){
         case "Усім користувачам":
           for (let i = 0; i < AllUsers.length; i++){
-            if (AllUsers[i].id !== ctx?.chat?.id ?? -1){
+            if (AllUsers[i].id !== ctx?.chat?.id){
               try{
                 switch(user['admin_notification_type_of_files']){
                   case "text":
@@ -7063,7 +7063,7 @@ async function main() {
             }
           } catch (err){
             const User = await dbProcess.ShowOneUser(parseInt(user['admin_specific_user_send_notification_id']))
-            console.log("Error to send message to user " +User?.name ?? '??' +":"+err);
+            console.log("Error to send message to user " + User?.name + " " + err);
             ctx.reply(`не вдалося надіслати сповіщення користувачу ${User?.name ?? '(імені нема, можливо навіть в бд його нема)'} :( Скоріш за все він нас заблокував)`)
           }
           ctx.reply('віправлено ✅', {
