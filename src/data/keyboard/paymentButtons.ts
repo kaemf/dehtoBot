@@ -182,3 +182,24 @@ export const inlineGoToDetaskCheck = (id: number): HideableIKBtn[][] => {
         ]
     ];
 }
+
+export const ClubInlineKeyboardGenerate = (typeClub: string, id: number, clubIndex: string, paymentStatus: string, packet: string | undefined, date: string): HideableIKBtn[][] => {
+    switch (typeClub){
+        case "Разове заняття":
+            return clubIndex !== ''
+            ?
+            inlineAcceptOncePayment(id, clubIndex, paymentStatus, date)
+            :
+            inlineAcceptOncePaymentWithoutClub(id, paymentStatus, date)
+
+        case "Шпрах клуб":
+            return clubIndex !== ''
+            ?
+            inlineAcceptClubWithPacketPayment(id, clubIndex, paymentStatus, packet!, date)
+            :
+            inlineAcceptPacketPayment(id, paymentStatus, packet!)
+
+        default:
+            throw new Error(`Uncorrect parametr typeClub in ClubInlineKeyboardGenerate() ` + typeClub);
+    }
+}

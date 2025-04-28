@@ -498,10 +498,46 @@ export default async function dbProcess(botdb: MongoClient){
                             const oldTeacherStudents = usersTeacher.registered_students,
                                 newTeacherStudents = newTeacher.registered_students ?? false,
                                 studentDeTask = await this.deTaskDB.findOne({idStudent: user.id}) || false,
-                                indexInMassiveOld = oldTeacherStudents.indexOf(user.id);
+                                indexInMassiveOld = oldTeacherStudents.indexOf(user.id),
+                                studentsLessons = user.individual_lessons,
+                                oldTeachersLessons = usersTeacher.set_individual_lessons;
+
+                            if (oldTeachersLessons && oldTeacherStudents.length){
+                                const stringOldTeachersLessons = oldTeachersLessons.map((element: any) => {
+                                    return element.toString()
+                                }), stringUserLessons = studentsLessons.map((element: any) => {
+                                    return element.toString();
+                                })
+
+                                for (let i = 0; i < stringUserLessons.length; i++){
+                                    const lesson = await this.individualdbLessons.findOne({_id: new ObjectId(stringUserLessons[i])}),
+                                        lessonDuration = lesson?.duration;
+
+                                    if (stringOldTeachersLessons.includes(stringUserLessons[i])){
+                                        const indexInUserLessons = stringUserLessons.indexOf(stringUserLessons[i]),
+                                            indexInTeacherLessons = stringOldTeachersLessons.indexOf(stringUserLessons[i]);
+
+                                        if (indexInUserLessons !== -1){
+                                            studentsLessons.splice(indexInUserLessons, 1);
+                                            await this.botdbUsers.updateOne({id: user.id}, {$set: {individual_lessons: studentsLessons}});
+                                            const finalCount = parseInt(user.individual_count) + parseInt(lessonDuration);
+                                            await this.botdbUsers.updateOne({id: user.id}, {$set: {individual_count: finalCount}});
+                                        }
+                                        else throw new Error('While transfer user not found lesson which in teacher');
+
+                                        if (indexInTeacherLessons !== -1){
+                                            oldTeachersLessons.splice(indexInTeacherLessons, 1);
+                                            await this.botdbUsers.updateOne({id: user.teacher}, {set_individual_lessons: oldTeachersLessons});
+                                        }
+
+                                        await this.individualdbLessons.deleteOne({_id: lesson!._id});
+                                    }
+                                }
+                            }
 
                             if (studentDeTask){
-                                await this.botdbUsers.updateOne({id: idStudent}, {$set: {de_task: false}});
+                                await this.botdbUsers.updateOne({id: idStudent}, {$set: {detask: false}});
+                                await this.deTaskDB.deleteOne({_id: studentDeTask._id});
                                 const teacherDeTasks = usersTeacher.set_detasks,
                                     stringTeacherDeTasks = teacherDeTasks.map((element: any) => {
                                         return element.toString();
@@ -540,7 +576,10 @@ export default async function dbProcess(botdb: MongoClient){
                                 }
                                 else throw new Error('New Teacher already have this student');
                             }
-                            else await this.botdbUsers.updateOne({_id: newTeacher._id}, {$set: {registered_students: [user!.id]}});
+                            else{
+                                await this.botdbUsers.updateOne({_id: newTeacher._id}, {$set: {registered_students: [user!.id]}});
+                                await this.botdbUsers.updateOne({_id: user._id}, {$set: {teacher: newTeacher.id}});
+                            }
                         }
                         else{
                             const newTeacher = await this.ShowOneUser(await this.GetUserIDByName(value.toString())),
@@ -591,14 +630,33 @@ export default async function dbProcess(botdb: MongoClient){
 
         async DeleteTeacherFromPost(idTeacher: number){
             const teacherObject = await dbProcess.ShowOneUser(idTeacher),
-                teacherDetasks = teacherObject?.set_detasks;
+                teacherDetasks = teacherObject?.set_detasks,
+                teacherIndividualLessons = teacherObject?.set_individual_lessons;
 
             if (teacherObject){
+                if (teacherIndividualLessons){
+                    for (let i = 0; i < teacherIndividualLessons.length; i++){
+                        const lesson = await this.individualdbLessons.findOne({_id: teacherIndividualLessons[i]}),
+                            student = lesson!.idStudent,
+                            finalCount = parseInt(student.individual_count) + parseInt(lesson!.duration),
+                            studentLessons = student.individual_lessons,
+                            stringIndividualLessons = studentLessons.map((element: any) => {
+                                return element.toString();
+                            }),
+                            indexOfLessonsInStudent = stringIndividualLessons.indexOf(teacherIndividualLessons[i].toString());
+
+                        studentLessons.splice(indexOfLessonsInStudent, 1);
+                        await this.botdbUsers.updateOne({id: student.id}, {$set: {individual_lessons: studentLessons, individual_count: finalCount}});
+                        await this.individualdbLessons.deleteOne({_id: teacherIndividualLessons[i]});
+                    }
+                }
                 await this.botdbUsers.updateMany({teacher: idTeacher}, {$set: {teacher: false, detask: false}});
                 await this.botdbUsers.updateOne({id: idTeacher}, {$set : {registered_students: [], role: 'guest', set_detasks: [], set_individual_lessons: []}});
                 if (teacherDetasks){
                     for (let i = 0; i < teacherDetasks.length; i++){
-                        await this.deTaskDB.deleteOne({_id: teacherDetasks[i]})
+                        const deTask = await this.deTaskDB.findOne({_id: teacherDetasks[i]});
+                        await this.deTaskDB.deleteOne({_id: teacherDetasks[i]});
+                        await this.botdbUsers.updateOne({id: deTask!.idStudent}, {$set: {detask: false}})
                     }
                 }
                 return true;
@@ -974,8 +1032,8 @@ export default async function dbProcess(botdb: MongoClient){
                                     UniversalSingleDataProcess(lessonDate, 'month'),
                                     lessons[i].time,
                                     (await this.ShowOneUser(lessons[i].idTeacher))?.name ?? "сталась помилка",
-                                    (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
-                                    (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
+                                    (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0,
+                                    lessons[i].zoom_link ?? '...'
                                 ), {parse_mode: "HTML"});
                                 ctx.sendMessage(lessons[i].idTeacher, script.notification.forStudent.lessonComingNotification(
                                     'teacher',
@@ -986,8 +1044,8 @@ export default async function dbProcess(botdb: MongoClient){
                                     UniversalSingleDataProcess(lessonDate, 'month'),
                                     lessons[i].time,
                                     (await this.ShowOneUser(lessons[i].idStudent))?.name ?? "сталась помилка",
-                                    (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
-                                    (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
+                                    (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0,
+                                    lessons[i].zoom_link ?? '...'
                                 ), {parse_mode: "HTML"});
                                 console.log(`\nNotification Sent. Lesson start in ${formatDateWithTime(lessonDate)}`);
                                 await this.sentIndividualNotifications.insertOne({id: lessons[i]._id});
@@ -1004,8 +1062,8 @@ export default async function dbProcess(botdb: MongoClient){
                                 UniversalSingleDataProcess(lessonDate, 'month'),
                                 lessons[i].time,
                                 (await this.ShowOneUser(lessons[i].idTeacher))?.name ?? "сталась помилка",
-                                (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
-                                (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
+                                (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0,
+                                lessons[i].zoom_link ?? '...'
                             ), {parse_mode: "HTML"});
                             ctx.sendMessage(lessons[i].idTeacher, script.notification.forStudent.lessonComingNotification(
                                 'teacher',
@@ -1016,8 +1074,8 @@ export default async function dbProcess(botdb: MongoClient){
                                 UniversalSingleDataProcess(lessonDate, 'month'),
                                 lessons[i].time,
                                 (await this.ShowOneUser(lessons[i].idStudent))?.name ?? "сталась помилка",
-                                (await this.ShowOneUser(lessons[i].idStudent))?.miro_link ?? "помилка",
-                                (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0
+                                (await this.ShowOneUser(lessons[i].idStudent))?.individual_count ?? 0,
+                                lessons[i].zoom_link ?? '...'
                             ), {parse_mode: "HTML"});
                             console.log(`\nNotification Sent. Lesson start in ${formatDateWithTime(lessonDate)}`);
                             await this.sentIndividualNotifications.insertOne({id: lessons[i]._id});

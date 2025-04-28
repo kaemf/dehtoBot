@@ -128,6 +128,10 @@ class StandartCheckException{
     }
     else return false;
   }
+
+  public RegularButtons(keyboard: { text: string; }[][], input: string){
+    return keyboard.flatMap((el: any) => el.map((el: any) => {return el.text})).includes(input);
+  }
 }
 
 export const CheckException : StandartCheckException = new StandartCheckException();

@@ -23,8 +23,12 @@
   "dependencies": {
     "@prisma/client": "^4.11.0",
     "axios": "^1.5.1",
+<<<<<<< HEAD
     "dehto-bot": "file:",
     "dotenv": "^16.0.3",
+=======
+    "dotenv": "^16.4.5",
+>>>>>>> afb571f92ae479fb04867ff35dc996c445dbe11e
     "express": "^4.18.2",
     "googleapis": "^113.0.0",
     "got": "^14.2.1",
@@ -35,6 +39,7 @@
     "redis": "^4.6.5",
     "sharp": "^0.33.3",
     "telegraf": "^4.12.2",
+    "ts-dotenv": "^0.9.1",
     "ts-node": "^10.9.2"
   }
 }
